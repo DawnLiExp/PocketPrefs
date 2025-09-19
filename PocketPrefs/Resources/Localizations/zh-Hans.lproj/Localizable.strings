@@ -1,0 +1,49 @@
+/* 
+  Localizable.strings
+  PocketPrefs
+
+  Created by Me2 on 2025/9/19.
+  
+*/
+
+"Restore_Backup_Title" = "恢复备份";
+"Restore_Apps_Selected_Count" = "%1$d / %2$d 个应用已选择";
+"Restore_Search_No_Results" = "没有找到与 \"%@\" 相关的结果";
+"Restore_Search_Try_Different_Keyword" = "尝试使用不同的关键词搜索";
+"Restore_Empty_State_No_Backups" = "没有找到备份";
+"Restore_Empty_State_Select_Location_Or_Create_Backup" = "请选择其他位置或先创建备份";
+"Restore_App_Status_Not_Installed" = "未安装";
+"Restore_App_Status_Installed" = "已安装";
+"Restore_App_Config_Files_Count" = "%d 个配置文件";
+"Search apps..." = "搜索应用...";
+"Select Backup:" = "选择备份:";
+"Select from other location..." = "从其他位置选择...";
+
+"Detail_App_Status_Installed" = "已安装";
+"Detail_App_Status_Not_Installed" = "未安装";
+"Detail_Select_All_Config_Files" = "选择所有配置文件";
+"Detail_Action_Backup_Selected" = "备份已选";
+"Detail_Action_Select_Backup_File_To_Restore" = "选择备份文件进行恢复";
+"Detail_Placeholder_Select_App" = "选择一个应用以查看详情";
+"Detail_Placeholder_Quick_Backup_All_Selected" = "快速备份所有已选";
+"Detail_Restore_Backup_App_Count" = "%d 个应用";
+"Detail_Restore_Selected_Apps_Count" = "%d 个应用已选择";
+"Detail_Restore_Uninstalled_Apps_Count" = "%d 个未安装的应用";
+"Detail_Restore_Will_Restore_Apps" = "将恢复以下应用：";
+"Detail_Restore_App_Not_Installed_Badge" = "(未安装)";
+"Detail_Restore_Empty_State_No_Apps_Selected" = "没有选择任何应用";
+"Detail_Restore_Empty_State_Select_Apps_From_List" = "请从左侧列表中选择要恢复的应用";
+
+"AppList_Title" = "应用";
+"AppList_Select_All" = "全选";
+"AppList_Selected_Count" = "%1$d / %2$d 已选择";
+"AppList_App_Status_Not_Installed" = "未安装";
+"AppList_App_Config_Paths_Count" = "%d 个配置路径";
+
+"MainView_Mode_Backup" = "备份";
+"MainView_Mode_Restore" = "恢复";
+
+"Common_Processing" = "正在处理...";
+
+"Sidebar_Settings" = "设置";
+

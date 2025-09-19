@@ -1,0 +1,48 @@
+/* 
+  Localizable.strings
+  PocketPrefs
+
+  Created by Me2 on 2025/9/19.
+  
+*/
+
+"Restore_Backup_Title" = "Restore Backup";
+"Restore_Apps_Selected_Count" = "%1$d / %2$d apps selected";
+"Restore_Search_No_Results" = "No results for \"%@\"";
+"Restore_Search_Try_Different_Keyword" = "Try searching with a different keyword";
+"Restore_Empty_State_No_Backups" = "No backups found";
+"Restore_Empty_State_Select_Location_Or_Create_Backup" = "Select another location or create a backup first";
+"Restore_App_Status_Not_Installed" = "Not Installed";
+"Restore_App_Status_Installed" = "Installed";
+"Restore_App_Config_Files_Count" = "%d config files";
+"Search apps..." = "Search apps...";
+"Select Backup:" = "Select Backup:";
+"Select from other location..." = "Select from other location...";
+
+"Detail_App_Status_Installed" = "Installed";
+"Detail_App_Status_Not_Installed" = "Not Installed";
+"Detail_Select_All_Config_Files" = "Select all config files";
+"Detail_Action_Backup_Selected" = "Backup Selected";
+"Detail_Action_Select_Backup_File_To_Restore" = "Select backup file to restore";
+"Detail_Placeholder_Select_App" = "Select an app to view details";
+"Detail_Placeholder_Quick_Backup_All_Selected" = "Quick Backup All Selected";
+"Detail_Restore_Backup_App_Count" = "%d apps";
+"Detail_Restore_Selected_Apps_Count" = "%d apps selected";
+"Detail_Restore_Uninstalled_Apps_Count" = "%d uninstalled apps";
+"Detail_Restore_Will_Restore_Apps" = "The following applications will be restored:";
+"Detail_Restore_App_Not_Installed_Badge" = "(Not Installed)";
+"Detail_Restore_Empty_State_No_Apps_Selected" = "No applications selected";
+"Detail_Restore_Empty_State_Select_Apps_From_List" = "Please select applications to restore from the list on the left";
+
+"AppList_Title" = "Applications";
+"AppList_Select_All" = "Select All";
+"AppList_Selected_Count" = "%1$d / %2$d selected";
+"AppList_App_Status_Not_Installed" = "Not Installed";
+"AppList_App_Config_Paths_Count" = "%d config paths";
+
+"MainView_Mode_Backup" = "Backup";
+"MainView_Mode_Restore" = "Restore";
+
+"Common_Processing" = "Processing...";
+
+"Sidebar_Settings" = "Settings";
