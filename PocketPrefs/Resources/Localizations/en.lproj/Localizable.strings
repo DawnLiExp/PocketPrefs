@@ -65,3 +65,50 @@
 "Backup_Success_Message" = "✅ Backup complete! Successfully backed up %d app configurations";
 "Backup_Partial_Success_Message" = "⚠️ Backup complete. Success: %d, Failed: %@";
 "Backup_No_Apps_Processed" = "No app configurations were backed up";
+
+/* Settings Main */
+"Settings_Title" = "Settings - Custom Applications";
+"Settings_Search_Apps" = "Search apps...";
+"Settings_Add_App" = "Add App";
+"Settings_Delete_Selected" = "Delete %d Selected";
+"Settings_Deselect_All" = "Deselect All";
+"Settings_App_Information" = "App Information";
+"Settings_App_Name" = "App Name:";
+"Settings_Bundle_ID" = "Bundle ID:";
+"Settings_Config_Paths" = "Configuration Paths";
+"Settings_Paths_Count" = "%d paths";
+
+/* Settings Actions */
+"Settings_Add_Directory" = "Add Directory";
+"Settings_Add_File" = "Add File";
+"Settings_Add_Path_Manually" = "Add Path Manually";
+"Settings_Edit_Path" = "Edit Path";
+"Settings_Path_Placeholder" = "Enter path (e.g., ~/Library/Preferences/...)";
+"Settings_Path_Not_Found" = "Path does not exist";
+"Settings_No_Paths_Added" = "No configuration paths added";
+"Settings_Add_Path_Hint" = "Click + to add directories or files to backup";
+
+/* Settings Validation */
+"Settings_Validation_Empty_Fields" = "Please fill in all fields";
+"Settings_Validation_Invalid_BundleId" = "Invalid bundle ID format";
+"Settings_Validation_Duplicate_BundleId" = "An app with this bundle ID already exists";
+
+/* Settings Dialogs */
+"Settings_Add_New_App" = "Add New Application";
+"Settings_App_Name_Placeholder" = "e.g., Visual Studio Code";
+"Settings_Bundle_ID_Placeholder" = "e.g., com.microsoft.VSCode";
+"Settings_Bundle_ID_Hint" = "Use format: com.company.appname";
+"Settings_Delete_Confirmation_Title" = "Delete Selected Apps?";
+"Settings_Delete_Confirmation_Message" = "This will permanently delete %d custom app configuration(s). This action cannot be undone.";
+
+/* Settings Empty States */
+"Settings_No_Custom_Apps" = "No custom apps added yet";
+"Settings_Add_First_App_Hint" = "Click 'Add App' to configure a new application for backup";
+"Settings_No_Search_Results" = "No apps found";
+"Settings_Try_Different_Search" = "Try a different search term";
+"Settings_Select_App_To_Configure" = "Select an app to configure";
+
+/* Common Actions */
+"Common_Save" = "Save";
+"Common_Cancel" = "Cancel";
+"Common_Delete" = "Delete";

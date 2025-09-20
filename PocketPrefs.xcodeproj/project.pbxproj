@@ -13,6 +13,8 @@
 		FC195B772E7EB80B00258310 /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4B2E7EB80B00258310 /* BackupManager.swift */; };
 		FC195B792E7EB80B00258310 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FC195B552E7EB80B00258310 /* Assets.xcassets */; };
 		FC195B7B2E7EB80B00258310 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = FC195B532E7EB80B00258310 /* Localizable.strings */; };
+		FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED942E7EF4D600764A17 /* PathPickerView.swift */; };
+		FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */; };
 		FCD990722E7EC53600C7087A /* AppListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990672E7EC53600C7087A /* AppListView.swift */; };
 		FCD990732E7EC53600C7087A /* ColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990682E7EC53600C7087A /* ColorExtensions.swift */; };
 		FCD990742E7EC53600C7087A /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD9906B2E7EC53600C7087A /* MainView.swift */; };
@@ -27,6 +29,9 @@
 		FCD9907D2E7EC53600C7087A /* FileOperationService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990622E7EC53600C7087A /* FileOperationService.swift */; };
 		FCD9907E2E7EC53600C7087A /* RestoreService.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990642E7EC53600C7087A /* RestoreService.swift */; };
 		FCD9907F2E7EC53600C7087A /* info.plist in Resources */ = {isa = PBXBuildFile; fileRef = FCD9906F2E7EC53600C7087A /* info.plist */; };
+		FCD990B82E7EDEEB00C7087A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990B72E7EDEE900C7087A /* SettingsView.swift */; };
+		FCD990BC2E7EDF0500C7087A /* CustomAppManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990BB2E7EDF0300C7087A /* CustomAppManager.swift */; };
+		FCD990C02E7EDF1D00C7087A /* UserConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -37,6 +42,8 @@
 		FC195B512E7EB80B00258310 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		FC195B522E7EB80B00258310 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		FC195B552E7EB80B00258310 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FCAFED942E7EF4D600764A17 /* PathPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathPickerView.swift; sourceTree = "<group>"; };
+		FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
 		FCD990612E7EC53600C7087A /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
 		FCD990622E7EC53600C7087A /* FileOperationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileOperationService.swift; sourceTree = "<group>"; };
 		FCD990632E7EC53600C7087A /* IconService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconService.swift; sourceTree = "<group>"; };
@@ -52,6 +59,9 @@
 		FCD9906F2E7EC53600C7087A /* info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = info.plist; sourceTree = "<group>"; };
 		FCD990702E7EC53600C7087A /* PocketPrefs.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = PocketPrefs.entitlements; sourceTree = "<group>"; };
 		FCD990712E7EC53600C7087A /* PocketPrefsApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PocketPrefsApp.swift; sourceTree = "<group>"; };
+		FCD990B72E7EDEE900C7087A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		FCD990BB2E7EDF0300C7087A /* CustomAppManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomAppManager.swift; sourceTree = "<group>"; };
+		FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserConfigStore.swift; sourceTree = "<group>"; };
 		FCF9C4E92E7ADA4000013E27 /* PocketPrefs.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PocketPrefs.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -83,6 +93,7 @@
 			isa = PBXGroup;
 			children = (
 				FC195B4B2E7EB80B00258310 /* BackupManager.swift */,
+				FCD990BB2E7EDF0300C7087A /* CustomAppManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -122,6 +133,7 @@
 				FCD990632E7EC53600C7087A /* IconService.swift */,
 				FCD990642E7EC53600C7087A /* RestoreService.swift */,
 				FCD990652E7EC53600C7087A /* ThemeManager.swift */,
+				FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -136,6 +148,9 @@
 				FCD9906B2E7EC53600C7087A /* MainView.swift */,
 				FCD9906C2E7EC53600C7087A /* RestoreListView.swift */,
 				FCD9906D2E7EC53600C7087A /* SidebarView.swift */,
+				FCD990B72E7EDEE900C7087A /* SettingsView.swift */,
+				FCAFED942E7EF4D600764A17 /* PathPickerView.swift */,
+				FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -227,8 +242,12 @@
 				FCD990722E7EC53600C7087A /* AppListView.swift in Sources */,
 				FCD990732E7EC53600C7087A /* ColorExtensions.swift in Sources */,
 				FCD990742E7EC53600C7087A /* MainView.swift in Sources */,
+				FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */,
+				FCD990B82E7EDEEB00C7087A /* SettingsView.swift in Sources */,
 				FCD990752E7EC53600C7087A /* CommonComponents.swift in Sources */,
+				FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */,
 				FCD990762E7EC53600C7087A /* DetailView.swift in Sources */,
+				FCD990C02E7EDF1D00C7087A /* UserConfigStore.swift in Sources */,
 				FCD990772E7EC53600C7087A /* RestoreListView.swift in Sources */,
 				FCD990782E7EC53600C7087A /* ThemeManager.swift in Sources */,
 				FCD990792E7EC53600C7087A /* SidebarView.swift in Sources */,
@@ -241,6 +260,7 @@
 				FC195B6A2E7EB80B00258310 /* AppError.swift in Sources */,
 				FC195B6C2E7EB80B00258310 /* BackupModels.swift in Sources */,
 				FC195B772E7EB80B00258310 /* BackupManager.swift in Sources */,
+				FCD990BC2E7EDF0500C7087A /* CustomAppManager.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */

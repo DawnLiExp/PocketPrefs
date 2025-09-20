@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SidebarView: View {
     @Binding var currentMode: MainView.AppMode
+    @State private var showingSettings = false
     @Environment(\.colorScheme) var colorScheme
     
     let modes: [MainView.AppMode] = [.backup, .restore]
@@ -34,7 +35,7 @@ struct SidebarView: View {
                 title: NSLocalizedString("Sidebar_Settings", comment: ""),
                 isSelected: false
             ) {
-                // TODO: Open settings
+                showingSettings = true
             }
 
             Spacer()
@@ -53,6 +54,10 @@ struct SidebarView: View {
             )
             .opacity(colorScheme == .dark ? 0.9 : 0.95)
         )
+        .sheet(isPresented: $showingSettings) {
+            SettingsView()
+                .frame(width: 750, height: 500)
+        }
     }
 }
 

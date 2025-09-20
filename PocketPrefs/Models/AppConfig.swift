@@ -33,13 +33,13 @@ enum AppCategory: String, Codable, CaseIterable, Sendable {
 
 struct AppConfig: Identifiable, Codable, Sendable, Equatable {
     var id = UUID()
-    let name: String
+    var name: String  // 从 let 改为 var，允许编辑
     let bundleId: String
     var configPaths: [String]
     var isSelected: Bool = false
     var isInstalled: Bool = true
     var category: AppCategory = .development
-    var isUserAdded: Bool = false // For future settings page
+    var isUserAdded: Bool = false
     
     enum CodingKeys: String, CodingKey {
         case name, bundleId, configPaths, category, isUserAdded

@@ -65,3 +65,50 @@
 "Backup_Success_Message" = "✅ 备份完成！成功备份了 %d 个应用配置";
 "Backup_Partial_Success_Message" = "⚠️ 备份完成。成功: %d 个，失败: %@";
 "Backup_No_Apps_Processed" = "没有备份任何应用配置";
+
+/* Settings Main */
+"Settings_Title" = "设置 - 自定义应用";
+"Settings_Search_Apps" = "搜索应用...";
+"Settings_Add_App" = "添加应用";
+"Settings_Delete_Selected" = "删除 %d 个选中项";
+"Settings_Deselect_All" = "取消全选";
+"Settings_App_Information" = "应用信息";
+"Settings_App_Name" = "应用名称：";
+"Settings_Bundle_ID" = "Bundle ID：";
+"Settings_Config_Paths" = "配置路径";
+"Settings_Paths_Count" = "%d 个路径";
+
+/* Settings Actions */
+"Settings_Add_Directory" = "添加目录";
+"Settings_Add_File" = "添加文件";
+"Settings_Add_Path_Manually" = "手动添加路径";
+"Settings_Edit_Path" = "编辑路径";
+"Settings_Path_Placeholder" = "输入路径（例如：~/Library/Preferences/...)";
+"Settings_Path_Not_Found" = "路径不存在";
+"Settings_No_Paths_Added" = "尚未添加配置路径";
+"Settings_Add_Path_Hint" = "点击 + 添加需要备份的目录或文件";
+
+/* Settings Validation */
+"Settings_Validation_Empty_Fields" = "请填写所有字段";
+"Settings_Validation_Invalid_BundleId" = "Bundle ID 格式无效";
+"Settings_Validation_Duplicate_BundleId" = "已存在相同 Bundle ID 的应用";
+
+/* Settings Dialogs */
+"Settings_Add_New_App" = "添加新应用";
+"Settings_App_Name_Placeholder" = "例如：Visual Studio Code";
+"Settings_Bundle_ID_Placeholder" = "例如：com.microsoft.VSCode";
+"Settings_Bundle_ID_Hint" = "使用格式：com.company.appname";
+"Settings_Delete_Confirmation_Title" = "删除选中的应用？";
+"Settings_Delete_Confirmation_Message" = "将永久删除 %d 个自定义应用配置。此操作无法撤销。";
+
+/* Settings Empty States */
+"Settings_No_Custom_Apps" = "尚未添加自定义应用";
+"Settings_Add_First_App_Hint" = "点击\"添加应用\"配置新的应用备份";
+"Settings_No_Search_Results" = "未找到应用";
+"Settings_Try_Different_Search" = "尝试其他搜索词";
+"Settings_Select_App_To_Configure" = "选择一个应用进行配置";
+
+/* Common Actions */
+"Common_Save" = "保存";
+"Common_Cancel" = "取消";
+"Common_Delete" = "删除";

@@ -1,0 +1,394 @@
+//
+//  SettingsComponents.swift
+//  PocketPrefs
+//
+//  Reusable components for the Settings view
+//
+
+import SwiftUI
+
+// MARK: - Settings Title Bar
+
+struct SettingsTitleBar: View {
+    let onClose: () -> Void
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        HStack {
+            Text(NSLocalizedString("Settings_Title", comment: ""))
+                .font(DesignConstants.Typography.title)
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
+            
+            Spacer()
+            
+            Button(action: onClose) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(16)
+        .background(Color.App.secondaryBackground.color(for: colorScheme))
+    }
+}
+
+// MARK: - Settings Toolbar
+
+struct SettingsToolbar: View {
+    @Binding var searchText: String
+    let selectedCount: Int
+    let onAddApp: () -> Void
+    let onDeleteSelected: () -> Void
+    let customAppManager: CustomAppManager
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        VStack(spacing: 12) {
+            // Search bar
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                
+                TextField(NSLocalizedString("Settings_Search_Apps", comment: ""), text: $searchText)
+                    .textFieldStyle(.plain)
+                
+                if !searchText.isEmpty {
+                    Button(action: { searchText = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(8)
+            .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.5))
+            .clipShape(RoundedRectangle(cornerRadius: 6))
+            
+            // Action buttons
+            HStack {
+                Button(action: onAddApp) {
+                    Label(NSLocalizedString("Settings_Add_App", comment: ""),
+                          systemImage: "plus")
+                        .font(DesignConstants.Typography.body)
+                }
+                .buttonStyle(.bordered)
+                
+                if selectedCount > 0 {
+                    Button(action: onDeleteSelected) {
+                        Label(String(format: NSLocalizedString("Settings_Delete_Selected", comment: ""),
+                                     selectedCount),
+                              systemImage: "trash")
+                            .font(DesignConstants.Typography.body)
+                    }
+                    .buttonStyle(.bordered)
+                    .tint(Color.App.error.color(for: colorScheme))
+                }
+                
+                Spacer()
+                
+                if selectedCount > 0 {
+                    Button(action: { customAppManager.deselectAll() }) {
+                        Text(NSLocalizedString("Settings_Deselect_All", comment: ""))
+                            .font(DesignConstants.Typography.caption)
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+        }
+        .padding(12)
+    }
+}
+
+// MARK: - Custom App List Item
+
+struct CustomAppListItem: View {
+    let app: AppConfig
+    let isSelected: Bool
+    let isDetailSelected: Bool
+    let onToggleSelection: () -> Void
+    let onSelectForDetail: () -> Void
+    @State private var isHovered = false
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        HStack(spacing: 12) {
+            Toggle("", isOn: Binding(
+                get: { isSelected },
+                set: { _ in onToggleSelection() }
+            ))
+            .toggleStyle(.checkbox)
+            
+            VStack(alignment: .leading, spacing: 4) {
+                Text(app.name)
+                    .font(DesignConstants.Typography.headline)
+                    .foregroundColor(Color.App.primary.color(for: colorScheme))
+                
+                Text(app.bundleId)
+                    .font(DesignConstants.Typography.caption)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                
+                if !app.configPaths.isEmpty {
+                    Text(String(format: NSLocalizedString("Settings_Paths_Count", comment: ""),
+                                app.configPaths.count))
+                        .font(DesignConstants.Typography.caption)
+                        .foregroundColor(Color.App.accent.color(for: colorScheme))
+                }
+            }
+            
+            Spacer()
+            
+            if isHovered || isDetailSelected {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    .opacity(isDetailSelected ? 1 : 0.5)
+            }
+        }
+        .padding(12)
+        .background(
+            RoundedRectangle(cornerRadius: 6)
+                .fill(isDetailSelected ?
+                    Color.App.accent.color(for: colorScheme).opacity(0.1) :
+                    Color.clear)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 6)
+                .stroke(isDetailSelected ?
+                    Color.App.accent.color(for: colorScheme).opacity(0.3) :
+                    Color.clear, lineWidth: 1)
+        )
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onSelectForDetail)
+        .onHover { hovering in
+            withAnimation(DesignConstants.Animation.quick) {
+                isHovered = hovering
+            }
+        }
+    }
+}
+
+// MARK: - Custom App Detail View
+
+struct CustomAppDetailView: View {
+    let app: AppConfig
+    @ObservedObject var manager: CustomAppManager
+    @State private var editingName = false
+    @State private var editingBundleId = false
+    @State private var tempName = ""
+    @State private var tempBundleId = ""
+    @State private var paths: [String] = []
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        ScrollView {
+            VStack(alignment: .leading, spacing: 20) {
+                // App Info Section
+                VStack(alignment: .leading, spacing: 16) {
+                    Text(NSLocalizedString("Settings_App_Information", comment: ""))
+                        .font(DesignConstants.Typography.title)
+                        .foregroundColor(Color.App.primary.color(for: colorScheme))
+                    
+                    // App Name
+                    HStack {
+                        Text(NSLocalizedString("Settings_App_Name", comment: ""))
+                            .font(DesignConstants.Typography.headline)
+                            .frame(width: 100, alignment: .leading)
+                        
+                        if editingName {
+                            HStack {
+                                TextField("", text: $tempName)
+                                    .textFieldStyle(.roundedBorder)
+                                
+                                Button(action: saveName) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(Color.App.success.color(for: colorScheme))
+                                }
+                                .buttonStyle(.plain)
+                                
+                                Button(action: cancelNameEdit) {
+                                    Image(systemName: "xmark.circle.fill")
+                                        .foregroundColor(Color.App.error.color(for: colorScheme))
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        } else {
+                            Text(app.name)
+                                .font(DesignConstants.Typography.body)
+                            
+                            Button(action: startNameEdit) {
+                                Image(systemName: "pencil.circle")
+                                    .foregroundColor(Color.App.accent.color(for: colorScheme))
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                    
+                    // Bundle ID
+                    HStack {
+                        Text(NSLocalizedString("Settings_Bundle_ID", comment: ""))
+                            .font(DesignConstants.Typography.headline)
+                            .frame(width: 100, alignment: .leading)
+                        
+                        Text(app.bundleId)
+                            .font(.system(.body, design: .monospaced))
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    }
+                }
+                .padding()
+                .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
+                .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
+                
+                // Configuration Paths Section
+                PathPickerView(paths: $paths, manager: manager)
+                    .padding()
+                    .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
+                    .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
+                    .onChange(of: paths) { _, newPaths in
+                        savePathChanges(newPaths)
+                    }
+            }
+            .padding(20)
+        }
+        .onAppear {
+            paths = app.configPaths
+        }
+    }
+    
+    private func startNameEdit() {
+        tempName = app.name
+        editingName = true
+    }
+    
+    private func saveName() {
+        guard !tempName.isEmpty else { return }
+        var updatedApp = app
+        updatedApp.name = tempName
+        manager.updateApp(updatedApp)
+        manager.selectedApp = updatedApp
+        editingName = false
+    }
+    
+    private func cancelNameEdit() {
+        editingName = false
+        tempName = ""
+    }
+    
+    private func savePathChanges(_ newPaths: [String]) {
+        var updatedApp = app
+        updatedApp.configPaths = newPaths
+        manager.updateApp(updatedApp)
+        manager.selectedApp = updatedApp
+    }
+}
+
+// MARK: - Empty States
+
+struct EmptyAppsListView: View {
+    let searchActive: Bool
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: searchActive ? "magnifyingglass" : "plus.app")
+                .font(.system(size: 48))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+            
+            Text(searchActive ?
+                NSLocalizedString("Settings_No_Search_Results", comment: "") :
+                NSLocalizedString("Settings_No_Custom_Apps", comment: ""))
+                .font(DesignConstants.Typography.headline)
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
+            
+            Text(searchActive ?
+                NSLocalizedString("Settings_Try_Different_Search", comment: "") :
+                NSLocalizedString("Settings_Add_First_App_Hint", comment: ""))
+                .font(DesignConstants.Typography.caption)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .multilineTextAlignment(.center)
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+struct EmptyDetailView: View {
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        VStack(spacing: 16) {
+            Image(systemName: "sidebar.left")
+                .font(.system(size: 48))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+            
+            Text(NSLocalizedString("Settings_Select_App_To_Configure", comment: ""))
+                .font(DesignConstants.Typography.headline)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+}
+
+// MARK: - Add App Sheet
+
+struct AddAppSheet: View {
+    @Binding var appName: String
+    @Binding var bundleId: String
+    @Binding var validationError: String
+    let onAdd: () -> Void
+    let onCancel: () -> Void
+    let manager: CustomAppManager
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        VStack(spacing: 24) {
+            Text(NSLocalizedString("Settings_Add_New_App", comment: ""))
+                .font(DesignConstants.Typography.title)
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
+            
+            VStack(alignment: .leading, spacing: 16) {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(NSLocalizedString("Settings_App_Name", comment: ""))
+                        .font(DesignConstants.Typography.headline)
+                    TextField(NSLocalizedString("Settings_App_Name_Placeholder", comment: ""),
+                              text: $appName)
+                        .textFieldStyle(.roundedBorder)
+                }
+                
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(NSLocalizedString("Settings_Bundle_ID", comment: ""))
+                        .font(DesignConstants.Typography.headline)
+                    TextField(NSLocalizedString("Settings_Bundle_ID_Placeholder", comment: ""),
+                              text: $bundleId)
+                        .textFieldStyle(.roundedBorder)
+                    Text(NSLocalizedString("Settings_Bundle_ID_Hint", comment: ""))
+                        .font(DesignConstants.Typography.caption)
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                }
+                
+                if !validationError.isEmpty {
+                    HStack {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .foregroundColor(Color.App.error.color(for: colorScheme))
+                        Text(validationError)
+                            .font(DesignConstants.Typography.caption)
+                            .foregroundColor(Color.App.error.color(for: colorScheme))
+                    }
+                }
+            }
+            
+            HStack(spacing: 12) {
+                Button(NSLocalizedString("Common_Cancel", comment: ""), action: onCancel)
+                    .buttonStyle(SecondaryButtonStyle())
+                    .keyboardShortcut(.cancelAction)
+                
+                Button(NSLocalizedString("Settings_Add_App", comment: ""), action: onAdd)
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(appName.isEmpty || bundleId.isEmpty)
+                    .keyboardShortcut(.defaultAction)
+            }
+        }
+        .padding(30)
+        .frame(width: 450)
+        .background(Color.App.secondaryBackground.color(for: colorScheme))
+    }
+}
