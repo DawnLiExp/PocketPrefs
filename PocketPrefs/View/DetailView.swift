@@ -2,7 +2,7 @@
 //  DetailView.swift
 //  PocketPrefs
 //
-//  Created by Me2 on 2025/9/18.
+//  App detail and backup/restore management views
 //
 
 import SwiftUI

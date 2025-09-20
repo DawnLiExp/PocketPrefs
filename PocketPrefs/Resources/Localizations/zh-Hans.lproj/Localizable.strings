@@ -6,6 +6,11 @@
   
 */
 
+/* Restore Operations */
+"Restore_Starting" = "正在开始配置恢复...";
+"Restore_Success_Message" = "✅ 恢复完成！成功恢复了 %d 个应用配置";
+"Restore_Partial_Success_Message" = "⚠️ 恢复完成。成功: %d 个，失败: %@";
+"Restore_No_Apps_Processed" = "没有恢复任何应用配置";
 "Restore_Backup_Title" = "恢复备份";
 "Restore_Apps_Selected_Count" = "%1$d / %2$d 个应用已选择";
 "Restore_Search_No_Results" = "没有找到与 \"%@\" 相关的结果";
@@ -19,22 +24,25 @@
 "Select Backup:" = "选择备份:";
 "Select from other location..." = "从其他位置选择...";
 
+/* Detail View */
+"Detail_Restore_Empty_State_No_Apps_Selected" = "没有选择任何应用配置";
+"Detail_Restore_Empty_State_Select_Apps_From_List" = "请从左侧列表中选择要恢复的应用配置";
 "Detail_App_Status_Installed" = "已安装";
 "Detail_App_Status_Not_Installed" = "未安装";
 "Detail_Select_All_Config_Files" = "选择所有配置文件";
-"Detail_Action_Backup_Selected" = "备份已选";
+"Detail_Action_Backup_Selected" = "备份已选配置";
 "Detail_Action_Select_Backup_File_To_Restore" = "选择备份文件进行恢复";
 "Detail_Placeholder_Select_App" = "选择一个应用以查看详情";
-"Detail_Placeholder_Quick_Backup_All_Selected" = "快速备份所有已选";
+"Detail_Placeholder_Quick_Backup_All_Selected" = "快速备份所有已选配置";
 "Detail_Restore_Backup_App_Count" = "%d 个应用";
 "Detail_Restore_Selected_Apps_Count" = "%d 个应用已选择";
 "Detail_Restore_Uninstalled_Apps_Count" = "%d 个未安装的应用";
-"Detail_Restore_Will_Restore_Apps" = "将恢复以下应用：";
+"Detail_Restore_Will_Restore_Apps" = "将恢复以下应用的配置：";
 "Detail_Restore_App_Not_Installed_Badge" = "(未安装)";
-"Detail_Restore_Empty_State_No_Apps_Selected" = "没有选择任何应用";
-"Detail_Restore_Empty_State_Select_Apps_From_List" = "请从左侧列表中选择要恢复的应用";
+"Detail_Restore_Action_Restore_Selected" = "恢复已选配置";
+"Detail_Restore_No_Apps_Selected" = "未选择任何配置";
 
-"AppList_Title" = "应用";
+"AppList_Title" = "应用列表";
 "AppList_Select_All" = "全选";
 "AppList_Selected_Count" = "%1$d / %2$d 已选择";
 "AppList_App_Status_Not_Installed" = "未安装";
@@ -47,3 +55,13 @@
 
 "Sidebar_Settings" = "设置";
 
+"Theme_Follow_System" = "跟随系统";
+"Theme_Light" = "浅色";
+"Theme_Dark" = "深色";
+"Menu_Theme" = "主题";
+
+/* Backup Operations */
+"Backup_Starting" = "正在开始配置备份...";
+"Backup_Success_Message" = "✅ 备份完成！成功备份了 %d 个应用配置";
+"Backup_Partial_Success_Message" = "⚠️ 备份完成。成功: %d 个，失败: %@";
+"Backup_No_Apps_Processed" = "没有备份任何应用配置";

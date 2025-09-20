@@ -2,7 +2,7 @@
 //  AppListView.swift
 //  PocketPrefs
 //
-//  Created by Me2 on 2025/9/18.
+//  Main view for displaying a list of applications
 //
 
 import SwiftUI

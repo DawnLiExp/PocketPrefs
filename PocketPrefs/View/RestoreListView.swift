@@ -132,7 +132,7 @@ struct RestoreListHeader: View {
         try? await Task.sleep(nanoseconds: 200_000_000)
         
         // Refresh backup list
-        backupManager.scanBackups()
+        await backupManager.scanBackups() // Add await
         
         isRefreshing = false
     }
@@ -356,12 +356,13 @@ struct RestoreEmptyState: View {
 }
 
 /// Represents a single application item in the restore list, displaying its icon, name, and selection status.
+/// Represents a single application item in the restore list, displaying its icon, name, and selection status.
 struct RestoreAppItem: View {
     let app: BackupAppInfo
     let isSelected: Bool
     @ObservedObject var backupManager: BackupManager
     let onTap: () -> Void
-    @State private var isHovered = false // Correctly declared as @State
+    @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -373,8 +374,9 @@ struct RestoreAppItem: View {
             ))
             .toggleStyle(.checkbox)
             
-            // App Icon
-            if let icon = app.icon {
+            // App Icon - Get icon from backupManager
+            Group {
+                let icon = backupManager.getIcon(for: app)
                 Image(nsImage: icon)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
@@ -384,14 +386,6 @@ struct RestoreAppItem: View {
                         RoundedRectangle(cornerRadius: 6)
                             .stroke(Color.App.separator.color(for: colorScheme).opacity(0.3), lineWidth: 0.5)
                     )
-            } else {
-                // Fallback icon
-                Image(systemName: "app.badge")
-                    .font(.system(size: 20))
-                    .frame(width: 32, height: 32)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                    .background(Color.App.secondaryBackground.color(for: colorScheme).opacity(0.5))
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
             }
             
             // App Info
@@ -423,7 +417,7 @@ struct RestoreAppItem: View {
             
             Spacer()
             
-            // Vertical bar indicator instead of chevron
+            // Vertical bar indicator
             Text("│")
                 .font(.system(size: 14))
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))

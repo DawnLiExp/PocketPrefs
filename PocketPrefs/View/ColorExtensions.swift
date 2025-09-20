@@ -1,9 +1,8 @@
-
 //
 //  ColorExtensions.swift
 //  PocketPrefs
 //
-//  Created by Me2 on 2025/9/18.
+//  Color utilities and adaptive color palette
 //
 
 import SwiftUI

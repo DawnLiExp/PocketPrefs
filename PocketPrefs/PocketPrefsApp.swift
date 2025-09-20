@@ -2,7 +2,7 @@
 //  PocketPrefsApp.swift
 //  PocketPrefs
 //
-//  Created by Me2 on 2025/9/17.
+//  App entry point and main window configuration
 //
 
 import SwiftUI
@@ -45,7 +45,7 @@ struct PocketPrefsApp: App {
 
             // Add custom View menu items
             CommandGroup(after: .toolbar) {
-                Menu("主题") {
+                Menu(NSLocalizedString("Menu_Theme", comment: "")) {
                     ForEach(Theme.allCases, id: \.self) { theme in
                         Button(action: { themeManager.setTheme(theme) }) {
                             HStack {

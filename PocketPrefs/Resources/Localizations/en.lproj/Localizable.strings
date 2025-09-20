@@ -6,6 +6,11 @@
   
 */
 
+/* Restore Operations */
+"Restore_Starting" = "Starting configuration restore...";
+"Restore_Success_Message" = "✅ Restore complete! Successfully restored %d app configurations";
+"Restore_Partial_Success_Message" = "⚠️ Restore complete. Success: %d, Failed: %@";
+"Restore_No_Apps_Processed" = "No app configurations were restored";
 "Restore_Backup_Title" = "Restore Backup";
 "Restore_Apps_Selected_Count" = "%1$d / %2$d apps selected";
 "Restore_Search_No_Results" = "No results for \"%@\"";
@@ -19,20 +24,23 @@
 "Select Backup:" = "Select Backup:";
 "Select from other location..." = "Select from other location...";
 
+/* Detail View  */
+"Detail_Restore_Empty_State_No_Apps_Selected" = "No app configurations selected";
+"Detail_Restore_Empty_State_Select_Apps_From_List" = "Please select app configurations to restore from the list on the left";
 "Detail_App_Status_Installed" = "Installed";
 "Detail_App_Status_Not_Installed" = "Not Installed";
 "Detail_Select_All_Config_Files" = "Select all config files";
-"Detail_Action_Backup_Selected" = "Backup Selected";
+"Detail_Action_Backup_Selected" = "Backup Selected Configs";
 "Detail_Action_Select_Backup_File_To_Restore" = "Select backup file to restore";
 "Detail_Placeholder_Select_App" = "Select an app to view details";
-"Detail_Placeholder_Quick_Backup_All_Selected" = "Quick Backup All Selected";
+"Detail_Placeholder_Quick_Backup_All_Selected" = "Quick Backup All Selected Configs";
 "Detail_Restore_Backup_App_Count" = "%d apps";
 "Detail_Restore_Selected_Apps_Count" = "%d apps selected";
 "Detail_Restore_Uninstalled_Apps_Count" = "%d uninstalled apps";
-"Detail_Restore_Will_Restore_Apps" = "The following applications will be restored:";
+"Detail_Restore_Will_Restore_Apps" = "Will restore configurations for:";
 "Detail_Restore_App_Not_Installed_Badge" = "(Not Installed)";
-"Detail_Restore_Empty_State_No_Apps_Selected" = "No applications selected";
-"Detail_Restore_Empty_State_Select_Apps_From_List" = "Please select applications to restore from the list on the left";
+"Detail_Restore_Action_Restore_Selected" = "Restore Selected Configs";
+"Detail_Restore_No_Apps_Selected" = "No configurations selected";
 
 "AppList_Title" = "Applications";
 "AppList_Select_All" = "Select All";
@@ -46,3 +54,14 @@
 "Common_Processing" = "Processing...";
 
 "Sidebar_Settings" = "Settings";
+
+"Theme_Follow_System" = "Follow System";
+"Theme_Light" = "Light";
+"Theme_Dark" = "Dark";
+"Menu_Theme" = "Theme";
+
+/* Backup Operations */
+"Backup_Starting" = "Starting configuration backup...";
+"Backup_Success_Message" = "✅ Backup complete! Successfully backed up %d app configurations";
+"Backup_Partial_Success_Message" = "⚠️ Backup complete. Success: %d, Failed: %@";
+"Backup_No_Apps_Processed" = "No app configurations were backed up";

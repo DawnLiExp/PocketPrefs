@@ -1,9 +1,8 @@
-
 //
 //  CommonComponents.swift
 //  PocketPrefs
 //
-//  Created by Me2 on 2025/9/18.
+//  Reusable UI components and styles
 //
 
 import SwiftUI

@@ -2,7 +2,7 @@
 //  SidebarView.swift
 //  PocketPrefs
 //
-//  Created by Me2 on 2025/9/18.
+//  Sidebar navigation with mode selection
 //
 
 import SwiftUI
