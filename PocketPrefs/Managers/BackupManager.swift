@@ -25,21 +25,38 @@ class BackupManager: ObservableObject {
     private let backupService = BackupService()
     private let restoreService = RestoreService()
     private let fileOps = FileOperationService.shared
+    private let userStore = UserConfigStore.shared
     
     init() {
         Task {
             await loadApps()
             await scanBackups()
         }
+        
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(customAppsChanged),
+            name: .customAppsChanged,
+            object: nil
+        )
     }
     
-    // Load and check apps
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    @objc private func customAppsChanged() {
+        Task {
+            await loadApps()
+        }
+    }
+    
     func loadApps() async {
-        apps = AppConfig.presetConfigs
-        
-        // Check installation status concurrently
+        var allApps = AppConfig.presetConfigs
+        allApps.append(contentsOf: userStore.customApps)
+
         await withTaskGroup(of: (UUID, Bool).self) { group in
-            for app in apps {
+            for app in allApps {
                 group.addTask { [weak self] in
                     guard let self = self else { return (app.id, false) }
                     let isInstalled = await self.fileOps.checkIfAppInstalled(bundleId: app.bundleId)
@@ -47,15 +64,18 @@ class BackupManager: ObservableObject {
                 }
             }
             
+            var updatedApps = allApps
             for await (appId, isInstalled) in group {
-                if let index = self.apps.firstIndex(where: { $0.id == appId }) {
-                    self.apps[index].isInstalled = isInstalled
-                    self.apps[index].isSelected = isInstalled // Default select installed apps
+                if let index = updatedApps.firstIndex(where: { $0.id == appId }) {
+                    updatedApps[index].isInstalled = isInstalled
+                    updatedApps[index].isSelected = isInstalled
                 }
             }
+            
+            self.apps = updatedApps
         }
         
-        logger.info("Loaded \(self.apps.count) apps")
+        logger.info("Loaded \(self.apps.count) apps (including \(self.userStore.customApps.count) custom apps)")
     }
     
     // Get icon for app

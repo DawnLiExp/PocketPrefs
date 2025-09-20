@@ -11,8 +11,7 @@ import UniformTypeIdentifiers
 struct PathPickerView: View {
     @Binding var paths: [String]
     @ObservedObject var manager: CustomAppManager
-    @State private var showingFilePicker = false
-    @State private var showingFolderPicker = false
+    @State private var showingPicker = false
     @State private var editingPathIndex: Int?
     @State private var editingPathText = ""
     @State private var pathSelectionType: PathSelectionType = .directory
@@ -38,7 +37,7 @@ struct PathPickerView: View {
                 Menu {
                     Button(action: {
                         pathSelectionType = .directory
-                        showingFolderPicker = true
+                        showingPicker = true
                     }) {
                         Label(NSLocalizedString("Settings_Add_Directory", comment: ""),
                               systemImage: "folder.badge.plus")
@@ -46,7 +45,7 @@ struct PathPickerView: View {
                     
                     Button(action: {
                         pathSelectionType = .file
-                        showingFilePicker = true
+                        showingPicker = true
                     }) {
                         Label(NSLocalizedString("Settings_Add_File", comment: ""),
                               systemImage: "doc.badge.plus")
@@ -90,16 +89,12 @@ struct PathPickerView: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
             }
         }
+        // Fixed: Use single fileImporter with dynamic content types based on selection type
         .fileImporter(
-            isPresented: $showingFilePicker,
-            allowedContentTypes: [.data, .text, .json, .xml, .propertyList, .plainText],
-            allowsMultipleSelection: false
-        ) { result in
-            handleFileSelection(result)
-        }
-        .fileImporter(
-            isPresented: $showingFolderPicker,
-            allowedContentTypes: [.folder],
+            isPresented: $showingPicker,
+            allowedContentTypes: pathSelectionType == .directory
+                ? [.folder]
+                : [.data, .text, .json, .xml, .propertyList, .plainText, .sourceCode, .item],
             allowsMultipleSelection: false
         ) { result in
             handleFileSelection(result)
@@ -109,7 +104,15 @@ struct PathPickerView: View {
                 pathText: $editingPathText,
                 onSave: {
                     if let index = editingPathIndex {
-                        paths[index] = editingPathText
+                        if index == -1 {
+                            // New manual path
+                            if !editingPathText.isEmpty, !paths.contains(editingPathText) {
+                                paths.append(editingPathText)
+                            }
+                        } else {
+                            // Edit existing path
+                            paths[index] = editingPathText
+                        }
                     }
                     editingPathIndex = nil
                 },
@@ -145,13 +148,6 @@ struct PathPickerView: View {
     private func addManualPath() {
         editingPathIndex = -1 // Special value for new path
         editingPathText = ""
-        
-        // Create a temporary sheet for adding new path
-        DispatchQueue.main.async {
-            if !editingPathText.isEmpty, !paths.contains(editingPathText) {
-                paths.append(editingPathText)
-            }
-        }
     }
 }
 

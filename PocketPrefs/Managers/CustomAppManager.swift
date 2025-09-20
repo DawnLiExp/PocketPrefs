@@ -5,8 +5,8 @@
 //  Business logic for managing custom applications
 //
 
-import Foundation
 import AppKit
+import Foundation
 import os.log
 
 @MainActor
@@ -18,7 +18,7 @@ class CustomAppManager: ObservableObject {
     @Published var editingApp: AppConfig?
     
     private let logger = Logger(subsystem: "com.pocketprefs", category: "CustomAppManager")
-    let userStore = UserConfigStore.shared  // Made internal for access
+    let userStore = UserConfigStore.shared
     private let fileOps = FileOperationService.shared
     
     init() {
@@ -27,25 +27,23 @@ class CustomAppManager: ObservableObject {
     
     func loadCustomApps() {
         customApps = userStore.customApps
-        // 重置选中状态
+    
         selectedApp = nil
         selectedAppIds.removeAll()
     }
     
-    // Create a new app configuration
     func createNewApp(name: String, bundleId: String) -> AppConfig {
         return AppConfig(
             name: name,
             bundleId: bundleId,
             configPaths: [],
-            isSelected: false,
+            isSelected: true,
             isInstalled: true,
             category: .custom,
             isUserAdded: true
         )
     }
     
-    // Add a new custom app
     func addApp(_ app: AppConfig) {
         guard !userStore.bundleIdExists(app.bundleId) else {
             logger.warning("App with bundle ID \(app.bundleId) already exists")
@@ -53,15 +51,15 @@ class CustomAppManager: ObservableObject {
         }
         
         userStore.addApp(app)
-        loadCustomApps()  // 重新加载以同步状态
-        selectedApp = customApps.last  // 选中新添加的应用
+        loadCustomApps()
+        selectedApp = customApps.last
     }
     
     // Update an existing app
     func updateApp(_ app: AppConfig) {
         userStore.updateApp(app)
         loadCustomApps()
-        // 保持当前选中
+    
         if let updated = customApps.first(where: { $0.id == app.id }) {
             selectedApp = updated
         }
