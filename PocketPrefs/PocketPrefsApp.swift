@@ -17,6 +17,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             window.titleVisibility = .hidden
             window.styleMask.insert(.fullSizeContentView)
             window.isMovableByWindowBackground = true
+            // Background color will be handled by the main view's background modifier
             window.backgroundColor = NSColor.clear
         }
     }
@@ -28,11 +29,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 struct PocketPrefsApp: App {
     @StateObject private var themeManager = ThemeManager.shared
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some Scene {
         WindowGroup {
             MainView()
                 .environmentObject(themeManager)
+                .background(Color.App.background.color(for: colorScheme)) // Apply background color here
         }
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unified(showsTitle: false))

@@ -45,8 +45,8 @@ struct SidebarView: View {
         .background(
             LinearGradient(
                 gradient: Gradient(colors: [
-                    Color(NSColor.controlBackgroundColor),
-                    Color(NSColor.windowBackgroundColor)
+                    Color.App.secondaryBackground.color(for: colorScheme),
+                    Color.App.background.color(for: colorScheme)
                 ]),
                 startPoint: .top,
                 endPoint: .bottom
@@ -63,6 +63,7 @@ struct SidebarIconButton: View {
     let action: () -> Void
     
     @State private var isHovered = false
+    @Environment(\.colorScheme) var colorScheme
     
     // Three-tier brightness levels
     private var iconOpacity: Double {
@@ -72,9 +73,9 @@ struct SidebarIconButton: View {
     }
     
     private var textColor: Color {
-        if isSelected { return .primary }
-        if isHovered { return .primary.opacity(0.8) }
-        return .secondary
+        if isSelected { return Color.App.primary.color(for: colorScheme) }
+        if isHovered { return Color.App.primary.color(for: colorScheme).opacity(0.8) }
+        return Color.App.secondary.color(for: colorScheme)
     }
     
     var body: some View {
@@ -83,7 +84,7 @@ struct SidebarIconButton: View {
                 Image(systemName: icon)
                     .font(.system(size: 24, weight: .regular))
                     .foregroundStyle(
-                        LinearGradient.appAccent
+                        LinearGradient.appAccent(for: colorScheme)
                             .opacity(iconOpacity)
                     )
                     .frame(height: 24)

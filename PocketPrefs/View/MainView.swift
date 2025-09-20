@@ -15,6 +15,7 @@ struct MainView: View {
     @State private var showingRestorePicker = false
     @State private var isProcessing = false
     @State private var progress: Double = 0.0
+    @Environment(\.colorScheme) var colorScheme
     
     enum AppMode: String {
         case backup
@@ -40,11 +41,11 @@ struct MainView: View {
             // Left Sidebar - Fixed width, no interaction
             SidebarView(currentMode: $currentMode)
                 .frame(width: DesignConstants.Layout.sidebarWidth)
-                .background(Color(NSColor.windowBackgroundColor))
+                .background(Color.App.background.color(for: colorScheme))
             
             // Separator line
             Divider()
-                .background(Color(NSColor.separatorColor))
+                .background(Color.App.separator.color(for: colorScheme))
             
             // Middle Content
             Group {
@@ -66,11 +67,11 @@ struct MainView: View {
                 idealWidth: DesignConstants.Layout.listWidth,
                 maxWidth: DesignConstants.Layout.listWidth + 60
             )
-            .background(Color(NSColor.controlBackgroundColor))
+            .background(Color.App.controlBackground.color(for: colorScheme))
             
             // Separator line
             Divider()
-                .background(Color(NSColor.separatorColor))
+                .background(Color.App.separator.color(for: colorScheme))
             
             // Right Detail - Takes remaining space
             DetailContainerView(
@@ -82,9 +83,9 @@ struct MainView: View {
                 showingRestorePicker: $showingRestorePicker
             )
             .frame(maxWidth: .infinity)
-            .background(Color.App.background)
+            .background(Color.App.background.color(for: colorScheme))
         }
-        .background(Color.App.background)
+        .background(Color.App.background.color(for: colorScheme))
         .frame(
             minWidth: DesignConstants.Layout.minWindowWidth,
             minHeight: DesignConstants.Layout.minWindowHeight

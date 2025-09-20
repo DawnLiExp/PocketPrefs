@@ -15,6 +15,7 @@ struct RestoreListView: View {
     @State private var selectedBackupApp: BackupAppInfo?
     @State private var searchText = ""
     @State private var isRefreshing = false
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(spacing: 0) {
@@ -34,7 +35,7 @@ struct RestoreListView: View {
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.App.background)
+        .background(Color.App.background.color(for: colorScheme))
         .fileImporter(
             isPresented: $showingFilePicker,
             allowedContentTypes: [.folder],
@@ -72,13 +73,14 @@ struct RestoreListHeader: View {
     @Binding var showingFilePicker: Bool
     @Binding var searchText: String
     @Binding var isRefreshing: Bool
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Display the title for the restore backup view
             Text(NSLocalizedString("Restore_Backup_Title", comment: ""))
                 .font(DesignConstants.Typography.title)
-                .foregroundColor(.primary)
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
             
             // Backup selector with refresh button
             HStack(spacing: 12) {
@@ -115,11 +117,11 @@ struct RestoreListHeader: View {
                 
                 Text(String(format: NSLocalizedString("Restore_Apps_Selected_Count", comment: ""), filteredCount, totalFilteredCount))
                     .font(DesignConstants.Typography.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
         }
         .padding(16)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(Color.App.controlBackground.color(for: colorScheme))
     }
     
     @MainActor
@@ -140,11 +142,12 @@ struct RestoreListHeader: View {
 struct SearchFieldView: View {
     @Binding var searchText: String
     @FocusState private var isFocused: Bool
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         HStack {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .font(.system(size: 14))
             
             TextField(NSLocalizedString("Search apps...", comment: ""), text: $searchText)
@@ -157,7 +160,7 @@ struct SearchFieldView: View {
                     searchText = ""
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
                         .font(.system(size: 14))
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -168,13 +171,13 @@ struct SearchFieldView: View {
         .background(
             // Enhanced background with subtle color
             RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                .fill(Color.App.secondaryBackground.opacity(0.6))
+                .fill(Color.App.secondaryBackground.color(for: colorScheme).opacity(0.6))
         )
         .overlay(
             // Enhanced border with focus state
             RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                 .stroke(
-                    isFocused ? Color.accentColor.opacity(0.4) : Color.App.separator.opacity(0.3),
+                    isFocused ? Color.App.accent.color(for: colorScheme).opacity(0.4) : Color.App.separator.color(for: colorScheme).opacity(0.3),
                     lineWidth: isFocused ? 1.5 : 1.0
                 )
         )
@@ -186,12 +189,13 @@ struct SearchFieldView: View {
 struct RefreshButton: View {
     @Binding var isRefreshing: Bool
     let action: () -> Void
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         Button(action: action) {
             Image(systemName: "arrow.clockwise")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(.primary)
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
                 .rotationEffect(.degrees(isRefreshing ? 360 : 0))
                 .animation(
                     isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default,
@@ -200,10 +204,10 @@ struct RefreshButton: View {
         }
         .buttonStyle(PlainButtonStyle())
         .frame(width: 32, height: 32)
-        .background(Color.App.secondaryBackground.opacity(0.5))
+        .background(Color.App.secondaryBackground.color(for: colorScheme).opacity(0.5))
         .overlay(
             RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                .stroke(Color.App.separator.opacity(0.3), lineWidth: 0.5)
+                .stroke(Color.App.separator.color(for: colorScheme).opacity(0.3), lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
         .disabled(isRefreshing)
@@ -214,6 +218,7 @@ struct RefreshButton: View {
 struct BackupSelectorView: View {
     @ObservedObject var backupManager: BackupManager
     @Binding var showingFilePicker: Bool
+    @Environment(\.colorScheme) var colorScheme
     
     // Custom wrapper for picker selection binding
     private var pickerBinding: Binding<BackupInfo?> {
@@ -256,6 +261,7 @@ struct RestoreListContent: View {
     @ObservedObject var backupManager: BackupManager
     @Binding var selectedBackupApp: BackupAppInfo?
     let searchText: String
+    @Environment(\.colorScheme) var colorScheme
     
     // Filter apps based on search text
     private var filteredApps: [BackupAppInfo] {
@@ -294,7 +300,7 @@ struct RestoreListContent: View {
                     }
                     .padding(12)
                 }
-                .background(Color.App.background)
+                .background(Color.App.background.color(for: colorScheme))
             }
         } else {
             RestoreEmptyState()
@@ -305,44 +311,47 @@ struct RestoreListContent: View {
 /// Displays a message when no search results are found in the restore list.
 struct SearchEmptyState: View {
     let searchText: String
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 48))
-                .foregroundColor(.secondary.opacity(0.5))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme).opacity(0.5))
             Text(String(format: NSLocalizedString("Restore_Search_No_Results", comment: ""), searchText))
                 .font(DesignConstants.Typography.headline)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
             Text(NSLocalizedString("Restore_Search_Try_Different_Keyword", comment: ""))
                 .font(DesignConstants.Typography.body)
-                .foregroundColor(.secondary.opacity(0.8))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme).opacity(0.8))
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.App.background)
+        .background(Color.App.background.color(for: colorScheme))
     }
 }
 
 /// Displays a message when no backups are found or selected.
 struct RestoreEmptyState: View {
+    @Environment(\.colorScheme) var colorScheme
+    
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
             Image(systemName: "archivebox")
                 .font(.system(size: 48))
-                .foregroundColor(.secondary.opacity(0.5))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme).opacity(0.5))
             Text(NSLocalizedString("Restore_Empty_State_No_Backups", comment: ""))
                 .font(DesignConstants.Typography.headline)
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
             Text(NSLocalizedString("Restore_Empty_State_Select_Location_Or_Create_Backup", comment: ""))
                 .font(DesignConstants.Typography.body)
-                .foregroundColor(.secondary.opacity(0.8))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme).opacity(0.8))
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.App.background)
+        .background(Color.App.background.color(for: colorScheme))
     }
 }
 
@@ -352,8 +361,8 @@ struct RestoreAppItem: View {
     let isSelected: Bool
     @ObservedObject var backupManager: BackupManager
     let onTap: () -> Void
-    
-    @State private var isHovered = false
+    @State private var isHovered = false // Correctly declared as @State
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         HStack(spacing: 12) {
@@ -373,15 +382,15 @@ struct RestoreAppItem: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.App.separator.opacity(0.3), lineWidth: 0.5)
+                            .stroke(Color.App.separator.color(for: colorScheme).opacity(0.3), lineWidth: 0.5)
                     )
             } else {
                 // Fallback icon
                 Image(systemName: "app.badge")
                     .font(.system(size: 20))
                     .frame(width: 32, height: 32)
-                    .foregroundColor(.secondary)
-                    .background(Color.App.secondaryBackground.opacity(0.5))
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    .background(Color.App.secondaryBackground.color(for: colorScheme).opacity(0.5))
                     .clipShape(RoundedRectangle(cornerRadius: 6))
             }
             
@@ -390,18 +399,18 @@ struct RestoreAppItem: View {
                 HStack {
                     Text(app.name)
                         .font(DesignConstants.Typography.headline)
-                        .foregroundColor(.primary)
+                        .foregroundColor(Color.App.primary.color(for: colorScheme))
                     
                     if !app.isCurrentlyInstalled {
                         StatusBadge(
                             text: NSLocalizedString("Restore_App_Status_Not_Installed", comment: ""),
-                            color: .orange,
+                            color: Color.App.warning.color(for: colorScheme),
                             style: .compact
                         )
                     } else {
                         StatusBadge(
                             text: NSLocalizedString("Restore_App_Status_Installed", comment: ""),
-                            color: .green,
+                            color: Color.App.success.color(for: colorScheme),
                             style: .compact
                         )
                     }
@@ -409,7 +418,7 @@ struct RestoreAppItem: View {
                 
                 Text(String(format: NSLocalizedString("Restore_App_Config_Files_Count", comment: ""), app.configPaths.count))
                     .font(DesignConstants.Typography.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
             
             Spacer()
@@ -417,7 +426,7 @@ struct RestoreAppItem: View {
             // Vertical bar indicator instead of chevron
             Text("│")
                 .font(.system(size: 14))
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .opacity(isHovered ? 0.6 : 0)
         }
         .padding(12)

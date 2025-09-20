@@ -13,6 +13,7 @@ struct AppListView: View {
     @Binding var selectedApp: AppConfig?
     let currentMode: MainView.AppMode
     @State private var selectAll = false
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(spacing: 0) {
@@ -42,10 +43,10 @@ struct AppListView: View {
                 }
                 .padding(12)
             }
-            .background(Color.App.background)
+            .background(Color.App.background.color(for: colorScheme))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.App.background)
+        .background(Color.App.background.color(for: colorScheme))
     }
 }
 
@@ -53,13 +54,14 @@ struct AppListView: View {
 struct AppListHeader: View {
     @Binding var selectAll: Bool
     @ObservedObject var backupManager: BackupManager
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Display the title for the applications list
             Text(NSLocalizedString("AppList_Title", comment: ""))
                 .font(DesignConstants.Typography.title)
-                .foregroundColor(.primary)
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
             
             HStack {
                 Toggle(isOn: $selectAll) {
@@ -80,11 +82,11 @@ struct AppListHeader: View {
                 
                 Text(String(format: NSLocalizedString("AppList_Selected_Count", comment: ""), backupManager.apps.filter { $0.isSelected }.count, backupManager.apps.count))
                     .font(DesignConstants.Typography.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
         }
         .padding(16)
-        .background(Color(NSColor.controlBackgroundColor))
+        .background(Color.App.controlBackground.color(for: colorScheme))
     }
 }
 
@@ -97,6 +99,7 @@ struct AppListItem: View {
     let onTap: () -> Void
     
     @State private var isHovered = false
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         HStack(spacing: 12) {
@@ -118,7 +121,7 @@ struct AppListItem: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.App.separator.opacity(0.3), lineWidth: 0.5)
+                            .stroke(Color.App.separator.color(for: colorScheme).opacity(0.3), lineWidth: 0.5)
                     )
             }
             
@@ -127,12 +130,12 @@ struct AppListItem: View {
                 HStack {
                     Text(app.name)
                         .font(DesignConstants.Typography.headline)
-                        .foregroundColor(app.isInstalled || currentMode == .restore ? .primary : .secondary)
+                        .foregroundColor(app.isInstalled || currentMode == .restore ? Color.App.primary.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
                     
                     if currentMode == .backup && !app.isInstalled {
                         StatusBadge(
                             text: NSLocalizedString("AppList_App_Status_Not_Installed", comment: ""),
-                            color: .orange,
+                            color: Color.App.notInstalled.color(for: colorScheme),
                             style: .compact
                         )
                     }
@@ -140,7 +143,7 @@ struct AppListItem: View {
                 
                 Text(String(format: NSLocalizedString("AppList_App_Config_Paths_Count", comment: ""), app.configPaths.count))
                     .font(DesignConstants.Typography.caption)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
             
             Spacer()
@@ -148,7 +151,7 @@ struct AppListItem: View {
             // Chevron
             Image(systemName: "chevron.right")
                 .font(.system(size: 12))
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .opacity(isHovered ? 1 : 0)
         }
         .padding(12)

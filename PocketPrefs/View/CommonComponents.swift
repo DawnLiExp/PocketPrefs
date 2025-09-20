@@ -1,3 +1,4 @@
+
 //
 //  CommonComponents.swift
 //  PocketPrefs
@@ -11,6 +12,7 @@ import SwiftUI
 
 struct ProgressView: View {
     let progress: Double
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         VStack(spacing: 24) {
@@ -20,11 +22,11 @@ struct ProgressView: View {
             VStack(spacing: 8) {
                 Text(NSLocalizedString("Common_Processing", comment: ""))
                     .font(DesignConstants.Typography.headline)
-                    .foregroundColor(.primary)
+                    .foregroundColor(Color.App.primary.color(for: colorScheme))
 
                 Text("\(Int(progress * 100))%")
                     .font(DesignConstants.Typography.largeTitle)
-                    .foregroundStyle(LinearGradient.appAccent)
+                    .foregroundStyle(LinearGradient.appAccent(for: colorScheme))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -36,19 +38,20 @@ struct ProgressView: View {
 
 struct CircularProgressView: View {
     let progress: Double
+    @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         ZStack {
             Circle()
                 .stroke(
-                    Color.App.progressTrack,
+                    Color.App.progressTrack.color(for: colorScheme),
                     lineWidth: 12
                 )
 
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
-                    LinearGradient.appAccent,
+                    LinearGradient.appAccent(for: colorScheme),
                     style: StrokeStyle(
                         lineWidth: 12,
                         lineCap: .round
@@ -59,7 +62,7 @@ struct CircularProgressView: View {
 
             Image(systemName: "arrow.triangle.2.circlepath")
                 .font(.system(size: 32))
-                .foregroundStyle(LinearGradient.appAccent)
+                .foregroundStyle(LinearGradient.appAccent(for: colorScheme))
                 .rotationEffect(.degrees(progress * 360))
                 .animation(DesignConstants.Animation.standard, value: progress)
         }
@@ -92,6 +95,7 @@ struct StatusBadge: View {
 
 struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) var isEnabled
+    @Environment(\.colorScheme) var colorScheme
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -100,7 +104,7 @@ struct PrimaryButtonStyle: ButtonStyle {
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
             .background(
-                LinearGradient.appAccent
+                LinearGradient.appAccent(for: colorScheme)
                     .opacity(isEnabled ? 1 : 0.5)
             )
             .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
@@ -111,20 +115,21 @@ struct PrimaryButtonStyle: ButtonStyle {
 
 struct SecondaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) var isEnabled
+    @Environment(\.colorScheme) var colorScheme
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(DesignConstants.Typography.headline)
-            .foregroundColor(isEnabled ? .primary : .secondary)
+            .foregroundColor(isEnabled ? Color.App.primary.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
             .padding(.horizontal, 20)
             .padding(.vertical, 10)
             .background(
-                Color.App.secondaryBackground
+                Color.App.secondaryBackground.color(for: colorScheme)
                     .opacity(isEnabled ? 0.5 : 0.3)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                    .stroke(Color.App.separator, lineWidth: 0.5)
+                    .stroke(Color.App.separator.color(for: colorScheme), lineWidth: 0.5)
             )
             .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
             .scaleEffect(configuration.isPressed ? 0.95 : 1)

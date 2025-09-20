@@ -1,3 +1,4 @@
+
 //
 //  ThemeManager.swift
 //  PocketPrefs
@@ -12,18 +13,18 @@ import SwiftUI
 @MainActor
 class ThemeManager: ObservableObject {
     static let shared = ThemeManager()
-    
+
     @Published var currentTheme: Theme = .system
     @AppStorage("preferredTheme") private var storedTheme: String = "system"
-    
+
     private init() {
         loadTheme()
     }
-    
+
     private func loadTheme() {
         currentTheme = Theme(rawValue: storedTheme) ?? .system
     }
-    
+
     func setTheme(_ theme: Theme) {
         currentTheme = theme
         storedTheme = theme.rawValue
@@ -36,7 +37,7 @@ enum Theme: String, CaseIterable {
     case system
     case light
     case dark
-    
+
     var displayName: String {
         switch self {
         case .system: return "跟随系统"
@@ -44,7 +45,7 @@ enum Theme: String, CaseIterable {
         case .dark: return "深色"
         }
     }
-    
+
     var colorScheme: ColorScheme? {
         switch self {
         case .system: return nil
@@ -63,15 +64,15 @@ enum DesignConstants {
         static let listWidth: CGFloat = 280
         static let minWindowWidth: CGFloat = 820
         static let minWindowHeight: CGFloat = 600
-        
+
         static let cornerRadius: CGFloat = 10
         static let smallCornerRadius: CGFloat = 6
-        
+
         static let spacing: CGFloat = 16
         static let smallSpacing: CGFloat = 8
         static let itemPadding: CGFloat = 12
     }
-    
+
     // Typography
     enum Typography {
         static let largeTitle: Font = .system(size: 28, weight: .bold, design: .rounded)
@@ -81,7 +82,7 @@ enum DesignConstants {
         static let caption: Font = .system(size: 11)
         static let tiny: Font = .system(size: 10)
     }
-    
+
     // Animation
     enum Animation {
         static let standard = SwiftUI.Animation.spring(response: 0.35, dampingFraction: 0.86)
@@ -94,21 +95,19 @@ enum DesignConstants {
 
 struct GlassEffect: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
-    
+
     func body(content: Content) -> some View {
         content
             .background(.ultraThinMaterial)
             .background(
-                colorScheme == .dark
-                    ? Color.white.opacity(0.02)
-                    : Color.black.opacity(0.02)
+                AdaptiveColor.glassOverlay.color(for: colorScheme)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius)
                     .stroke(
                         colorScheme == .dark
-                            ? Color.white.opacity(0.1)
-                            : Color.black.opacity(0.05),
+                            ? Color.App.primary.color(for: colorScheme).opacity(0.1)
+                            : Color.App.primary.color(for: colorScheme).opacity(0.05),
                         lineWidth: 0.5
                     )
             )
@@ -119,22 +118,22 @@ struct GlassEffect: ViewModifier {
 struct CardEffect: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
     let isSelected: Bool
-    
+
     func body(content: Content) -> some View {
         content
             .background(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                    .fill(isSelected ? Color.accentColor.opacity(0.1) : Color.clear)
+                    .fill(isSelected ? Color.App.accent.color(for: colorScheme).opacity(0.1) : Color.clear)
             )
             .background(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                    .fill(.quaternary.opacity(0.3))
+                    .fill(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                     .stroke(
                         isSelected
-                            ? Color.accentColor.opacity(0.3)
+                            ? Color.App.accent.color(for: colorScheme).opacity(0.3)
                             : Color.clear,
                         lineWidth: 1
                     )
@@ -148,13 +147,22 @@ extension View {
     func glassEffect() -> some View {
         modifier(GlassEffect())
     }
-    
+
     func cardEffect(isSelected: Bool = false) -> some View {
         modifier(CardEffect(isSelected: isSelected))
     }
-    
+
     func sectionBackground() -> some View {
-        background(.quaternary.opacity(0.3))
+        modifier(SectionBackgroundModifier())
+    }
+}
+
+private struct SectionBackgroundModifier: ViewModifier {
+    @Environment(\.colorScheme) var colorScheme
+
+    func body(content: Content) -> some View {
+        content
+            .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
             .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
     }
 }

@@ -12,7 +12,7 @@ import SwiftUI
 /// A container view that manages the display of app details or placeholders based on the current mode and processing state.
 struct DetailContainerView: View {
     let selectedApp: AppConfig?
-    @ObservedObject var backupManager: BackupManager // Changed to @ObservedObject for reactivity
+    @ObservedObject var backupManager: BackupManager
     let currentMode: MainView.AppMode
     @Binding var isProcessing: Bool
     @Binding var progress: Double
@@ -54,12 +54,13 @@ struct DetailContainerView: View {
 /// Displays the detailed view for a selected application in backup mode.
 struct AppDetailView: View {
     let app: AppConfig
-    @ObservedObject var backupManager: BackupManager // Changed to @ObservedObject
+    @ObservedObject var backupManager: BackupManager
     let currentMode: MainView.AppMode
     @Binding var isProcessing: Bool
     @Binding var progress: Double
     @Binding var showingRestorePicker: Bool
     @State private var selectedPaths: Set<String> = []
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(spacing: 0) {
@@ -101,7 +102,7 @@ struct AppDetailView: View {
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.App.background)
+        .background(Color.App.background.color(for: colorScheme))
         .onAppear {
             selectedPaths = Set(app.configPaths)
         }
@@ -125,13 +126,14 @@ struct AppDetailHeader: View {
     let app: AppConfig
     let currentMode: MainView.AppMode
     @Binding var selectedPaths: Set<String>
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack {
                 Image(systemName: currentMode == .backup ? "arrow.up.circle" : "arrow.down.circle")
                     .font(.system(size: 24))
-                    .foregroundStyle(LinearGradient.appAccent)
+                    .foregroundStyle(LinearGradient.appAccent(for: colorScheme))
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(app.name)
@@ -139,17 +141,17 @@ struct AppDetailHeader: View {
                     
                     Text(app.bundleId)
                         .font(DesignConstants.Typography.caption)
-                        .foregroundColor(.secondary)
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
                 
                 Spacer()
                 
                 if currentMode == .backup {
                     if app.isInstalled {
-                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Installed", comment: ""), color: .green)
+                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Installed", comment: ""), color: Color.App.success.color(for: colorScheme))
 
                     } else {
-                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Not_Installed", comment: ""), color: .orange)
+                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Not_Installed", comment: ""), color: Color.App.warning.color(for: colorScheme))
                     }
                 }
             }
@@ -184,7 +186,7 @@ struct AppDetailActionBar: View {
     @Binding var isProcessing: Bool
     @Binding var progress: Double
     @Binding var showingRestorePicker: Bool
-    @ObservedObject var backupManager: BackupManager // Changed to @ObservedObject
+    @ObservedObject var backupManager: BackupManager
     
     var body: some View {
         HStack {
@@ -235,6 +237,7 @@ struct ConfigPathItem: View {
     let isSelected: Bool
     let onToggle: () -> Void
     @State private var isHovered = false
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         HStack {
@@ -246,11 +249,11 @@ struct ConfigPathItem: View {
             
             Image(systemName: "folder")
                 .font(.system(size: 14))
-                .foregroundColor(.secondary)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
             
             Text(path)
                 .font(DesignConstants.Typography.body)
-                .foregroundColor(.primary)
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
                 .lineLimit(1)
                 .truncationMode(.middle)
             
@@ -273,6 +276,7 @@ struct BackupPlaceholderView: View {
     @ObservedObject var backupManager: BackupManager
     @Binding var isProcessing: Bool
     @Binding var progress: Double
+    @Environment(\.colorScheme) var colorScheme
     
     // Check if there are any selected apps that are also installed
     private var hasValidSelection: Bool {
@@ -286,11 +290,11 @@ struct BackupPlaceholderView: View {
             VStack(spacing: 16) {
                 Image(systemName: "arrowshape.turn.up.left.2.fill")
                     .font(.system(size: 108))
-                    .foregroundStyle(LinearGradient.appAccent.opacity(0.6))
+                    .foregroundStyle(LinearGradient.appAccent(for: colorScheme).opacity(0.6))
                 
                 Text(NSLocalizedString("Detail_Placeholder_Select_App", comment: ""))
                     .font(DesignConstants.Typography.headline)
-                    .foregroundColor(.secondary)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
             
             Spacer()
@@ -311,7 +315,7 @@ struct BackupPlaceholderView: View {
             .padding(.bottom, 40)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.App.background)
+        .background(Color.App.background.color(for: colorScheme))
     }
     
     private func performQuickBackup() {
@@ -341,6 +345,7 @@ struct RestorePlaceholderView: View {
     @ObservedObject var backupManager: BackupManager
     @Binding var isProcessing: Bool
     @Binding var progress: Double
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(spacing: 0) {
@@ -356,16 +361,17 @@ struct RestorePlaceholderView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.App.background)
+        .background(Color.App.background.color(for: colorScheme))
     }
 }
 
 /// Displays the detailed content of a selected backup in restore mode.
 struct RestoreDetailContent: View {
-    @ObservedObject var backupManager: BackupManager // Observing changes
+    @ObservedObject var backupManager: BackupManager
     let backup: BackupInfo
     @Binding var isProcessing: Bool
     @Binding var progress: Double
+    @Environment(\.colorScheme) var colorScheme
     
     // Computed property to get selected apps count with proper reactivity
     private var selectedAppsCount: Int {
@@ -389,7 +395,7 @@ struct RestoreDetailContent: View {
                 HStack {
                     Image(systemName: "archivebox.fill")
                         .font(.system(size: 24))
-                        .foregroundStyle(LinearGradient.appAccent)
+                        .foregroundStyle(LinearGradient.appAccent(for: colorScheme))
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(formatBackupName(backup.name))
@@ -397,7 +403,7 @@ struct RestoreDetailContent: View {
                         
                         Text(String(format: NSLocalizedString("Detail_Restore_Backup_App_Count", comment: ""), backup.apps.count))
                             .font(DesignConstants.Typography.caption)
-                            .foregroundColor(.secondary)
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
                     }
                     
                     Spacer()
@@ -407,12 +413,12 @@ struct RestoreDetailContent: View {
                     Label(String(format: NSLocalizedString("Detail_Restore_Selected_Apps_Count", comment: ""), selectedAppsCount),
                           systemImage: "checkmark.circle.fill")
                         .font(DesignConstants.Typography.body)
-                        .foregroundColor(selectedAppsCount > 0 ? .green : .secondary)
+                        .foregroundColor(selectedAppsCount > 0 ? Color.App.success.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
                     
                     Label(String(format: NSLocalizedString("Detail_Restore_Uninstalled_Apps_Count", comment: ""), uninstalledSelectedCount),
                           systemImage: "exclamationmark.triangle.fill")
                         .font(DesignConstants.Typography.body)
-                        .foregroundColor(uninstalledSelectedCount > 0 ? .orange : .secondary)
+                        .foregroundColor(uninstalledSelectedCount > 0 ? Color.App.warning.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
                 }
             }
             .padding(20)
@@ -432,7 +438,7 @@ struct RestoreDetailContent: View {
                         ForEach(backupManager.selectedBackup?.apps.filter { $0.isSelected } ?? []) { app in
                             HStack {
                                 Image(systemName: app.isCurrentlyInstalled ? "checkmark.circle" : "exclamationmark.circle")
-                                    .foregroundColor(app.isCurrentlyInstalled ? .green : .orange)
+                                    .foregroundColor(app.isCurrentlyInstalled ? Color.App.success.color(for: colorScheme) : Color.App.warning.color(for: colorScheme))
                                 
                                 Text(app.name)
                                     .font(DesignConstants.Typography.body)
@@ -440,7 +446,7 @@ struct RestoreDetailContent: View {
                                 if !app.isCurrentlyInstalled {
                                     Text(NSLocalizedString("Detail_Restore_App_Not_Installed_Badge", comment: ""))
                                         .font(DesignConstants.Typography.caption)
-                                        .foregroundColor(.orange)
+                                        .foregroundColor(Color.App.warning.color(for: colorScheme))
                                 }
                                 
                                 Spacer()
@@ -453,40 +459,32 @@ struct RestoreDetailContent: View {
             } else {
                 // Empty state when no apps selected
                 VStack(spacing: 16) {
-                    Spacer()
-                    Image(systemName: "checkmark.circle")
-                        .font(.system(size: 40))
-                        .foregroundColor(.secondary.opacity(0.4))
-                    Text(NSLocalizedString("Detail_Restore_Empty_State_No_Apps_Selected", comment: ""))
+                    Image(systemName: "info.circle")
+                        .font(.system(size: 48))
+                        .foregroundStyle(LinearGradient.appAccent(for: colorScheme).opacity(0.6))
+                    
+                    Text(NSLocalizedString("Detail_Restore_No_Apps_Selected", comment: ""))
                         .font(DesignConstants.Typography.headline)
-                        .foregroundColor(.secondary)
-                    Text(NSLocalizedString("Detail_Restore_Empty_State_Select_Apps_From_List", comment: ""))
-                        .font(DesignConstants.Typography.caption)
-                        .foregroundColor(.secondary.opacity(0.8))
-                    Spacer()
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             
             Spacer()
             
-            // Action button with proper state binding
+            // Action bar
             HStack {
                 Spacer()
                 
                 Button(action: performRestore) {
-                    Label("执行恢复", systemImage: "arrow.down.circle.fill")
+                    Label(NSLocalizedString("Detail_Restore_Action_Restore_Selected", comment: ""), systemImage: "arrow.down.circle.fill")
                 }
                 .buttonStyle(PrimaryButtonStyle())
-                .disabled(!hasSelectedApps) // Use computed property for proper reactivity
+                .disabled(!hasSelectedApps)
             }
             .padding(20)
             .background(.ultraThinMaterial)
         }
-    }
-    
-    private func formatBackupName(_ name: String) -> String {
-        name.replacingOccurrences(of: "Backup_", with: "")
     }
     
     private func performRestore() {
@@ -501,7 +499,7 @@ struct RestoreDetailContent: View {
                 progress += 0.02
             }
             
-            backupManager.performSelectiveRestore()
+            backupManager.performRestore(from: backup.path)
             
             progress = 1.0
             try? await Task.sleep(nanoseconds: 500_000_000)
@@ -509,26 +507,26 @@ struct RestoreDetailContent: View {
             progress = 0.0
         }
     }
+    
+    private func formatBackupName(_ name: String) -> String {
+        name.replacingOccurrences(of: ".zip", with: "")
+    }
 }
 
+/// Placeholder view for restore mode when no backup is selected.
 struct RestoreEmptyDetail: View {
+    @Environment(\.colorScheme) var colorScheme
+    
     var body: some View {
         VStack(spacing: 16) {
-            Spacer()
+            Image(systemName: "list.bullet.rectangle.portrait")
+                .font(.system(size: 108))
+                .foregroundStyle(LinearGradient.appAccent(for: colorScheme).opacity(0.6))
             
-            Image(systemName: "archivebox")
-                .font(.system(size: 48))
-                .foregroundStyle(LinearGradient.appAccent.opacity(0.6))
-            
-            Text("请选择一个备份")
+            Text(NSLocalizedString("Detail_Restore_Placeholder_Select_Backup", comment: ""))
                 .font(DesignConstants.Typography.headline)
-                .foregroundColor(.secondary)
-            
-            Text("从左侧列表选择要恢复的备份")
-                .font(DesignConstants.Typography.body)
-                .foregroundColor(.secondary.opacity(0.8))
-            
-            Spacer()
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
