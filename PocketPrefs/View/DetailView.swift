@@ -71,9 +71,7 @@ struct AppDetailView: View {
                 selectedPaths: $selectedPaths
             )
             
-            Divider()
-            
-            // Config Paths List
+            // Config Paths List - no internal separator
             ScrollView {
                 VStack(spacing: 8) {
                     ForEach(app.configPaths, id: \.self) { path in
@@ -102,7 +100,6 @@ struct AppDetailView: View {
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.App.background.color(for: colorScheme))
         .onAppear {
             selectedPaths = Set(app.configPaths)
         }
@@ -141,17 +138,17 @@ struct AppDetailHeader: View {
                     
                     Text(app.bundleId)
                         .font(DesignConstants.Typography.caption)
-                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                        .foregroundColor((Color.App.secondary.color(for: colorScheme)))
                 }
                 
                 Spacer()
                 
                 if currentMode == .backup {
                     if app.isInstalled {
-                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Installed", comment: ""), color: Color.App.success.color(for: colorScheme))
+                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Installed", comment: ""), color: (Color.App.success.color(for: colorScheme)))
 
                     } else {
-                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Not_Installed", comment: ""), color: Color.App.warning.color(for: colorScheme))
+                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Not_Installed", comment: ""), color: (Color.App.warning.color(for: colorScheme)))
                     }
                 }
             }
@@ -174,7 +171,9 @@ struct AppDetailHeader: View {
             }
         }
         .padding(20)
-        .background(.ultraThinMaterial)
+        .background(
+            (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3)
+        )
     }
 }
 
@@ -187,6 +186,7 @@ struct AppDetailActionBar: View {
     @Binding var progress: Double
     @Binding var showingRestorePicker: Bool
     @ObservedObject var backupManager: BackupManager
+    @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         HStack {
@@ -206,7 +206,9 @@ struct AppDetailActionBar: View {
             }
         }
         .padding(20)
-        .background(.ultraThinMaterial)
+        .background(
+            (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3)
+        )
     }
     
     private func performBackup() {
@@ -249,11 +251,11 @@ struct ConfigPathItem: View {
             
             Image(systemName: "folder")
                 .font(.system(size: 14))
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
             
             Text(path)
                 .font(DesignConstants.Typography.body)
-                .foregroundColor(Color.App.primary.color(for: colorScheme))
+                .foregroundColor((Color.App.primary.color(for: colorScheme)))
                 .lineLimit(1)
                 .truncationMode(.middle)
             
@@ -294,7 +296,7 @@ struct BackupPlaceholderView: View {
                 
                 Text(NSLocalizedString("Detail_Placeholder_Select_App", comment: ""))
                     .font(DesignConstants.Typography.headline)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    .foregroundColor((Color.App.secondary.color(for: colorScheme)))
             }
             
             Spacer()
@@ -315,7 +317,6 @@ struct BackupPlaceholderView: View {
             .padding(.bottom, 40)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.App.background.color(for: colorScheme))
     }
     
     private func performQuickBackup() {
@@ -361,7 +362,6 @@ struct RestorePlaceholderView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.App.background.color(for: colorScheme))
     }
 }
 
@@ -403,7 +403,7 @@ struct RestoreDetailContent: View {
                         
                         Text(String(format: NSLocalizedString("Detail_Restore_Backup_App_Count", comment: ""), backup.apps.count))
                             .font(DesignConstants.Typography.caption)
-                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                            .foregroundColor((Color.App.secondary.color(for: colorScheme)))
                     }
                     
                     Spacer()
@@ -413,20 +413,18 @@ struct RestoreDetailContent: View {
                     Label(String(format: NSLocalizedString("Detail_Restore_Selected_Apps_Count", comment: ""), selectedAppsCount),
                           systemImage: "checkmark.circle.fill")
                         .font(DesignConstants.Typography.body)
-                        .foregroundColor(selectedAppsCount > 0 ? Color.App.success.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
+                        .foregroundColor(selectedAppsCount > 0 ? (Color.App.success.color(for: colorScheme)) : (Color.App.secondary.color(for: colorScheme)))
                     
                     Label(String(format: NSLocalizedString("Detail_Restore_Uninstalled_Apps_Count", comment: ""), uninstalledSelectedCount),
                           systemImage: "exclamationmark.triangle.fill")
                         .font(DesignConstants.Typography.body)
-                        .foregroundColor(uninstalledSelectedCount > 0 ? Color.App.warning.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
+                        .foregroundColor(uninstalledSelectedCount > 0 ? (Color.App.warning.color(for: colorScheme)) : (Color.App.secondary.color(for: colorScheme)))
                 }
             }
             .padding(20)
-            .background(.ultraThinMaterial)
+            .background((Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3))
             
-            Divider()
-            
-            // Selected apps list
+            // Selected apps list - no internal separator
             if hasSelectedApps {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
@@ -438,7 +436,7 @@ struct RestoreDetailContent: View {
                         ForEach(backupManager.selectedBackup?.apps.filter { $0.isSelected } ?? []) { app in
                             HStack {
                                 Image(systemName: app.isCurrentlyInstalled ? "checkmark.circle" : "exclamationmark.circle")
-                                    .foregroundColor(app.isCurrentlyInstalled ? Color.App.success.color(for: colorScheme) : Color.App.warning.color(for: colorScheme))
+                                    .foregroundColor(app.isCurrentlyInstalled ? (Color.App.success.color(for: colorScheme)) : (Color.App.warning.color(for: colorScheme)))
                                 
                                 Text(app.name)
                                     .font(DesignConstants.Typography.body)
@@ -446,7 +444,7 @@ struct RestoreDetailContent: View {
                                 if !app.isCurrentlyInstalled {
                                     Text(NSLocalizedString("Detail_Restore_App_Not_Installed_Badge", comment: ""))
                                         .font(DesignConstants.Typography.caption)
-                                        .foregroundColor(Color.App.warning.color(for: colorScheme))
+                                        .foregroundColor((Color.App.warning.color(for: colorScheme)))
                                 }
                                 
                                 Spacer()
@@ -465,7 +463,7 @@ struct RestoreDetailContent: View {
                     
                     Text(NSLocalizedString("Detail_Restore_No_Apps_Selected", comment: ""))
                         .font(DesignConstants.Typography.headline)
-                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                        .foregroundColor((Color.App.secondary.color(for: colorScheme)))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -483,7 +481,7 @@ struct RestoreDetailContent: View {
                 .disabled(!hasSelectedApps)
             }
             .padding(20)
-            .background(.ultraThinMaterial)
+            .background((Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3))
         }
     }
     
@@ -525,7 +523,7 @@ struct RestoreEmptyDetail: View {
             
             Text(NSLocalizedString("Detail_Restore_Placeholder_Select_Backup", comment: ""))
                 .font(DesignConstants.Typography.headline)
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }

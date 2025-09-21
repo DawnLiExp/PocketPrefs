@@ -64,8 +64,8 @@ enum DesignConstants {
         static let minWindowWidth: CGFloat = 820
         static let minWindowHeight: CGFloat = 600
 
-        static let cornerRadius: CGFloat = 10
-        static let smallCornerRadius: CGFloat = 6
+        static let cornerRadius: CGFloat = 12
+        static let smallCornerRadius: CGFloat = 8
 
         static let spacing: CGFloat = 16
         static let smallSpacing: CGFloat = 8
@@ -99,14 +99,12 @@ struct GlassEffect: ViewModifier {
         content
             .background(.ultraThinMaterial)
             .background(
-                AdaptiveColor.glassOverlay.color(for: colorScheme)
+                (AdaptiveColor.glassOverlay.color(for: colorScheme))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius)
                     .stroke(
-                        colorScheme == .dark
-                            ? Color.App.primary.color(for: colorScheme).opacity(0.1)
-                            : Color.App.primary.color(for: colorScheme).opacity(0.05),
+                        (Color.App.lightSeparator.color(for: colorScheme)),
                         lineWidth: 0.5
                     )
             )
@@ -122,17 +120,17 @@ struct CardEffect: ViewModifier {
         content
             .background(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                    .fill(isSelected ? Color.App.accent.color(for: colorScheme).opacity(0.1) : Color.clear)
+                    .fill(isSelected ? (Color.App.accent.color(for: colorScheme)).opacity(0.1) : Color.clear)
             )
             .background(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                    .fill(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
+                    .fill((Color.App.hoverBackground.color(for: colorScheme)))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                     .stroke(
                         isSelected
-                            ? Color.App.accent.color(for: colorScheme).opacity(0.3)
+                            ? (Color.App.accent.color(for: colorScheme)).opacity(0.3)
                             : Color.clear,
                         lineWidth: 1
                     )
@@ -161,7 +159,7 @@ private struct SectionBackgroundModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
-            .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
+            .background((Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.2))
+            .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
     }
 }

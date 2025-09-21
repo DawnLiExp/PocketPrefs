@@ -26,8 +26,7 @@ struct RestoreListView: View {
                 isRefreshing: $isRefreshing
             )
             
-            Divider()
-            
+            // No internal separator
             RestoreListContent(
                 backupManager: backupManager,
                 selectedBackupApp: $selectedBackupApp,
@@ -35,7 +34,6 @@ struct RestoreListView: View {
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.App.background.color(for: colorScheme))
         .fileImporter(
             isPresented: $showingFilePicker,
             allowedContentTypes: [.folder],
@@ -80,7 +78,7 @@ struct RestoreListHeader: View {
             // Display the title for the restore backup view
             Text(NSLocalizedString("Restore_Backup_Title", comment: ""))
                 .font(DesignConstants.Typography.title)
-                .foregroundColor(Color.App.primary.color(for: colorScheme))
+                .foregroundColor((Color.App.primary.color(for: colorScheme)))
             
             // Backup selector with refresh button
             HStack(spacing: 12) {
@@ -117,11 +115,13 @@ struct RestoreListHeader: View {
                 
                 Text(String(format: NSLocalizedString("Restore_Apps_Selected_Count", comment: ""), filteredCount, totalFilteredCount))
                     .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    .foregroundColor((Color.App.secondary.color(for: colorScheme)))
             }
         }
-        .padding(16)
-        .background(Color.App.controlBackground.color(for: colorScheme))
+        .padding(20)
+        .background(
+            (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3)
+        )
     }
     
     @MainActor
@@ -132,7 +132,7 @@ struct RestoreListHeader: View {
         try? await Task.sleep(nanoseconds: 200_000_000)
         
         // Refresh backup list
-        await backupManager.scanBackups() // Add await
+        await backupManager.scanBackups()
         
         isRefreshing = false
     }
@@ -147,7 +147,7 @@ struct SearchFieldView: View {
     var body: some View {
         HStack {
             Image(systemName: "magnifyingglass")
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
                 .font(.system(size: 14))
             
             TextField(NSLocalizedString("Search apps...", comment: ""), text: $searchText)
@@ -160,7 +160,7 @@ struct SearchFieldView: View {
                     searchText = ""
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                        .foregroundColor((Color.App.secondary.color(for: colorScheme)))
                         .font(.system(size: 14))
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -169,15 +169,15 @@ struct SearchFieldView: View {
         .padding(.horizontal, 10)
         .padding(.vertical, 7)
         .background(
-            // Enhanced background with subtle color
             RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                .fill(Color.App.secondaryBackground.color(for: colorScheme).opacity(0.6))
+                .fill(
+                    (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.5)
+                )
         )
         .overlay(
-            // Enhanced border with focus state
             RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                 .stroke(
-                    isFocused ? Color.App.accent.color(for: colorScheme).opacity(0.4) : Color.App.separator.color(for: colorScheme).opacity(0.3),
+                    isFocused ? (Color.App.accent.color(for: colorScheme)).opacity(0.4) : (Color.App.lightSeparator.color(for: colorScheme)),
                     lineWidth: isFocused ? 1.5 : 1.0
                 )
         )
@@ -195,7 +195,7 @@ struct RefreshButton: View {
         Button(action: action) {
             Image(systemName: "arrow.clockwise")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor(Color.App.primary.color(for: colorScheme))
+                .foregroundColor((Color.App.primary.color(for: colorScheme)))
                 .rotationEffect(.degrees(isRefreshing ? 360 : 0))
                 .animation(
                     isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default,
@@ -204,10 +204,12 @@ struct RefreshButton: View {
         }
         .buttonStyle(PlainButtonStyle())
         .frame(width: 32, height: 32)
-        .background(Color.App.secondaryBackground.color(for: colorScheme).opacity(0.5))
+        .background(
+            (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.5)
+        )
         .overlay(
             RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                .stroke(Color.App.separator.color(for: colorScheme).opacity(0.3), lineWidth: 0.5)
+                .stroke((Color.App.lightSeparator.color(for: colorScheme)), lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
         .disabled(isRefreshing)
@@ -298,9 +300,8 @@ struct RestoreListContent: View {
                             }
                         }
                     }
-                    .padding(12)
+                    .padding(16)
                 }
-                .background(Color.App.background.color(for: colorScheme))
             }
         } else {
             RestoreEmptyState()
@@ -318,17 +319,16 @@ struct SearchEmptyState: View {
             Spacer()
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 48))
-                .foregroundColor(Color.App.secondary.color(for: colorScheme).opacity(0.5))
+                .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.5))
             Text(String(format: NSLocalizedString("Restore_Search_No_Results", comment: ""), searchText))
                 .font(DesignConstants.Typography.headline)
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
             Text(NSLocalizedString("Restore_Search_Try_Different_Keyword", comment: ""))
                 .font(DesignConstants.Typography.body)
-                .foregroundColor(Color.App.secondary.color(for: colorScheme).opacity(0.8))
+                .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.8))
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.App.background.color(for: colorScheme))
     }
 }
 
@@ -341,21 +341,19 @@ struct RestoreEmptyState: View {
             Spacer()
             Image(systemName: "archivebox")
                 .font(.system(size: 48))
-                .foregroundColor(Color.App.secondary.color(for: colorScheme).opacity(0.5))
+                .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.5))
             Text(NSLocalizedString("Restore_Empty_State_No_Backups", comment: ""))
                 .font(DesignConstants.Typography.headline)
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
             Text(NSLocalizedString("Restore_Empty_State_Select_Location_Or_Create_Backup", comment: ""))
                 .font(DesignConstants.Typography.body)
-                .foregroundColor(Color.App.secondary.color(for: colorScheme).opacity(0.8))
+                .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.8))
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(Color.App.background.color(for: colorScheme))
     }
 }
 
-/// Represents a single application item in the restore list, displaying its icon, name, and selection status.
 /// Represents a single application item in the restore list, displaying its icon, name, and selection status.
 struct RestoreAppItem: View {
     let app: BackupAppInfo
@@ -384,7 +382,7 @@ struct RestoreAppItem: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.App.separator.color(for: colorScheme).opacity(0.3), lineWidth: 0.5)
+                            .stroke((Color.App.lightSeparator.color(for: colorScheme)), lineWidth: 0.5)
                     )
             }
             
@@ -393,18 +391,18 @@ struct RestoreAppItem: View {
                 HStack {
                     Text(app.name)
                         .font(DesignConstants.Typography.headline)
-                        .foregroundColor(Color.App.primary.color(for: colorScheme))
+                        .foregroundColor((Color.App.primary.color(for: colorScheme)))
                     
                     if !app.isCurrentlyInstalled {
                         StatusBadge(
                             text: NSLocalizedString("Restore_App_Status_Not_Installed", comment: ""),
-                            color: Color.App.warning.color(for: colorScheme),
+                            color: (Color.App.warning.color(for: colorScheme)),
                             style: .compact
                         )
                     } else {
                         StatusBadge(
                             text: NSLocalizedString("Restore_App_Status_Installed", comment: ""),
-                            color: Color.App.success.color(for: colorScheme),
+                            color: (Color.App.success.color(for: colorScheme)),
                             style: .compact
                         )
                     }
@@ -412,7 +410,7 @@ struct RestoreAppItem: View {
                 
                 Text(String(format: NSLocalizedString("Restore_App_Config_Files_Count", comment: ""), app.configPaths.count))
                     .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    .foregroundColor((Color.App.secondary.color(for: colorScheme)))
             }
             
             Spacer()
@@ -420,7 +418,7 @@ struct RestoreAppItem: View {
             // Vertical bar indicator
             Text("│")
                 .font(.system(size: 14))
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
                 .opacity(isHovered ? 0.6 : 0)
         }
         .padding(12)

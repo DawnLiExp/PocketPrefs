@@ -21,7 +21,7 @@ struct ProgressView: View {
             VStack(spacing: 8) {
                 Text(NSLocalizedString("Common_Processing", comment: ""))
                     .font(DesignConstants.Typography.headline)
-                    .foregroundColor(Color.App.primary.color(for: colorScheme))
+                    .foregroundColor((Color.App.primary.color(for: colorScheme)))
 
                 Text("\(Int(progress * 100))%")
                     .font(DesignConstants.Typography.largeTitle)
@@ -29,7 +29,10 @@ struct ProgressView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .background(.ultraThinMaterial)
+        .background(.ultraThinMaterial.opacity(0.8))
+        .background(
+            (Color.App.unifiedBackground.color(for: colorScheme)).opacity(0.3)
+        )
     }
 }
 
@@ -43,7 +46,7 @@ struct CircularProgressView: View {
         ZStack {
             Circle()
                 .stroke(
-                    Color.App.progressTrack.color(for: colorScheme),
+                    (Color.App.progressTrack.color(for: colorScheme)),
                     lineWidth: 12
                 )
 
@@ -85,7 +88,7 @@ struct StatusBadge: View {
             .foregroundColor(color)
             .padding(.horizontal, style == .compact ? 6 : 8)
             .padding(.vertical, style == .compact ? 2 : 4)
-            .background(color.opacity(0.15))
+            .background(color.opacity(0.12))
             .clipShape(Capsule())
     }
 }
@@ -101,13 +104,15 @@ struct PrimaryButtonStyle: ButtonStyle {
             .font(DesignConstants.Typography.headline)
             .foregroundColor(.white)
             .padding(.horizontal, 20)
-            .padding(.vertical, 10)
+            .padding(.vertical, 12)
             .background(
-                LinearGradient.appAccent(for: colorScheme)
-                    .opacity(isEnabled ? 1 : 0.5)
+                RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                    .fill(
+                        LinearGradient.appAccent(for: colorScheme)
+                            .opacity(isEnabled ? 1 : 0.5)
+                    )
             )
-            .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .animation(DesignConstants.Animation.quick, value: configuration.isPressed)
     }
 }
@@ -119,19 +124,18 @@ struct SecondaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(DesignConstants.Typography.headline)
-            .foregroundColor(isEnabled ? Color.App.primary.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
+            .foregroundColor(isEnabled ? (Color.App.primary.color(for: colorScheme)) : (Color.App.secondary.color(for: colorScheme)))
             .padding(.horizontal, 20)
-            .padding(.vertical, 10)
+            .padding(.vertical, 12)
             .background(
-                Color.App.secondaryBackground.color(for: colorScheme)
-                    .opacity(isEnabled ? 0.5 : 0.3)
+                RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                    .fill((Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.4))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                    .stroke(Color.App.separator.color(for: colorScheme), lineWidth: 0.5)
+                    .stroke((Color.App.lightSeparator.color(for: colorScheme)), lineWidth: 0.5)
             )
-            .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
-            .scaleEffect(configuration.isPressed ? 0.95 : 1)
+            .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .animation(DesignConstants.Animation.quick, value: configuration.isPressed)
     }
 }

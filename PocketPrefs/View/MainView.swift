@@ -38,54 +38,55 @@ struct MainView: View {
     
     var body: some View {
         HStack(spacing: 0) {
-            // Left Sidebar - Fixed width, no interaction
+            // Left Sidebar - Unified background
             SidebarView(currentMode: $currentMode)
                 .frame(width: DesignConstants.Layout.sidebarWidth)
-                .background(Color.App.background.color(for: colorScheme))
             
-            // Separator line
-            Divider()
-                .background(Color.App.separator.color(for: colorScheme))
-            
-            // Middle Content
-            Group {
-                if currentMode == .backup {
-                    AppListView(
-                        backupManager: backupManager,
-                        selectedApp: $selectedApp,
-                        currentMode: currentMode
-                    )
-                } else {
-                    RestoreListView(
-                        backupManager: backupManager,
-                        selectedApp: $selectedApp
-                    )
+            // Content area with floating window effect
+            HStack(spacing: 20) {
+                // Middle Content Area
+                Group {
+                    if currentMode == .backup {
+                        AppListView(
+                            backupManager: backupManager,
+                            selectedApp: $selectedApp,
+                            currentMode: currentMode
+                        )
+                    } else {
+                        RestoreListView(
+                            backupManager: backupManager,
+                            selectedApp: $selectedApp
+                        )
+                    }
                 }
+                .frame(
+                    minWidth: DesignConstants.Layout.listWidth - 20,
+                    idealWidth: DesignConstants.Layout.listWidth,
+                    maxWidth: DesignConstants.Layout.listWidth + 60
+                )
+                .contentAreaBackground()
+                
+                // Single separator between middle and right content
+                Rectangle()
+                    .fill((Color.App.separator.color(for: colorScheme)))
+                    .frame(width: 1)
+                    .opacity(0.3)
+                
+                // Right Detail Area
+                DetailContainerView(
+                    selectedApp: selectedApp,
+                    backupManager: backupManager,
+                    currentMode: currentMode,
+                    isProcessing: $isProcessing,
+                    progress: $progress,
+                    showingRestorePicker: $showingRestorePicker
+                )
+                .frame(maxWidth: .infinity)
+                .contentAreaBackground()
             }
-            .frame(
-                minWidth: DesignConstants.Layout.listWidth - 20,
-                idealWidth: DesignConstants.Layout.listWidth,
-                maxWidth: DesignConstants.Layout.listWidth + 60
-            )
-            .background(Color.App.controlBackground.color(for: colorScheme))
-            
-            // Separator line
-            Divider()
-                .background(Color.App.separator.color(for: colorScheme))
-            
-            // Right Detail - Takes remaining space
-            DetailContainerView(
-                selectedApp: selectedApp,
-                backupManager: backupManager,
-                currentMode: currentMode,
-                isProcessing: $isProcessing,
-                progress: $progress,
-                showingRestorePicker: $showingRestorePicker
-            )
-            .frame(maxWidth: .infinity)
-            .background(Color.App.background.color(for: colorScheme))
+            .padding(20)
         }
-        .background(Color.App.background.color(for: colorScheme))
+        .unifiedBackground()
         .frame(
             minWidth: DesignConstants.Layout.minWindowWidth,
             minHeight: DesignConstants.Layout.minWindowHeight

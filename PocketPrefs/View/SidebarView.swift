@@ -43,17 +43,6 @@ struct SidebarView: View {
         .padding(.vertical, 12)
         .frame(width: DesignConstants.Layout.sidebarWidth)
         .frame(maxHeight: .infinity)
-        .background(
-            LinearGradient(
-                gradient: Gradient(colors: [
-                    Color.App.secondaryBackground.color(for: colorScheme),
-                    Color.App.background.color(for: colorScheme)
-                ]),
-                startPoint: .top,
-                endPoint: .bottom
-            )
-            .opacity(colorScheme == .dark ? 0.9 : 0.95)
-        )
         .sheet(isPresented: $showingSettings) {
             SettingsView()
                 .frame(width: 750, height: 500)
@@ -70,17 +59,17 @@ struct SidebarIconButton: View {
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
     
-    // Three-tier brightness levels
+    // Enhanced opacity levels for better visual hierarchy
     private var iconOpacity: Double {
-        if isSelected { return 1.0 } // Brightest when selected
-        if isHovered { return 0.8 } // Medium on hover
-        return 0.5 // Dim when idle
+        if isSelected { return 1.0 }
+        if isHovered { return 0.85 }
+        return 0.6
     }
     
     private var textColor: Color {
-        if isSelected { return Color.App.primary.color(for: colorScheme) }
-        if isHovered { return Color.App.primary.color(for: colorScheme).opacity(0.8) }
-        return Color.App.secondary.color(for: colorScheme)
+        if isSelected { return (Color.App.primary.color(for: colorScheme)) }
+        if isHovered { return (Color.App.primary.color(for: colorScheme)).opacity(0.85) }
+        return (Color.App.secondary.color(for: colorScheme))
     }
     
     var body: some View {

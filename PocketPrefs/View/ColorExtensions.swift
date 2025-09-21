@@ -66,7 +66,7 @@ extension Color {
             dark: Color(hex: "0A84FF")
         )
         static let primary = AdaptiveColor(
-            light: Color(hex: "000000"),
+            light: Color(hex: "1C1C1E"),
             dark: Color(hex: "FFFFFF")
         )
         static let secondary = AdaptiveColor(
@@ -92,24 +92,36 @@ extension Color {
             dark: Color(hex: "0A84FF")
         )
 
-        // Background Colors
+        // New unified background system
+        static let unifiedBackground = AdaptiveColor(
+            light: Color(hex: "F5F5F7"),
+            dark: Color(hex: "0D0D0D")
+        )
+        
+        // Content area backgrounds (floating windows)
+        static let contentAreaBackground = AdaptiveColor(
+            light: Color(hex: "FFFFFF"),
+            dark: Color(hex: "1C1C1E")
+        )
+        
+        // Legacy background colors (kept for compatibility)
         static let background = AdaptiveColor(
-            light: Color(hex: "F2F2F7"),
-            dark: Color(hex: "000000")
+            light: Color(hex: "F5F5F7"),
+            dark: Color(hex: "0D0D0D")
         )
         static let secondaryBackground = AdaptiveColor(
             light: Color(hex: "FFFFFF"),
             dark: Color(hex: "1C1C1E")
         )
         static let tertiaryBackground = AdaptiveColor(
-            light: Color(hex: "E5E5EA"),
+            light: Color(hex: "F2F2F7"),
             dark: Color(hex: "2C2C2E")
         )
 
         // Interactive Elements
         static let controlBackground = AdaptiveColor(
-            light: Color(hex: "E5E5EA"),
-            dark: Color(hex: "2C2C2E")
+            light: Color(hex: "FFFFFF"),
+            dark: Color(hex: "1C1C1E")
         )
         static let selectedControlBackground = AdaptiveColor(
             light: Color(hex: "007AFF"),
@@ -122,7 +134,7 @@ extension Color {
 
         // Text Colors
         static let primaryText = AdaptiveColor(
-            light: Color(hex: "000000"),
+            light: Color(hex: "1C1C1E"),
             dark: Color(hex: "FFFFFF")
         )
         static let secondaryText = AdaptiveColor(
@@ -138,14 +150,14 @@ extension Color {
             dark: Color(hex: "EBEBF5", opacity: 0.3)
         )
 
-        // Separator
+        // Separator (subtle, for minimal visibility)
         static let separator = AdaptiveColor(
-            light: Color(hex: "3C3C43", opacity: 0.3),
-            dark: Color(hex: "EBEBF5", opacity: 0.3)
+            light: Color(hex: "C6C6C8"),
+            dark: Color(hex: "38383A")
         )
         static let lightSeparator = AdaptiveColor(
-            light: Color(hex: "3C3C43", opacity: 0.15),
-            dark: Color(hex: "EBEBF5", opacity: 0.15)
+            light: Color(hex: "3C3C43", opacity: 0.1),
+            dark: Color(hex: "EBEBF5", opacity: 0.1)
         )
 
         // Status Colors
@@ -181,7 +193,7 @@ extension LinearGradient {
     /// - Parameter scheme: The current `ColorScheme`.
     static func appAccent(for scheme: ColorScheme) -> LinearGradient {
         let accentColor = Color.App.accent.color(for: scheme)
-        let endColor = scheme == .dark ? Color(hex: "636366") : Color(hex: "C7C7CC") // Placeholder for a secondary gradient color
+        let endColor = scheme == .dark ? Color(hex: "636366") : Color(hex: "C7C7CC")
 
         return LinearGradient(
             gradient: Gradient(colors: [accentColor, endColor]),
@@ -194,6 +206,16 @@ extension LinearGradient {
 // MARK: - View Extensions for Backgrounds
 
 extension View {
+    /// Applies the new unified background (main + sidebar)
+    func unifiedBackground() -> some View {
+        modifier(UnifiedBackgroundModifier())
+    }
+    
+    /// Applies content area background (floating window effect)
+    func contentAreaBackground() -> some View {
+        modifier(ContentAreaBackgroundModifier())
+    }
+
     /// Applies a sidebar background style.
     func sidebarBackground() -> some View {
         modifier(SidebarBackgroundModifier())
@@ -205,21 +227,33 @@ extension View {
     }
 }
 
+private struct UnifiedBackgroundModifier: ViewModifier {
+    @Environment(\.colorScheme) var colorScheme
+
+    func body(content: Content) -> some View {
+        content
+            .background(.ultraThinMaterial)
+            .background((Color.App.unifiedBackground.color(for: colorScheme)))
+    }
+}
+
+private struct ContentAreaBackgroundModifier: ViewModifier {
+    @Environment(\.colorScheme) var colorScheme
+
+    func body(content: Content) -> some View {
+        content
+            .background((Color.App.contentAreaBackground.color(for: colorScheme)))
+            .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
+    }
+}
+
 private struct SidebarBackgroundModifier: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
 
     func body(content: Content) -> some View {
         content
-            .background(
-                LinearGradient(
-                    gradient: Gradient(colors: [
-                        Color.App.secondaryBackground.color(for: colorScheme),
-                        Color.App.background.color(for: colorScheme)
-                    ]),
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
+            .background(.ultraThinMaterial)
+            .background((Color.App.unifiedBackground.color(for: colorScheme)))
     }
 }
 
@@ -228,7 +262,7 @@ private struct ContentBackgroundModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(Color.App.background.color(for: colorScheme))
+            .background((Color.App.contentAreaBackground.color(for: colorScheme)))
     }
 }
 
@@ -253,7 +287,7 @@ private struct SoftShadowModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .shadow(
-                color: Color.App.primary.color(for: colorScheme).opacity(0.1),
+                color: (Color.App.primary.color(for: colorScheme)).opacity(0.1),
                 radius: 8,
                 x: 0,
                 y: 2
@@ -272,7 +306,7 @@ private struct ElevationShadowModifier: ViewModifier {
 
         return content
             .shadow(
-                color: Color.App.primary.color(for: colorScheme).opacity(min(opacity, 0.2)),
+                color: (Color.App.primary.color(for: colorScheme)).opacity(min(opacity, 0.2)),
                 radius: radius,
                 x: 0,
                 y: y
