@@ -12,16 +12,12 @@ struct AppListView: View {
     @ObservedObject var backupManager: BackupManager
     @Binding var selectedApp: AppConfig?
     let currentMode: MainView.AppMode
-    @State private var selectAll = false
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(spacing: 0) {
             // Header
-            AppListHeader(
-                selectAll: $selectAll,
-                backupManager: backupManager
-            )
+            AppListHeader(backupManager: backupManager)
             
             // App List - no internal separator
             ScrollView {
@@ -48,37 +44,44 @@ struct AppListView: View {
 
 /// Header view for the application list, including a "Select All" toggle and selection count.
 struct AppListHeader: View {
-    @Binding var selectAll: Bool
     @ObservedObject var backupManager: BackupManager
     @Environment(\.colorScheme) var colorScheme
+    
+    // Calculate initial state based on actual selection
+    private var allInstalledSelected: Bool {
+        let installedApps = backupManager.apps.filter { $0.isInstalled }
+        return !installedApps.isEmpty && installedApps.allSatisfy { $0.isSelected }
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Display the title for the applications list
             Text(NSLocalizedString("AppList_Title", comment: ""))
                 .font(DesignConstants.Typography.title)
-                .foregroundColor((Color.App.primary.color(for: colorScheme)))
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
             
             HStack {
-                Toggle(isOn: $selectAll) {
+                Toggle(isOn: Binding(
+                    get: { allInstalledSelected },
+                    set: { newValue in
+                        if newValue {
+                            backupManager.selectAll()
+                        } else {
+                            backupManager.deselectAll()
+                        }
+                    }
+                )) {
                     // Toggle to select or deselect all applications
                     Text(NSLocalizedString("AppList_Select_All", comment: ""))
                         .font(DesignConstants.Typography.body)
                 }
                 .toggleStyle(.checkbox)
-                .onChange(of: selectAll) { _, newValue in
-                    if newValue {
-                        backupManager.selectAll()
-                    } else {
-                        backupManager.deselectAll()
-                    }
-                }
                 
                 Spacer()
                 
                 Text(String(format: NSLocalizedString("AppList_Selected_Count", comment: ""), backupManager.apps.filter { $0.isSelected }.count, backupManager.apps.count))
                     .font(DesignConstants.Typography.caption)
-                    .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
         }
         .padding(20)
@@ -119,7 +122,7 @@ struct AppListItem: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke((Color.App.lightSeparator.color(for: colorScheme)), lineWidth: 0.5)
+                            .stroke(Color.App.lightSeparator.color(for: colorScheme), lineWidth: 0.5)
                     )
             }
             
@@ -133,7 +136,7 @@ struct AppListItem: View {
                     if currentMode == .backup && !app.isInstalled {
                         StatusBadge(
                             text: NSLocalizedString("AppList_App_Status_Not_Installed", comment: ""),
-                            color: (Color.App.notInstalled.color(for: colorScheme)),
+                            color: Color.App.notInstalled.color(for: colorScheme),
                             style: .compact
                         )
                     }
@@ -141,7 +144,7 @@ struct AppListItem: View {
                 
                 Text(String(format: NSLocalizedString("AppList_App_Config_Paths_Count", comment: ""), app.configPaths.count))
                     .font(DesignConstants.Typography.caption)
-                    .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
             
             Spacer()
@@ -149,7 +152,7 @@ struct AppListItem: View {
             // Chevron
             Image(systemName: "chevron.right")
                 .font(.system(size: 12))
-                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .opacity(isHovered ? 1 : 0)
         }
         .padding(12)

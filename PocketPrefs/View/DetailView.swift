@@ -5,6 +5,7 @@
 //  App detail and backup/restore management views
 //
 
+import AppKit
 import SwiftUI
 
 // MARK: - DetailContainerView
@@ -59,7 +60,6 @@ struct AppDetailView: View {
     @Binding var isProcessing: Bool
     @Binding var progress: Double
     @Binding var showingRestorePicker: Bool
-    @State private var selectedPaths: Set<String> = []
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -67,52 +67,22 @@ struct AppDetailView: View {
             // Header
             AppDetailHeader(
                 app: app,
-                currentMode: currentMode,
-                selectedPaths: $selectedPaths
+                currentMode: currentMode
             )
             
-            // Config Paths List - no internal separator
+            // Config Paths List - display only
             ScrollView {
                 VStack(spacing: 8) {
                     ForEach(app.configPaths, id: \.self) { path in
-                        ConfigPathItem(
-                            path: path,
-                            isSelected: selectedPaths.contains(path)
-                        ) {
-                            togglePath(path)
-                        }
+                        ConfigPathItem(path: path)
                     }
                 }
                 .padding(16)
             }
             
             Spacer()
-            
-            // Action Button
-            AppDetailActionBar(
-                app: app,
-                currentMode: currentMode,
-                selectedPaths: selectedPaths,
-                isProcessing: $isProcessing,
-                progress: $progress,
-                showingRestorePicker: $showingRestorePicker,
-                backupManager: backupManager
-            )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear {
-            selectedPaths = Set(app.configPaths)
-        }
-    }
-    
-    private func togglePath(_ path: String) {
-        withAnimation(DesignConstants.Animation.quick) {
-            if selectedPaths.contains(path) {
-                selectedPaths.remove(path)
-            } else {
-                selectedPaths.insert(path)
-            }
-        }
     }
 }
 
@@ -122,7 +92,6 @@ struct AppDetailView: View {
 struct AppDetailHeader: View {
     let app: AppConfig
     let currentMode: MainView.AppMode
-    @Binding var selectedPaths: Set<String>
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -138,37 +107,24 @@ struct AppDetailHeader: View {
                     
                     Text(app.bundleId)
                         .font(DesignConstants.Typography.caption)
-                        .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
                 
                 Spacer()
                 
                 if currentMode == .backup {
                     if app.isInstalled {
-                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Installed", comment: ""), color: (Color.App.success.color(for: colorScheme)))
-
+                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Installed", comment: ""), color: Color.App.success.color(for: colorScheme))
                     } else {
-                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Not_Installed", comment: ""), color: (Color.App.warning.color(for: colorScheme)))
+                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Not_Installed", comment: ""), color: Color.App.warning.color(for: colorScheme))
                     }
                 }
             }
             
-            HStack {
-                Toggle(isOn: Binding(
-                    get: { selectedPaths.count == app.configPaths.count },
-                    set: { newValue in
-                        if newValue {
-                            selectedPaths = Set(app.configPaths)
-                        } else {
-                            selectedPaths.removeAll()
-                        }
-                    }
-                )) {
-                    Text(NSLocalizedString("Detail_Select_All_Config_Files", comment: ""))
-                        .font(DesignConstants.Typography.body)
-                }
-                .toggleStyle(.checkbox)
-            }
+            // Configuration paths count
+            Text(String(format: NSLocalizedString("AppList_App_Config_Paths_Count", comment: ""), app.configPaths.count))
+                .font(DesignConstants.Typography.body)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
         }
         .padding(20)
         .background(
@@ -177,89 +133,41 @@ struct AppDetailHeader: View {
     }
 }
 
-/// Action bar for the app detail view, containing backup or restore buttons.
-struct AppDetailActionBar: View {
-    let app: AppConfig
-    let currentMode: MainView.AppMode
-    let selectedPaths: Set<String>
-    @Binding var isProcessing: Bool
-    @Binding var progress: Double
-    @Binding var showingRestorePicker: Bool
-    @ObservedObject var backupManager: BackupManager
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        HStack {
-            Spacer()
-            
-            if currentMode == .backup {
-                Button(action: performBackup) {
-                    Label(NSLocalizedString("Detail_Action_Backup_Selected", comment: ""), systemImage: "arrow.up.circle.fill")
-                }
-                .buttonStyle(PrimaryButtonStyle())
-                .disabled(selectedPaths.isEmpty || !app.isInstalled)
-            } else {
-                Button(action: { showingRestorePicker = true }) {
-                    Label(NSLocalizedString("Detail_Action_Select_Backup_File_To_Restore", comment: ""), systemImage: "arrow.down.circle.fill")
-                }
-                .buttonStyle(PrimaryButtonStyle())
-            }
-        }
-        .padding(20)
-        .background(
-            (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3)
-        )
-    }
-    
-    private func performBackup() {
-        withAnimation(DesignConstants.Animation.standard) {
-            isProcessing = true
-            progress = 0.0
-        }
-        
-        Task { @MainActor in
-            while progress < 0.9 {
-                try? await Task.sleep(nanoseconds: 50_000_000)
-                progress += 0.02
-            }
-            
-            backupManager.performBackup()
-            
-            progress = 1.0
-            try? await Task.sleep(nanoseconds: 500_000_000)
-            isProcessing = false
-            progress = 0.0
-        }
-    }
-}
-
-/// Displays a single configuration path item with a checkbox.
+/// Displays a single configuration path item with file size and Show in Finder functionality.
 struct ConfigPathItem: View {
     let path: String
-    let isSelected: Bool
-    let onToggle: () -> Void
     @State private var isHovered = false
+    @State private var fileSize: String = "-"
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         HStack {
-            Toggle("", isOn: Binding(
-                get: { isSelected },
-                set: { _ in onToggle() }
-            ))
-            .toggleStyle(.checkbox)
-            
             Image(systemName: "folder")
                 .font(.system(size: 14))
-                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
             
-            Text(path)
-                .font(DesignConstants.Typography.body)
-                .foregroundColor((Color.App.primary.color(for: colorScheme)))
-                .lineLimit(1)
-                .truncationMode(.middle)
+            VStack(alignment: .leading, spacing: 4) {
+                Text(path)
+                    .font(DesignConstants.Typography.body)
+                    .foregroundColor(Color.App.primary.color(for: colorScheme))
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                
+                Text(fileSize)
+                    .font(DesignConstants.Typography.caption)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+            }
             
             Spacer()
+            
+            // Show in Finder button
+            Button(action: showInFinder) {
+                Image(systemName: "arrow.right.circle")
+                    .font(.system(size: 16))
+                    .foregroundColor(isHovered ? (Color.App.primary.color(for: colorScheme)) : (Color.App.secondary.color(for: colorScheme)))
+            }
+            .buttonStyle(.plain)
+            .help("Show in Finder")
         }
         .padding(12)
         .cardEffect(isSelected: false)
@@ -268,6 +176,81 @@ struct ConfigPathItem: View {
                 isHovered = hovering
             }
         }
+        .task {
+            await calculateFileSize()
+        }
+    }
+    
+    private func showInFinder() {
+        let expandedPath = NSString(string: path).expandingTildeInPath
+        let url = URL(fileURLWithPath: expandedPath)
+        
+        // Check if file/directory exists
+        if FileManager.default.fileExists(atPath: expandedPath) {
+            NSWorkspace.shared.selectFile(expandedPath, inFileViewerRootedAtPath: url.deletingLastPathComponent().path)
+        } else {
+            // If file doesn't exist, open parent directory
+            let parentURL = url.deletingLastPathComponent()
+            if FileManager.default.fileExists(atPath: parentURL.path) {
+                NSWorkspace.shared.open(parentURL)
+            }
+        }
+    }
+    
+    private func calculateFileSize() async {
+        let expandedPath = NSString(string: path).expandingTildeInPath
+        let url = URL(fileURLWithPath: expandedPath)
+        
+        await MainActor.run {
+            do {
+                let resourceValues = try url.resourceValues(forKeys: [.totalFileSizeKey, .fileSizeKey, .isDirectoryKey])
+                
+                let size: Int64
+                if resourceValues.isDirectory == true {
+                    // Calculate directory size
+                    size = directorySize(at: url)
+                } else {
+                    // File size
+                    size = Int64(resourceValues.totalFileSize ?? resourceValues.fileSize ?? 0)
+                }
+                
+                self.fileSize = formatFileSize(size)
+            } catch {
+                self.fileSize = "Not Found"
+            }
+        }
+    }
+    
+    private func directorySize(at url: URL) -> Int64 {
+        var totalSize: Int64 = 0
+        
+        guard let enumerator = FileManager.default.enumerator(
+            at: url,
+            includingPropertiesForKeys: [.totalFileSizeKey, .fileSizeKey],
+            options: [.skipsHiddenFiles, .skipsPackageDescendants]
+        ) else {
+            return 0
+        }
+        
+        for case let fileURL as URL in enumerator {
+            do {
+                let resourceValues = try fileURL.resourceValues(forKeys: [.totalFileSizeKey, .fileSizeKey])
+                let fileSize = Int64(resourceValues.totalFileSize ?? resourceValues.fileSize ?? 0)
+                totalSize += fileSize
+            } catch {
+                continue
+            }
+        }
+        
+        return totalSize
+    }
+    
+    private func formatFileSize(_ size: Int64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        formatter.includesUnit = true
+        formatter.isAdaptive = true
+        return formatter.string(fromByteCount: size)
     }
 }
 
@@ -296,7 +279,7 @@ struct BackupPlaceholderView: View {
                 
                 Text(NSLocalizedString("Detail_Placeholder_Select_App", comment: ""))
                     .font(DesignConstants.Typography.headline)
-                    .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
             
             Spacer()
@@ -403,7 +386,7 @@ struct RestoreDetailContent: View {
                         
                         Text(String(format: NSLocalizedString("Detail_Restore_Backup_App_Count", comment: ""), backup.apps.count))
                             .font(DesignConstants.Typography.caption)
-                            .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
                     }
                     
                     Spacer()
@@ -444,7 +427,7 @@ struct RestoreDetailContent: View {
                                 if !app.isCurrentlyInstalled {
                                     Text(NSLocalizedString("Detail_Restore_App_Not_Installed_Badge", comment: ""))
                                         .font(DesignConstants.Typography.caption)
-                                        .foregroundColor((Color.App.warning.color(for: colorScheme)))
+                                        .foregroundColor(Color.App.warning.color(for: colorScheme))
                                 }
                                 
                                 Spacer()
@@ -463,7 +446,7 @@ struct RestoreDetailContent: View {
                     
                     Text(NSLocalizedString("Detail_Restore_No_Apps_Selected", comment: ""))
                         .font(DesignConstants.Typography.headline)
-                        .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
@@ -523,7 +506,7 @@ struct RestoreEmptyDetail: View {
             
             Text(NSLocalizedString("Detail_Restore_Placeholder_Select_Backup", comment: ""))
                 .font(DesignConstants.Typography.headline)
-                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
