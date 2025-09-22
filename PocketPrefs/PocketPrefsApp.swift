@@ -11,14 +11,66 @@ import SwiftUI
 
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
-        // Configure window appearance
-        if let window = NSApplication.shared.windows.first {
-            window.titlebarAppearsTransparent = true
-            window.titleVisibility = .hidden
-            window.styleMask.insert(.fullSizeContentView)
-            window.isMovableByWindowBackground = true
-            // Background color will be handled by the main view's background modifier
-            window.backgroundColor = NSColor.clear
+        // Configure window appearance after launch
+        DispatchQueue.main.async {
+            if let window = NSApplication.shared.windows.first {
+                // Make titlebar blend with content but not fully transparent
+                window.titlebarAppearsTransparent = true
+                window.titleVisibility = .hidden
+                window.styleMask.insert(.fullSizeContentView)
+                
+                // Remove toolbar separator
+                window.toolbarStyle = .unified
+                
+                // Enable window dragging from background
+                window.isMovableByWindowBackground = true
+                
+                // Don't set backgroundColor to clear - let SwiftUI handle the background
+                // This ensures the window has proper background color
+                // window.backgroundColor = NSColor.clear  // REMOVED
+                
+                // Set minimum window size
+                window.minSize = NSSize(
+                    width: DesignConstants.Layout.minWindowWidth,
+                    height: DesignConstants.Layout.minWindowHeight
+                )
+            }
+        }
+    }
+    
+    func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
+        return true
+    }
+}
+
+// MARK: - Custom Window Background
+
+struct WindowBackgroundView: NSViewRepresentable {
+    @Environment(\.colorScheme) var colorScheme
+    
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView()
+        updateBackground(view)
+        return view
+    }
+    
+    func updateNSView(_ nsView: NSView, context: Context) {
+        updateBackground(nsView)
+    }
+    
+    private func updateBackground(_ view: NSView) {
+        DispatchQueue.main.async {
+            if let window = view.window {
+                // Apply visual effect view for proper background
+                window.titlebarAppearsTransparent = true
+                
+                // Set background based on color scheme
+                if colorScheme == .dark {
+                    window.backgroundColor = NSColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 0.95)
+                } else {
+                    window.backgroundColor = NSColor(red: 0.96, green: 0.96, blue: 0.97, alpha: 0.95)
+                }
+            }
         }
     }
 }
@@ -33,9 +85,15 @@ struct PocketPrefsApp: App {
 
     var body: some Scene {
         WindowGroup {
-            MainView()
-                .environmentObject(themeManager)
-                .background(Color.App.background.color(for: colorScheme)) // Apply background color here
+            ZStack {
+                // Window background handler
+                WindowBackgroundView()
+                    .ignoresSafeArea()
+                
+                // Main content
+                MainView()
+                    .environmentObject(themeManager)
+            }
         }
         .windowStyle(.hiddenTitleBar)
         .windowToolbarStyle(.unified(showsTitle: false))

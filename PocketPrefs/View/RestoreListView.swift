@@ -78,7 +78,7 @@ struct RestoreListHeader: View {
             // Display the title for the restore backup view
             Text(NSLocalizedString("Restore_Backup_Title", comment: ""))
                 .font(DesignConstants.Typography.title)
-                .foregroundColor((Color.App.primary.color(for: colorScheme)))
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
             
             // Backup selector with refresh button
             HStack(spacing: 12) {
@@ -115,7 +115,7 @@ struct RestoreListHeader: View {
                 
                 Text(String(format: NSLocalizedString("Restore_Apps_Selected_Count", comment: ""), filteredCount, totalFilteredCount))
                     .font(DesignConstants.Typography.caption)
-                    .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
         }
         .padding(20)
@@ -147,7 +147,7 @@ struct SearchFieldView: View {
     var body: some View {
         HStack {
             Image(systemName: "magnifyingglass")
-                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .font(.system(size: 14))
             
             TextField(NSLocalizedString("Search apps...", comment: ""), text: $searchText)
@@ -160,7 +160,7 @@ struct SearchFieldView: View {
                     searchText = ""
                 }) {
                     Image(systemName: "xmark.circle.fill")
-                        .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
                         .font(.system(size: 14))
                 }
                 .buttonStyle(PlainButtonStyle())
@@ -195,7 +195,7 @@ struct RefreshButton: View {
         Button(action: action) {
             Image(systemName: "arrow.clockwise")
                 .font(.system(size: 14, weight: .medium))
-                .foregroundColor((Color.App.primary.color(for: colorScheme)))
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
                 .rotationEffect(.degrees(isRefreshing ? 360 : 0))
                 .animation(
                     isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default,
@@ -209,7 +209,7 @@ struct RefreshButton: View {
         )
         .overlay(
             RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                .stroke((Color.App.lightSeparator.color(for: colorScheme)), lineWidth: 0.5)
+                .stroke(Color.App.lightSeparator.color(for: colorScheme), lineWidth: 0.5)
         )
         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
         .disabled(isRefreshing)
@@ -322,7 +322,7 @@ struct SearchEmptyState: View {
                 .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.5))
             Text(String(format: NSLocalizedString("Restore_Search_No_Results", comment: ""), searchText))
                 .font(DesignConstants.Typography.headline)
-                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
             Text(NSLocalizedString("Restore_Search_Try_Different_Keyword", comment: ""))
                 .font(DesignConstants.Typography.body)
                 .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.8))
@@ -344,7 +344,7 @@ struct RestoreEmptyState: View {
                 .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.5))
             Text(NSLocalizedString("Restore_Empty_State_No_Backups", comment: ""))
                 .font(DesignConstants.Typography.headline)
-                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
             Text(NSLocalizedString("Restore_Empty_State_Select_Location_Or_Create_Backup", comment: ""))
                 .font(DesignConstants.Typography.body)
                 .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.8))
@@ -382,7 +382,7 @@ struct RestoreAppItem: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke((Color.App.lightSeparator.color(for: colorScheme)), lineWidth: 0.5)
+                            .stroke(Color.App.lightSeparator.color(for: colorScheme), lineWidth: 0.5)
                     )
             }
             
@@ -391,18 +391,18 @@ struct RestoreAppItem: View {
                 HStack {
                     Text(app.name)
                         .font(DesignConstants.Typography.headline)
-                        .foregroundColor((Color.App.primary.color(for: colorScheme)))
+                        .foregroundColor(Color.App.primary.color(for: colorScheme))
                     
                     if !app.isCurrentlyInstalled {
                         StatusBadge(
                             text: NSLocalizedString("Restore_App_Status_Not_Installed", comment: ""),
-                            color: (Color.App.warning.color(for: colorScheme)),
+                            color: Color.App.warning.color(for: colorScheme),
                             style: .compact
                         )
                     } else {
                         StatusBadge(
                             text: NSLocalizedString("Restore_App_Status_Installed", comment: ""),
-                            color: (Color.App.success.color(for: colorScheme)),
+                            color: Color.App.success.color(for: colorScheme),
                             style: .compact
                         )
                     }
@@ -410,15 +410,15 @@ struct RestoreAppItem: View {
                 
                 Text(String(format: NSLocalizedString("Restore_App_Config_Files_Count", comment: ""), app.configPaths.count))
                     .font(DesignConstants.Typography.caption)
-                    .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
             
             Spacer()
             
             // Vertical bar indicator
-            Text("│")
-                .font(.system(size: 14))
-                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .opacity(isHovered ? 0.6 : 0)
         }
         .padding(12)

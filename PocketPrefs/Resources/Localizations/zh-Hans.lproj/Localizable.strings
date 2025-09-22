@@ -20,7 +20,7 @@
 "Restore_App_Status_Not_Installed" = "未安装";
 "Restore_App_Status_Installed" = "已安装";
 "Restore_App_Config_Files_Count" = "%d 个配置文件";
-"Search apps..." = "搜索应用...";
+"Search apps..." = "搜索...";
 "Select Backup:" = "选择备份:";
 "Select from other location..." = "从其他位置选择...";
 
@@ -41,12 +41,14 @@
 "Detail_Restore_App_Not_Installed_Badge" = "(未安装)";
 "Detail_Restore_Action_Restore_Selected" = "恢复已选配置";
 "Detail_Restore_No_Apps_Selected" = "未选择任何配置";
+"Detail_Restore_Placeholder_Select_Backup" = "从列表选择备份";
 
 "AppList_Title" = "应用列表";
 "AppList_Select_All" = "全选";
 "AppList_Selected_Count" = "%1$d / %2$d 已选择";
 "AppList_App_Status_Not_Installed" = "未安装";
 "AppList_App_Config_Paths_Count" = "%d 个配置路径";
+"AppList_Search_Placeholder" = "搜索...";
 
 "MainView_Mode_Backup" = "备份";
 "MainView_Mode_Restore" = "恢复";
@@ -68,7 +70,7 @@
 
 /* Settings Main */
 "Settings_Title" = "设置 - 自定义应用";
-"Settings_Search_Apps" = "搜索应用...";
+"Settings_Search_Apps" = "搜索...";
 "Settings_Add_App" = "添加应用";
 "Settings_Delete_Selected" = "删除 %d 个选中项";
 "Settings_Deselect_All" = "取消全选";

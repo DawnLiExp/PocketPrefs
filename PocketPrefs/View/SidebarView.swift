@@ -43,6 +43,7 @@ struct SidebarView: View {
         .padding(.vertical, 12)
         .frame(width: DesignConstants.Layout.sidebarWidth)
         .frame(maxHeight: .infinity)
+        .sidebarBackground()
         .sheet(isPresented: $showingSettings) {
             SettingsView()
                 .frame(width: 750, height: 500)
@@ -57,40 +58,42 @@ struct SidebarIconButton: View {
     let action: () -> Void
     
     @State private var isHovered = false
-    @Environment(\.colorScheme) var colorScheme
+    @Environment(\.colorScheme) private var colorScheme
     
     // Enhanced opacity levels for better visual hierarchy
     private var iconOpacity: Double {
         if isSelected { return 1.0 }
-        if isHovered { return 0.85 }
-        return 0.6
+        if isHovered { return 0.75 }
+        return 0.45
     }
     
-    private var textColor: Color {
-        if isSelected { return (Color.App.primary.color(for: colorScheme)) }
-        if isHovered { return (Color.App.primary.color(for: colorScheme)).opacity(0.85) }
-        return (Color.App.secondary.color(for: colorScheme))
+    private var textOpacity: Double {
+        if isSelected { return 1.0 }
+        if isHovered { return 0.8 }
+        return 0.55
     }
     
     var body: some View {
         Button(action: action) {
-            VStack(spacing: 4) {
+            VStack(spacing: 6) {
                 Image(systemName: icon)
-                    .font(.system(size: 24, weight: .regular))
-                    .foregroundStyle(
-                        LinearGradient.appAccent(for: colorScheme)
+                    .font(.system(size: 24, weight: .medium))
+                    .foregroundColor(
+                        Color.App.accent.color(for: colorScheme)
                             .opacity(iconOpacity)
                     )
-                    .frame(height: 24)
                 
                 Text(title)
-                    .font(.system(size: 12))
-                    .foregroundColor(textColor)
+                    .font(.system(size: 11, weight: .medium))
+                    .foregroundColor(
+                        Color.App.primaryText.color(for: colorScheme)
+                            .opacity(textOpacity)
+                    )
                     .lineLimit(1)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 8)
-            .padding(.horizontal, 4)
+            .padding(.vertical, 10)
+            .contentShape(Rectangle())
         }
         .buttonStyle(PlainButtonStyle())
         .onHover { hovering in

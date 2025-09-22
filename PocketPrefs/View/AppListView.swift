@@ -12,17 +12,32 @@ struct AppListView: View {
     @ObservedObject var backupManager: BackupManager
     @Binding var selectedApp: AppConfig?
     let currentMode: MainView.AppMode
+    @State private var searchText = ""
     @Environment(\.colorScheme) var colorScheme
+    
+    // Filter apps based on search text
+    private var filteredApps: [AppConfig] {
+        if searchText.isEmpty {
+            return backupManager.apps
+        }
+        return backupManager.apps.filter { app in
+            app.name.localizedCaseInsensitiveContains(searchText) ||
+            app.bundleId.localizedCaseInsensitiveContains(searchText)
+        }
+    }
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header
-            AppListHeader(backupManager: backupManager)
+            // Header with search
+            AppListHeader(
+                searchText: $searchText,
+                backupManager: backupManager
+            )
             
             // App List - no internal separator
             ScrollView {
                 LazyVStack(spacing: 8) {
-                    ForEach(backupManager.apps) { app in
+                    ForEach(filteredApps) { app in
                         AppListItem(
                             app: app,
                             isSelected: selectedApp?.id == app.id,
@@ -42,8 +57,9 @@ struct AppListView: View {
     }
 }
 
-/// Header view for the application list, including a "Select All" toggle and selection count.
+/// Header view for the application list with search box and select all toggle.
 struct AppListHeader: View {
+    @Binding var searchText: String
     @ObservedObject var backupManager: BackupManager
     @Environment(\.colorScheme) var colorScheme
     
@@ -55,10 +71,37 @@ struct AppListHeader: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Display the title for the applications list
-            Text(NSLocalizedString("AppList_Title", comment: ""))
-                .font(DesignConstants.Typography.title)
-                .foregroundColor(Color.App.primary.color(for: colorScheme))
+            // Search bar
+            HStack {
+                Image(systemName: "magnifyingglass")
+                    .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                    .font(.system(size: 14))
+                
+                TextField(
+                    NSLocalizedString("AppList_Search_Placeholder", comment: "Search apps..."),
+                    text: $searchText
+                )
+                .textFieldStyle(.plain)
+                .font(DesignConstants.Typography.body)
+                
+                if !searchText.isEmpty {
+                    Button(action: { searchText = "" }) {
+                        Image(systemName: "xmark.circle.fill")
+                            .foregroundColor((Color.App.secondary.color(for: colorScheme)))
+                            .font(.system(size: 14))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(8)
+            .background(
+                RoundedRectangle(cornerRadius: 8)
+                    .fill((Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.5))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .stroke((Color.App.lightSeparator.color(for: colorScheme)), lineWidth: 0.5)
+            )
             
             HStack {
                 Toggle(isOn: Binding(
@@ -81,7 +124,7 @@ struct AppListHeader: View {
                 
                 Text(String(format: NSLocalizedString("AppList_Selected_Count", comment: ""), backupManager.apps.filter { $0.isSelected }.count, backupManager.apps.count))
                     .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    .foregroundColor((Color.App.secondary.color(for: colorScheme)))
             }
         }
         .padding(20)
@@ -122,7 +165,7 @@ struct AppListItem: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .overlay(
                         RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.App.lightSeparator.color(for: colorScheme), lineWidth: 0.5)
+                            .stroke((Color.App.lightSeparator.color(for: colorScheme)), lineWidth: 0.5)
                     )
             }
             
@@ -136,7 +179,7 @@ struct AppListItem: View {
                     if currentMode == .backup && !app.isInstalled {
                         StatusBadge(
                             text: NSLocalizedString("AppList_App_Status_Not_Installed", comment: ""),
-                            color: Color.App.notInstalled.color(for: colorScheme),
+                            color: (Color.App.notInstalled.color(for: colorScheme)),
                             style: .compact
                         )
                     }
@@ -144,7 +187,7 @@ struct AppListItem: View {
                 
                 Text(String(format: NSLocalizedString("AppList_App_Config_Paths_Count", comment: ""), app.configPaths.count))
                     .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    .foregroundColor((Color.App.secondary.color(for: colorScheme)))
             }
             
             Spacer()
@@ -152,7 +195,7 @@ struct AppListItem: View {
             // Chevron
             Image(systemName: "chevron.right")
                 .font(.system(size: 12))
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .foregroundColor((Color.App.secondary.color(for: colorScheme)))
                 .opacity(isHovered ? 1 : 0)
         }
         .padding(12)

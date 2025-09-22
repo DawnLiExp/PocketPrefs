@@ -21,11 +21,11 @@ struct ProgressView: View {
             VStack(spacing: 8) {
                 Text(NSLocalizedString("Common_Processing", comment: ""))
                     .font(DesignConstants.Typography.headline)
-                    .foregroundColor((Color.App.primary.color(for: colorScheme)))
+                    .foregroundColor(Color.App.primary.color(for: colorScheme))
 
                 Text("\(Int(progress * 100))%")
                     .font(DesignConstants.Typography.largeTitle)
-                    .foregroundStyle(LinearGradient.appAccent(for: colorScheme))
+                    .foregroundColor(Color.App.accent.color(for: colorScheme))
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -46,14 +46,14 @@ struct CircularProgressView: View {
         ZStack {
             Circle()
                 .stroke(
-                    (Color.App.progressTrack.color(for: colorScheme)),
+                    Color.App.progressTrack.color(for: colorScheme),
                     lineWidth: 12
                 )
 
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
-                    LinearGradient.appAccent(for: colorScheme),
+                    Color.App.accent.color(for: colorScheme),
                     style: StrokeStyle(
                         lineWidth: 12,
                         lineCap: .round
@@ -64,7 +64,7 @@ struct CircularProgressView: View {
 
             Image(systemName: "arrow.triangle.2.circlepath")
                 .font(.system(size: 32))
-                .foregroundStyle(LinearGradient.appAccent(for: colorScheme))
+                .foregroundColor(Color.App.accent.color(for: colorScheme))
                 .rotationEffect(.degrees(progress * 360))
                 .animation(DesignConstants.Animation.standard, value: progress)
         }
@@ -98,6 +98,7 @@ struct StatusBadge: View {
 struct PrimaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) var isEnabled
     @Environment(\.colorScheme) var colorScheme
+    @State private var isHovered = false
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -108,12 +109,21 @@ struct PrimaryButtonStyle: ButtonStyle {
             .background(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                     .fill(
-                        LinearGradient.appAccent(for: colorScheme)
-                            .opacity(isEnabled ? 1 : 0.5)
+                        (Color.App.accent.color(for: colorScheme))
+                            .opacity(isEnabled ? (isHovered ? 0.9 : 1.0) : 0.5)
                     )
             )
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .animation(DesignConstants.Animation.quick, value: configuration.isPressed)
+            .scaleEffect(configuration.isPressed ? 0.98 : 1)
+            .shadow(
+                color: (Color.App.accent.color(for: colorScheme)).opacity(isEnabled ? (isHovered ? 0.4 : 0.2) : 0.1),
+                radius: isHovered ? 10 : 5,
+                x: 0,
+                y: isHovered ? 4 : 2
+            )
+            .animation(DesignConstants.Animation.smooth, value: configuration.isPressed || isHovered)
+            .onHover { hovering in
+                isHovered = hovering
+            }
     }
 }
 
@@ -133,7 +143,7 @@ struct SecondaryButtonStyle: ButtonStyle {
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                    .stroke((Color.App.lightSeparator.color(for: colorScheme)), lineWidth: 0.5)
+                    .stroke(Color.App.lightSeparator.color(for: colorScheme), lineWidth: 0.5)
             )
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .animation(DesignConstants.Animation.quick, value: configuration.isPressed)

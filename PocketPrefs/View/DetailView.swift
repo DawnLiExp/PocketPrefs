@@ -99,7 +99,7 @@ struct AppDetailHeader: View {
             HStack {
                 Image(systemName: currentMode == .backup ? "arrow.up.circle" : "arrow.down.circle")
                     .font(.system(size: 24))
-                    .foregroundStyle(LinearGradient.appAccent(for: colorScheme))
+                    .foregroundColor(Color.App.accent.color(for: colorScheme))
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(app.name)
@@ -162,7 +162,7 @@ struct ConfigPathItem: View {
             
             // Show in Finder button
             Button(action: showInFinder) {
-                Image(systemName: "arrow.right.circle")
+                Image(systemName: "magnifyingglass.circle")
                     .font(.system(size: 16))
                     .foregroundColor(isHovered ? (Color.App.primary.color(for: colorScheme)) : (Color.App.secondary.color(for: colorScheme)))
             }
@@ -275,7 +275,7 @@ struct BackupPlaceholderView: View {
             VStack(spacing: 16) {
                 Image(systemName: "arrowshape.turn.up.left.2.fill")
                     .font(.system(size: 108))
-                    .foregroundStyle(LinearGradient.appAccent(for: colorScheme).opacity(0.6))
+                    .foregroundColor(Color.App.accent.color(for: colorScheme).opacity(0.7))
                 
                 Text(NSLocalizedString("Detail_Placeholder_Select_App", comment: ""))
                     .font(DesignConstants.Typography.headline)
@@ -378,7 +378,7 @@ struct RestoreDetailContent: View {
                 HStack {
                     Image(systemName: "archivebox.fill")
                         .font(.system(size: 24))
-                        .foregroundStyle(LinearGradient.appAccent(for: colorScheme))
+                        .foregroundColor(Color.App.accent.color(for: colorScheme))
                     
                     VStack(alignment: .leading, spacing: 4) {
                         Text(formatBackupName(backup.name))
@@ -442,7 +442,7 @@ struct RestoreDetailContent: View {
                 VStack(spacing: 16) {
                     Image(systemName: "info.circle")
                         .font(.system(size: 48))
-                        .foregroundStyle(LinearGradient.appAccent(for: colorScheme).opacity(0.6))
+                        .foregroundColor(Color.App.accent.color(for: colorScheme).opacity(0.6))
                     
                     Text(NSLocalizedString("Detail_Restore_No_Apps_Selected", comment: ""))
                         .font(DesignConstants.Typography.headline)
@@ -502,7 +502,7 @@ struct RestoreEmptyDetail: View {
         VStack(spacing: 16) {
             Image(systemName: "list.bullet.rectangle.portrait")
                 .font(.system(size: 108))
-                .foregroundStyle(LinearGradient.appAccent(for: colorScheme).opacity(0.6))
+                .foregroundColor(Color.App.accent.color(for: colorScheme).opacity(0.7))
             
             Text(NSLocalizedString("Detail_Restore_Placeholder_Select_Backup", comment: ""))
                 .font(DesignConstants.Typography.headline)

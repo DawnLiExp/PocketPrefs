@@ -97,13 +97,13 @@ extension Color {
             light: Color(hex: "F5F5F7"),
             dark: Color(hex: "0D0D0D")
         )
-        
+
         // Content area backgrounds (floating windows)
         static let contentAreaBackground = AdaptiveColor(
             light: Color(hex: "FFFFFF"),
             dark: Color(hex: "1C1C1E")
         )
-        
+
         // Legacy background colors (kept for compatibility)
         static let background = AdaptiveColor(
             light: Color(hex: "F5F5F7"),
@@ -206,11 +206,11 @@ extension LinearGradient {
 // MARK: - View Extensions for Backgrounds
 
 extension View {
-    /// Applies the new unified background (main + sidebar)
+    /// Applies the new unified background (main + sidebar) with glass effect
     func unifiedBackground() -> some View {
         modifier(UnifiedBackgroundModifier())
     }
-    
+
     /// Applies content area background (floating window effect)
     func contentAreaBackground() -> some View {
         modifier(ContentAreaBackgroundModifier())
@@ -232,8 +232,18 @@ private struct UnifiedBackgroundModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(.ultraThinMaterial)
-            .background((Color.App.unifiedBackground.color(for: colorScheme)))
+            .background(
+                ZStack {
+                    // Base color with transparency for glass effect
+                    (Color.App.unifiedBackground.color(for: colorScheme))
+                        .opacity(0.85)
+
+                    // Material layer for blur
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.7)
+                }
+            )
     }
 }
 
@@ -242,8 +252,16 @@ private struct ContentAreaBackgroundModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background((Color.App.contentAreaBackground.color(for: colorScheme)))
+            .background(Color.App.contentAreaBackground.color(for: colorScheme))
             .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
+            .shadow(
+                color: colorScheme == .dark
+                    ? Color.black.opacity(0.3)
+                    : Color.black.opacity(0.08),
+                radius: 8,
+                x: 0,
+                y: 2
+            )
     }
 }
 
@@ -252,8 +270,18 @@ private struct SidebarBackgroundModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background(.ultraThinMaterial)
-            .background((Color.App.unifiedBackground.color(for: colorScheme)))
+            .background(
+                ZStack {
+                    // Base color with transparency
+                    (Color.App.unifiedBackground.color(for: colorScheme))
+                        .opacity(0.85)
+
+                    // Material layer
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.7)
+                }
+            )
     }
 }
 
@@ -262,7 +290,7 @@ private struct ContentBackgroundModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background((Color.App.contentAreaBackground.color(for: colorScheme)))
+            .background(Color.App.contentAreaBackground.color(for: colorScheme))
     }
 }
 

@@ -20,7 +20,7 @@
 "Restore_App_Status_Not_Installed" = "Not Installed";
 "Restore_App_Status_Installed" = "Installed";
 "Restore_App_Config_Files_Count" = "%d config files";
-"Search apps..." = "Search apps...";
+"Search apps..." = "Search...";
 "Select Backup:" = "Select Backup:";
 "Select from other location..." = "Select from other location...";
 
@@ -41,12 +41,14 @@
 "Detail_Restore_App_Not_Installed_Badge" = "(Not Installed)";
 "Detail_Restore_Action_Restore_Selected" = "Restore Selected Configs";
 "Detail_Restore_No_Apps_Selected" = "No configurations selected";
+"Detail_Restore_Placeholder_Select_Backup" = "Select a backup from the list";
 
 "AppList_Title" = "Applications";
 "AppList_Select_All" = "Select All";
 "AppList_Selected_Count" = "%1$d / %2$d selected";
 "AppList_App_Status_Not_Installed" = "Not Installed";
 "AppList_App_Config_Paths_Count" = "%d config paths";
+"AppList_Search_Placeholder" = "Search...";
 
 "MainView_Mode_Backup" = "Backup";
 "MainView_Mode_Restore" = "Restore";
@@ -68,7 +70,7 @@
 
 /* Settings Main */
 "Settings_Title" = "Settings - Custom Applications";
-"Settings_Search_Apps" = "Search apps...";
+"Settings_Search_Apps" = "Search...";
 "Settings_Add_App" = "Add App";
 "Settings_Delete_Selected" = "Delete %d Selected";
 "Settings_Deselect_All" = "Deselect All";

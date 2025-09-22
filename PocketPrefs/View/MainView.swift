@@ -17,6 +17,10 @@ struct MainView: View {
     @State private var progress: Double = 0.0
     @Environment(\.colorScheme) var colorScheme
     
+    // Unified spacing - titlebar height serves as visual spacing
+    private let unifiedSpacing: CGFloat = 13
+    private let sidebarGap: CGFloat = 0 // Smaller gap to sidebar for visual balance
+    
     enum AppMode: String {
         case backup
         case restore
@@ -30,63 +34,80 @@ struct MainView: View {
 
         var icon: String {
             switch self {
-            case .backup: return "duffle.bag.fill"
+            case .backup: return "gearshape.arrow.trianglehead.2.clockwise.rotate.90"
             case .restore: return "clock.arrow.trianglehead.2.counterclockwise.rotate.90"
             }
         }
     }
     
     var body: some View {
-        HStack(spacing: 0) {
-            // Left Sidebar - Unified background
-            SidebarView(currentMode: $currentMode)
-                .frame(width: DesignConstants.Layout.sidebarWidth)
+        ZStack {
+            // Full background with glass effect
+            Color.clear
+                .unifiedBackground()
+                .ignoresSafeArea()
             
-            // Content area with floating window effect
-            HStack(spacing: 20) {
-                // Middle Content Area
-                Group {
-                    if currentMode == .backup {
-                        AppListView(
-                            backupManager: backupManager,
-                            selectedApp: $selectedApp,
-                            currentMode: currentMode
-                        )
-                    } else {
-                        RestoreListView(
-                            backupManager: backupManager,
-                            selectedApp: $selectedApp
-                        )
+            // Content area with merged middle and right sections
+            HStack(spacing: 0) {
+                // Left Sidebar
+                SidebarView(currentMode: $currentMode)
+                    .frame(width: DesignConstants.Layout.sidebarWidth)
+                
+                // Merged middle and right content area
+                HStack(spacing: 0) {
+                    // Middle Content Area
+                    Group {
+                        if currentMode == .backup {
+                            AppListView(
+                                backupManager: backupManager,
+                                selectedApp: $selectedApp,
+                                currentMode: currentMode
+                            )
+                        } else {
+                            RestoreListView(
+                                backupManager: backupManager,
+                                selectedApp: $selectedApp
+                            )
+                        }
                     }
+                    .frame(
+                        minWidth: DesignConstants.Layout.listWidth,
+                        idealWidth: DesignConstants.Layout.listWidth,
+                        maxWidth: DesignConstants.Layout.listWidth + 60
+                    )
+                    .background(Color.App.contentAreaBackground.color(for: colorScheme))
+                    
+                    // Divider between middle and right sections
+                    Rectangle()
+                        .fill(Color.App.lightSeparator.color(for: colorScheme))
+                        .frame(width: 1)
+                    
+                    // Right Detail Area
+                    DetailContainerView(
+                        selectedApp: selectedApp,
+                        backupManager: backupManager,
+                        currentMode: currentMode,
+                        isProcessing: $isProcessing,
+                        progress: $progress,
+                        showingRestorePicker: $showingRestorePicker
+                    )
+                    .frame(maxWidth: .infinity)
+                    .background(Color.App.contentAreaBackground.color(for: colorScheme))
                 }
-                .frame(
-                    minWidth: DesignConstants.Layout.listWidth - 20,
-                    idealWidth: DesignConstants.Layout.listWidth,
-                    maxWidth: DesignConstants.Layout.listWidth + 60
+                .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
+                .shadow(
+                    color: colorScheme == .dark
+                        ? Color.black.opacity(0.3)
+                        : Color.black.opacity(0.08),
+                    radius: 8,
+                    x: 0,
+                    y: 2
                 )
-                .contentAreaBackground()
-                
-                // Single separator between middle and right content
-                Rectangle()
-                    .fill((Color.App.separator.color(for: colorScheme)))
-                    .frame(width: 1)
-                    .opacity(0.3)
-                
-                // Right Detail Area
-                DetailContainerView(
-                    selectedApp: selectedApp,
-                    backupManager: backupManager,
-                    currentMode: currentMode,
-                    isProcessing: $isProcessing,
-                    progress: $progress,
-                    showingRestorePicker: $showingRestorePicker
-                )
-                .frame(maxWidth: .infinity)
-                .contentAreaBackground()
+                .padding(.leading, sidebarGap)
+                .padding(.trailing, unifiedSpacing)
+                .padding(.bottom, unifiedSpacing)
             }
-            .padding(20)
         }
-        .unifiedBackground()
         .frame(
             minWidth: DesignConstants.Layout.minWindowWidth,
             minHeight: DesignConstants.Layout.minWindowHeight

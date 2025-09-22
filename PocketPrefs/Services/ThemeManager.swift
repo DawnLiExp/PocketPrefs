@@ -59,7 +59,7 @@ enum Theme: String, CaseIterable {
 enum DesignConstants {
     // Layout
     enum Layout {
-        static let sidebarWidth: CGFloat = 75
+        static let sidebarWidth: CGFloat = 76
         static let listWidth: CGFloat = 280
         static let minWindowWidth: CGFloat = 820
         static let minWindowHeight: CGFloat = 600
@@ -74,10 +74,10 @@ enum DesignConstants {
 
     // Typography
     enum Typography {
-        static let largeTitle: Font = .system(size: 28, weight: .bold, design: .rounded)
-        static let title: Font = .system(size: 20, weight: .semibold, design: .rounded)
-        static let headline: Font = .system(size: 14, weight: .semibold, design: .rounded)
-        static let body: Font = .system(size: 13)
+        static let largeTitle: Font = .system(size: 26, weight: .bold, design: .rounded)
+        static let title: Font = .system(size: 18, weight: .semibold, design: .rounded)
+        static let headline: Font = .system(size: 12, weight: .semibold, design: .rounded)
+        static let body: Font = .system(size: 12)
         static let caption: Font = .system(size: 11)
         static let tiny: Font = .system(size: 10)
     }
@@ -99,12 +99,12 @@ struct GlassEffect: ViewModifier {
         content
             .background(.ultraThinMaterial)
             .background(
-                (AdaptiveColor.glassOverlay.color(for: colorScheme))
+                AdaptiveColor.glassOverlay.color(for: colorScheme)
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius)
                     .stroke(
-                        (Color.App.lightSeparator.color(for: colorScheme)),
+                        Color.App.lightSeparator.color(for: colorScheme),
                         lineWidth: 0.5
                     )
             )
@@ -124,7 +124,7 @@ struct CardEffect: ViewModifier {
             )
             .background(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                    .fill((Color.App.hoverBackground.color(for: colorScheme)))
+                    .fill(Color.App.hoverBackground.color(for: colorScheme))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
