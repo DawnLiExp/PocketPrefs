@@ -1,4 +1,4 @@
-/* 
+/*
   Localizable.strings
   PocketPrefs
 
@@ -12,15 +12,11 @@
 "Restore_Partial_Success_Message" = "⚠️ 恢复完成。成功: %d 个，失败: %@";
 "Restore_No_Apps_Processed" = "没有恢复任何应用配置";
 "Restore_Backup_Title" = "恢复备份";
-"Restore_Apps_Selected_Count" = "%1$d / %2$d 个应用已选择";
-"Restore_Search_No_Results" = "没有找到与 \"%@\" 相关的结果";
-"Restore_Search_Try_Different_Keyword" = "尝试使用不同的关键词搜索";
 "Restore_Empty_State_No_Backups" = "没有找到备份";
 "Restore_Empty_State_Select_Location_Or_Create_Backup" = "请选择其他位置或先创建备份";
 "Restore_App_Status_Not_Installed" = "未安装";
 "Restore_App_Status_Installed" = "已安装";
 "Restore_App_Config_Files_Count" = "%d 个配置文件";
-"Search apps..." = "搜索...";
 "Select Backup:" = "选择备份:";
 "Select from other location..." = "从其他位置选择...";
 
@@ -44,11 +40,8 @@
 "Detail_Restore_Placeholder_Select_Backup" = "从列表选择备份";
 
 "AppList_Title" = "应用列表";
-"AppList_Select_All" = "全选";
-"AppList_Selected_Count" = "%1$d / %2$d 已选择";
 "AppList_App_Status_Not_Installed" = "未安装";
 "AppList_App_Config_Paths_Count" = "%d 个配置路径";
-"AppList_Search_Placeholder" = "搜索...";
 
 "MainView_Mode_Backup" = "备份";
 "MainView_Mode_Restore" = "恢复";
@@ -70,10 +63,9 @@
 
 /* Settings Main */
 "Settings_Title" = "设置 - 自定义应用";
-"Settings_Search_Apps" = "搜索...";
 "Settings_Add_App" = "添加应用";
 "Settings_Delete_Selected" = "删除 %d 个选中项";
-"Settings_Deselect_All" = "取消全选";
+
 "Settings_App_Information" = "应用信息";
 "Settings_App_Name" = "应用名称：";
 "Settings_Bundle_ID" = "Bundle ID：";
@@ -106,11 +98,16 @@
 /* Settings Empty States */
 "Settings_No_Custom_Apps" = "尚未添加自定义应用";
 "Settings_Add_First_App_Hint" = "点击\"添加应用\"配置新的应用备份";
-"Settings_No_Search_Results" = "未找到应用";
-"Settings_Try_Different_Search" = "尝试其他搜索词";
 "Settings_Select_App_To_Configure" = "选择一个应用进行配置";
 
 /* Common Actions */
 "Common_Save" = "保存";
 "Common_Cancel" = "取消";
 "Common_Delete" = "删除";
+
+/* Search Field */
+"Search_Placeholder" = "搜索...";
+"Select_All" = "全选";
+"Selected_Count" = "已选择 %d / %d";
+"Search_No_Results" = "未找到包含\"%@\"的应用";
+"Search_Try_Different_Keyword" = "尝试使用不同的关键词";

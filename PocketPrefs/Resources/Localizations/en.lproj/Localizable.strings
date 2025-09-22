@@ -1,4 +1,4 @@
-/* 
+/*
   Localizable.strings
   PocketPrefs
 
@@ -12,15 +12,11 @@
 "Restore_Partial_Success_Message" = "⚠️ Restore complete. Success: %d, Failed: %@";
 "Restore_No_Apps_Processed" = "No app configurations were restored";
 "Restore_Backup_Title" = "Restore Backup";
-"Restore_Apps_Selected_Count" = "%1$d / %2$d apps selected";
-"Restore_Search_No_Results" = "No results for \"%@\"";
-"Restore_Search_Try_Different_Keyword" = "Try searching with a different keyword";
 "Restore_Empty_State_No_Backups" = "No backups found";
 "Restore_Empty_State_Select_Location_Or_Create_Backup" = "Select another location or create a backup first";
 "Restore_App_Status_Not_Installed" = "Not Installed";
 "Restore_App_Status_Installed" = "Installed";
 "Restore_App_Config_Files_Count" = "%d config files";
-"Search apps..." = "Search...";
 "Select Backup:" = "Select Backup:";
 "Select from other location..." = "Select from other location...";
 
@@ -44,11 +40,8 @@
 "Detail_Restore_Placeholder_Select_Backup" = "Select a backup from the list";
 
 "AppList_Title" = "Applications";
-"AppList_Select_All" = "Select All";
-"AppList_Selected_Count" = "%1$d / %2$d selected";
 "AppList_App_Status_Not_Installed" = "Not Installed";
 "AppList_App_Config_Paths_Count" = "%d config paths";
-"AppList_Search_Placeholder" = "Search...";
 
 "MainView_Mode_Backup" = "Backup";
 "MainView_Mode_Restore" = "Restore";
@@ -70,10 +63,9 @@
 
 /* Settings Main */
 "Settings_Title" = "Settings - Custom Applications";
-"Settings_Search_Apps" = "Search...";
 "Settings_Add_App" = "Add App";
 "Settings_Delete_Selected" = "Delete %d Selected";
-"Settings_Deselect_All" = "Deselect All";
+
 "Settings_App_Information" = "App Information";
 "Settings_App_Name" = "App Name:";
 "Settings_Bundle_ID" = "Bundle ID:";
@@ -106,11 +98,16 @@
 /* Settings Empty States */
 "Settings_No_Custom_Apps" = "No custom apps added yet";
 "Settings_Add_First_App_Hint" = "Click 'Add App' to configure a new application for backup";
-"Settings_No_Search_Results" = "No apps found";
-"Settings_Try_Different_Search" = "Try a different search term";
 "Settings_Select_App_To_Configure" = "Select an app to configure";
 
 /* Common Actions */
 "Common_Save" = "Save";
 "Common_Cancel" = "Cancel";
 "Common_Delete" = "Delete";
+
+/* Search Field */
+"Search_Placeholder" = "Search...";
+"Select_All" = "Select All";
+"Selected_Count" = "Selected %d / %d";
+"Search_No_Results" = "No apps found for \"%@\"";
+"Search_Try_Different_Keyword" = "Try a different keyword";

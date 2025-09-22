@@ -51,7 +51,7 @@ struct SettingsView: View {
                     
                     // Apps List
                     if filteredApps.isEmpty {
-                        EmptyAppsListView(searchActive: !searchText.isEmpty)
+                        EmptyAppsListView(searchActive: !searchText.isEmpty, searchText: searchText)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                     } else {
                         ScrollView {

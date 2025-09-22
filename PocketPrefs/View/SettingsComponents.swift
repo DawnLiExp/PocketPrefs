@@ -50,7 +50,7 @@ struct SettingsToolbar: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 
-                TextField(NSLocalizedString("Settings_Search_Apps", comment: ""), text: $searchText)
+                TextField(NSLocalizedString("Search_Placeholder", comment: "Search apps..."), text: $searchText)
                     .textFieldStyle(.plain)
                 
                 if !searchText.isEmpty {
@@ -86,14 +86,29 @@ struct SettingsToolbar: View {
                 }
                 
                 Spacer()
-                
-                if selectedCount > 0 {
-                    Button(action: { customAppManager.deselectAll() }) {
-                        Text(NSLocalizedString("Settings_Deselect_All", comment: ""))
-                            .font(DesignConstants.Typography.caption)
+            }
+            
+            HStack {
+                Toggle(isOn: Binding(
+                    get: { !customAppManager.customApps.isEmpty && customAppManager.selectedAppIds.count == customAppManager.customApps.count },
+                    set: { newValue in
+                        if newValue {
+                            customAppManager.selectAll()
+                        } else {
+                            customAppManager.deselectAll()
+                        }
                     }
-                    .buttonStyle(.plain)
+                )) {
+                    Text(NSLocalizedString("Select_All", comment: ""))
+                        .font(DesignConstants.Typography.body)
                 }
+                .toggleStyle(.checkbox)
+                
+                Spacer()
+                
+                Text(String(format: NSLocalizedString("Selected_Count", comment: ""), customAppManager.selectedAppIds.count, customAppManager.customApps.count))
+                    .font(DesignConstants.Typography.caption)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
         }
         .padding(12)
@@ -286,6 +301,7 @@ struct CustomAppDetailView: View {
 
 struct EmptyAppsListView: View {
     let searchActive: Bool
+    let searchText: String
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -295,13 +311,13 @@ struct EmptyAppsListView: View {
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
             
             Text(searchActive ?
-                NSLocalizedString("Settings_No_Search_Results", comment: "") :
+                String(format: NSLocalizedString("Search_No_Results", comment: ""), searchText) :
                 NSLocalizedString("Settings_No_Custom_Apps", comment: ""))
                 .font(DesignConstants.Typography.headline)
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
-            
+                       
             Text(searchActive ?
-                NSLocalizedString("Settings_Try_Different_Search", comment: "") :
+                NSLocalizedString("Search_Try_Different_Keyword", comment: "") :
                 NSLocalizedString("Settings_Add_First_App_Hint", comment: ""))
                 .font(DesignConstants.Typography.caption)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))

@@ -73,6 +73,15 @@ struct RestoreListHeader: View {
     @Binding var isRefreshing: Bool
     @Environment(\.colorScheme) var colorScheme
     
+    // Calculate all selected state for restore apps
+    private var allRestoreAppsSelected: Bool {
+        guard let backup = backupManager.selectedBackup else { return false }
+        let filteredApps = backup.apps.filter {
+            searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText)
+        }
+        return !filteredApps.isEmpty && filteredApps.allSatisfy { $0.isSelected }
+    }
+    
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             // Display the title for the restore backup view
@@ -101,21 +110,46 @@ struct RestoreListHeader: View {
             // Search bar - only show if backup selected
             if backupManager.selectedBackup != nil {
                 SearchFieldView(searchText: $searchText)
-            }
-            
-            // Selection status
-            if let backup = backupManager.selectedBackup {
-                let filteredCount = backup.apps
-                    .filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
-                    .filter { $0.isSelected }
-                    .count
-                let totalFilteredCount = backup.apps
-                    .filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
-                    .count
                 
-                Text(String(format: NSLocalizedString("Restore_Apps_Selected_Count", comment: ""), filteredCount, totalFilteredCount))
-                    .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                // Select all toggle and selection count
+                HStack {
+                    Toggle(isOn: Binding(
+                        get: { allRestoreAppsSelected },
+                        set: { newValue in
+                            guard let backup = backupManager.selectedBackup else { return }
+                            let filteredApps = backup.apps.filter {
+                                searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText)
+                            }
+                            
+                            for app in filteredApps {
+                                if newValue != app.isSelected {
+                                    backupManager.toggleRestoreSelection(for: app)
+                                }
+                            }
+                        }
+                    )) {
+                        Text(NSLocalizedString("Select_All", comment: ""))
+                            .font(DesignConstants.Typography.body)
+                    }
+                    .toggleStyle(.checkbox)
+                    
+                    Spacer()
+                    
+                    // Selection status
+                    if let backup = backupManager.selectedBackup {
+                        let filteredCount = backup.apps
+                            .filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
+                            .filter { $0.isSelected }
+                            .count
+                        let totalFilteredCount = backup.apps
+                            .filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
+                            .count
+                        
+                        Text(String(format: NSLocalizedString("Selected_Count", comment: ""), filteredCount, totalFilteredCount))
+                            .font(DesignConstants.Typography.caption)
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    }
+                }
             }
         }
         .padding(20)
@@ -150,7 +184,7 @@ struct SearchFieldView: View {
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .font(.system(size: 14))
             
-            TextField(NSLocalizedString("Search apps...", comment: ""), text: $searchText)
+            TextField(NSLocalizedString("Search_Placeholder", comment: ""), text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
                 .focused($isFocused)
                 .font(DesignConstants.Typography.body)
@@ -177,8 +211,8 @@ struct SearchFieldView: View {
         .overlay(
             RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                 .stroke(
-                    isFocused ? (Color.App.accent.color(for: colorScheme)).opacity(0.4) : (Color.App.lightSeparator.color(for: colorScheme)),
-                    lineWidth: isFocused ? 1.5 : 1.0
+                    Color.App.lightSeparator.color(for: colorScheme),
+                    lineWidth: 1.0
                 )
         )
         .animation(.easeInOut(duration: 0.15), value: isFocused)
@@ -320,10 +354,10 @@ struct SearchEmptyState: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 48))
                 .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.5))
-            Text(String(format: NSLocalizedString("Restore_Search_No_Results", comment: ""), searchText))
+            Text(String(format: NSLocalizedString("Search_No_Results", comment: ""), searchText))
                 .font(DesignConstants.Typography.headline)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
-            Text(NSLocalizedString("Restore_Search_Try_Different_Keyword", comment: ""))
+            Text(NSLocalizedString("Search_Try_Different_Keyword", comment: ""))
                 .font(DesignConstants.Typography.body)
                 .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.8))
             Spacer()
