@@ -62,7 +62,7 @@ enum DesignConstants {
         static let sidebarWidth: CGFloat = 76
         static let listWidth: CGFloat = 280
         static let minWindowWidth: CGFloat = 820
-        static let minWindowHeight: CGFloat = 600
+        static let minWindowHeight: CGFloat = 570
 
         static let cornerRadius: CGFloat = 12
         static let smallCornerRadius: CGFloat = 8

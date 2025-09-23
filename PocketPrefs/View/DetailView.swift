@@ -128,7 +128,7 @@ struct AppDetailHeader: View {
         }
         .padding(20)
         .background(
-            (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3)
+            Color.App.contentAreaBackground.color(for: colorScheme)
         )
     }
 }
@@ -405,7 +405,7 @@ struct RestoreDetailContent: View {
                 }
             }
             .padding(20)
-            .background((Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3))
+            .background(Color.App.contentAreaBackground.color(for: colorScheme))
             
             // Selected apps list - no internal separator
             if hasSelectedApps {
@@ -464,7 +464,7 @@ struct RestoreDetailContent: View {
                 .disabled(!hasSelectedApps)
             }
             .padding(20)
-            .background((Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3))
+         //   .background((Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3))
         }
     }
     

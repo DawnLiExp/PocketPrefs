@@ -100,7 +100,7 @@ struct MainView: View {
                     color: colorScheme == .dark
                         ? Color.black.opacity(0.3)
                         : Color.black.opacity(0.08),
-                    radius: 8,
+                    radius: 4,
                     x: 0,
                     y: 2
                 )

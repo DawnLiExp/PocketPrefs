@@ -62,8 +62,8 @@ extension Color {
     enum App {
         // Primary Colors
         static let accent = AdaptiveColor(
-            light: Color(hex: "007AFF"),
-            dark: Color(hex: "0A84FF")
+            light: Color(hex: "748873"),
+            dark: Color(hex: "8D99AE")
         )
         static let primary = AdaptiveColor(
             light: Color(hex: "1C1C1E"),
@@ -94,13 +94,13 @@ extension Color {
 
         // New unified background system
         static let unifiedBackground = AdaptiveColor(
-            light: Color(hex: "F5F5F7"),
-            dark: Color(hex: "0D0D0D")
+            light: Color(hex: "F5F2ED"),
+            dark: Color(hex: "44444E")
         )
 
         // Content area backgrounds (floating windows)
         static let contentAreaBackground = AdaptiveColor(
-            light: Color(hex: "FFFFFF"),
+            light: Color(hex: "FAF8F5"),
             dark: Color(hex: "1C1C1E")
         )
 
@@ -114,7 +114,7 @@ extension Color {
             dark: Color(hex: "1C1C1E")
         )
         static let tertiaryBackground = AdaptiveColor(
-            light: Color(hex: "F2F2F7"),
+            light: Color(hex: "F5F2ED"),
             dark: Color(hex: "2C2C2E")
         )
 
@@ -124,12 +124,12 @@ extension Color {
             dark: Color(hex: "1C1C1E")
         )
         static let selectedControlBackground = AdaptiveColor(
-            light: Color(hex: "007AFF"),
+            light: Color(hex: "7A9A7A"),
             dark: Color(hex: "0A84FF")
         )
         static let hoverBackground = AdaptiveColor(
-            light: Color(hex: "007AFF", opacity: 0.08),
-            dark: Color(hex: "0A84FF", opacity: 0.08)
+            light: Color(hex: "7A9A7A", opacity: 0.08),
+            dark: Color(hex: "44444E", opacity: 0.08)
         )
 
         // Text Colors
@@ -156,14 +156,14 @@ extension Color {
             dark: Color(hex: "38383A")
         )
         static let lightSeparator = AdaptiveColor(
-            light: Color(hex: "3C3C43", opacity: 0.1),
-            dark: Color(hex: "EBEBF5", opacity: 0.1)
+            light: Color(hex: "748873", opacity: 0.8),
+            dark: Color(hex: "8D99AE", opacity: 0.8)
         )
 
         // Status Colors
         static let installed = AdaptiveColor(
-            light: Color(hex: "34C759", opacity: 0.8),
-            dark: Color(hex: "32D74B", opacity: 0.8)
+            light: Color(hex: "748873", opacity: 0.8),
+            dark: Color(hex: "748873", opacity: 0.8)
         )
         static let notInstalled = AdaptiveColor(
             light: Color(hex: "FF9500", opacity: 0.8),
@@ -236,12 +236,12 @@ private struct UnifiedBackgroundModifier: ViewModifier {
                 ZStack {
                     // Base color with transparency for glass effect
                     (Color.App.unifiedBackground.color(for: colorScheme))
-                        .opacity(0.85)
+                        .opacity(0.80)
 
                     // Material layer for blur
                     Rectangle()
                         .fill(.ultraThinMaterial)
-                        .opacity(0.7)
+                        .opacity(0.75)
                 }
             )
     }
@@ -274,12 +274,12 @@ private struct SidebarBackgroundModifier: ViewModifier {
                 ZStack {
                     // Base color with transparency
                     (Color.App.unifiedBackground.color(for: colorScheme))
-                        .opacity(0.85)
+                        .opacity(0.30)
 
                     // Material layer
                     Rectangle()
                         .fill(.ultraThinMaterial)
-                        .opacity(0.7)
+                        .opacity(0.75)
                 }
             )
     }

@@ -83,7 +83,7 @@ struct RestoreListHeader: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 20) {
             // Display the title for the restore backup view
             Text(NSLocalizedString("Restore_Backup_Title", comment: ""))
                 .font(DesignConstants.Typography.title)
@@ -152,9 +152,11 @@ struct RestoreListHeader: View {
                 }
             }
         }
-        .padding(20)
+        .padding(.horizontal, 20)
+        .padding(.top, 20)
+        .padding(.bottom, 8)
         .background(
-            (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3)
+            Color.App.contentAreaBackground.color(for: colorScheme)
         )
     }
     
@@ -200,21 +202,22 @@ struct SearchFieldView: View {
                 .buttonStyle(PlainButtonStyle())
             }
         }
-        .padding(.horizontal, 10)
-        .padding(.vertical, 7)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 9)
         .background(
             RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                 .fill(
-                    (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.5)
+                    (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.7)
                 )
         )
         .overlay(
             RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                 .stroke(
-                    Color.App.lightSeparator.color(for: colorScheme),
+                    Color.App.lightSeparator.color(for: colorScheme).opacity(0.7),
                     lineWidth: 1.0
                 )
         )
+
         .animation(.easeInOut(duration: 0.15), value: isFocused)
     }
 }
