@@ -45,6 +45,7 @@
 
 "MainView_Mode_Backup" = "Backup";
 "MainView_Mode_Restore" = "Restore";
+"Error_Select_Backup_Failed" = "Failed to select backup: %@";
 
 "Common_Processing" = "Processing...";
 

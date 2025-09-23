@@ -78,9 +78,10 @@ struct MainView: View {
                     .background(Color.App.contentAreaBackground.color(for: colorScheme))
                     
                     // Divider between middle and right sections
-                    Rectangle()
-                        .fill(Color.App.lightSeparator.color(for: colorScheme))
+                    RoundedRectangle(cornerRadius: 0.5)
+                        .fill(.ultraThinMaterial)
                         .frame(width: 1)
+                        .background(Color.App.lightSeparator.color(for: colorScheme).opacity(0.3))
                     
                     // Right Detail Area
                     DetailContainerView(
@@ -146,7 +147,10 @@ struct MainView: View {
                 }
             }
         case .failure(let error):
-            backupManager.statusMessage = "选择备份失败: \(error.localizedDescription)"
+            backupManager.statusMessage = String(
+                format: NSLocalizedString("Error_Select_Backup_Failed", comment: ""),
+                error.localizedDescription
+            )
         }
     }
 }

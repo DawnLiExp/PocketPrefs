@@ -45,6 +45,7 @@
 
 "MainView_Mode_Backup" = "备份";
 "MainView_Mode_Restore" = "恢复";
+"Error_Select_Backup_Failed" = "选择备份失败: %@";
 
 "Common_Processing" = "正在处理...";
 
