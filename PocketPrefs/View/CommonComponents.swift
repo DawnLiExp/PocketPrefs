@@ -49,7 +49,6 @@ struct CircularProgressView: View {
     let progress: Double
     @Environment(\.colorScheme) var colorScheme
     @State private var decorativeRotation: Double = 0
-    @State private var shimmerOffset: Double = -1.0
 
     var body: some View {
         ZStack {
@@ -98,30 +97,6 @@ struct CircularProgressView: View {
                 .animation(.linear(duration: 3).repeatForever(autoreverses: false), value: decorativeRotation)
                 .onAppear {
                     decorativeRotation = 360
-                }
-
-            // Shimmer Effect
-            Circle()
-                .trim(from: 0, to: progress)
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            .clear,
-                            Color.white.opacity(0.4),
-                            .clear
-                        ],
-                        startPoint: UnitPoint(x: shimmerOffset, y: 0),
-                        endPoint: UnitPoint(x: shimmerOffset + 0.3, y: 0)
-                    ),
-                    style: StrokeStyle(
-                        lineWidth: 12,
-                        lineCap: .round
-                    )
-                )
-                .rotationEffect(.degrees(-90))
-                .animation(.linear(duration: 1.5).repeatForever(autoreverses: false), value: shimmerOffset)
-                .onAppear {
-                    shimmerOffset = 1.3
                 }
 
             // Center Icon with Rotation
