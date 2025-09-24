@@ -203,10 +203,6 @@ struct AppListItem: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(width: 32, height: 32)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 6)
-                            .stroke(Color.App.lightSeparator.color(for: colorScheme), lineWidth: 0.5)
-                    )
             }
             
             // App Info
