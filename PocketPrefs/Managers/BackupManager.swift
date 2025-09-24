@@ -154,11 +154,11 @@ class BackupManager: ObservableObject {
         // Monitor progress
         let progressTask = Task { [weak self] in
             var progress = 0.0
-            while progress < 0.9 && !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 100_000_000) // 0.1 second
-                progress += 0.02
+            while progress < 0.95 && !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 80_000_000) // 0.1 second
+                progress += 0.03
                 await MainActor.run {
-                    self?.currentProgress = min(progress, 0.9)
+                    self?.currentProgress = min(progress, 0.95)
                 }
             }
         }
@@ -172,7 +172,7 @@ class BackupManager: ObservableObject {
         // Refresh backups list
         await scanBackups()
         
-        try? await Task.sleep(nanoseconds: 2_000_000_000) // 2 seconds
+        try? await Task.sleep(nanoseconds: 1_500_000_000) // 2 seconds
         isProcessing = false
         currentProgress = 0.0
     }
@@ -197,11 +197,11 @@ class BackupManager: ObservableObject {
         // Monitor progress
         let progressTask = Task { [weak self] in
             var progress = 0.0
-            while progress < 0.9 && !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 100_000_000)
-                progress += 0.02
+            while progress < 0.95 && !Task.isCancelled {
+                try? await Task.sleep(nanoseconds: 80_000_000)
+                progress += 0.03
                 await MainActor.run {
-                    self?.currentProgress = min(progress, 0.9)
+                    self?.currentProgress = min(progress, 0.95)
                 }
             }
         }
@@ -215,7 +215,7 @@ class BackupManager: ObservableObject {
         // Refresh app installation status
         await loadApps()
         
-        try? await Task.sleep(nanoseconds: 2_000_000_000)
+        try? await Task.sleep(nanoseconds: 1_500_000_000)
         isProcessing = false
         currentProgress = 0.0
     }

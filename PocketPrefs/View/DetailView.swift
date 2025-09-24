@@ -309,15 +309,15 @@ struct BackupPlaceholderView: View {
         }
         
         Task { @MainActor in
-            while progress < 0.9 {
-                try? await Task.sleep(nanoseconds: 50_000_000)
-                progress += 0.02
+            while progress < 0.95 {
+                try? await Task.sleep(nanoseconds: 40_000_000)
+                progress += 0.04
             }
             
             backupManager.performBackup()
             
             progress = 1.0
-            try? await Task.sleep(nanoseconds: 500_000_000)
+            try? await Task.sleep(nanoseconds: 375_000_000)
             isProcessing = false
             progress = 0.0
         }
@@ -464,7 +464,7 @@ struct RestoreDetailContent: View {
                 .disabled(!hasSelectedApps)
             }
             .padding(20)
-         //   .background((Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3))
+            //   .background((Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3))
         }
     }
     
@@ -475,15 +475,15 @@ struct RestoreDetailContent: View {
         }
         
         Task { @MainActor in
-            while progress < 0.9 {
-                try? await Task.sleep(nanoseconds: 50_000_000)
-                progress += 0.02
+            while progress < 0.95 {
+                try? await Task.sleep(nanoseconds: 40_000_000)
+                progress += 0.04
             }
             
             backupManager.performRestore(from: backup.path)
             
             progress = 1.0
-            try? await Task.sleep(nanoseconds: 500_000_000)
+            try? await Task.sleep(nanoseconds: 375_000_000)
             isProcessing = false
             progress = 0.0
         }

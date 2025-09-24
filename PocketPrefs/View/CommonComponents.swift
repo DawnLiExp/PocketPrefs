@@ -12,13 +12,15 @@ import SwiftUI
 struct ProgressView: View {
     let progress: Double
     @Environment(\.colorScheme) var colorScheme
+    @State private var rotation: Double = 0
+    @State private var pulseScale: Double = 1.0
 
     var body: some View {
-        VStack(spacing: 24) {
+        VStack(spacing: 32) {
             CircularProgressView(progress: progress)
-                .frame(width: 120, height: 120)
+                .frame(width: 140, height: 140)
 
-            VStack(spacing: 8) {
+            VStack(spacing: 12) {
                 Text(NSLocalizedString("Common_Processing", comment: ""))
                     .font(DesignConstants.Typography.headline)
                     .foregroundColor(Color.App.primary.color(for: colorScheme))
@@ -26,6 +28,11 @@ struct ProgressView: View {
                 Text("\(Int(progress * 100))%")
                     .font(DesignConstants.Typography.largeTitle)
                     .foregroundColor(Color.App.accent.color(for: colorScheme))
+                    .scaleEffect(pulseScale)
+                    .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: pulseScale)
+                    .onAppear {
+                        pulseScale = 1.05
+                    }
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -41,32 +48,94 @@ struct ProgressView: View {
 struct CircularProgressView: View {
     let progress: Double
     @Environment(\.colorScheme) var colorScheme
+    @State private var decorativeRotation: Double = 0
+    @State private var shimmerOffset: Double = -1.0
 
     var body: some View {
         ZStack {
+            // Background Track
             Circle()
                 .stroke(
                     Color.App.progressTrack.color(for: colorScheme),
-                    lineWidth: 12
+                    lineWidth: 8
                 )
 
+            // Progress Arc with Gradient
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
-                    Color.App.accent.color(for: colorScheme),
+                    LinearGradient(
+                        colors: [
+                            Color.App.accent.color(for: colorScheme),
+                            Color.App.accent.color(for: colorScheme).opacity(0.7)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    style: StrokeStyle(
+                        lineWidth: 8,
+                        lineCap: .round
+                    )
+                )
+                .rotationEffect(.degrees(-90))
+                .animation(.easeInOut(duration: 0.6), value: progress)
+
+            // Decorative Ring
+            Circle()
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            Color.App.accent.color(for: colorScheme).opacity(0.3),
+                            .clear
+                        ],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    ),
+                    lineWidth: 2
+                )
+                .frame(width: 120, height: 120)
+                .rotationEffect(.degrees(decorativeRotation))
+                .animation(.linear(duration: 3).repeatForever(autoreverses: false), value: decorativeRotation)
+                .onAppear {
+                    decorativeRotation = 360
+                }
+
+            // Shimmer Effect
+            Circle()
+                .trim(from: 0, to: progress)
+                .stroke(
+                    LinearGradient(
+                        colors: [
+                            .clear,
+                            Color.white.opacity(0.4),
+                            .clear
+                        ],
+                        startPoint: UnitPoint(x: shimmerOffset, y: 0),
+                        endPoint: UnitPoint(x: shimmerOffset + 0.3, y: 0)
+                    ),
                     style: StrokeStyle(
                         lineWidth: 12,
                         lineCap: .round
                     )
                 )
                 .rotationEffect(.degrees(-90))
-                .animation(DesignConstants.Animation.standard, value: progress)
+                .animation(.linear(duration: 1.5).repeatForever(autoreverses: false), value: shimmerOffset)
+                .onAppear {
+                    shimmerOffset = 1.3
+                }
 
+            // Center Icon with Rotation
             Image(systemName: "arrow.triangle.2.circlepath")
-                .font(.system(size: 32))
+                .font(.system(size: 36, weight: .light))
                 .foregroundColor(Color.App.accent.color(for: colorScheme))
                 .rotationEffect(.degrees(progress * 360))
-                .animation(DesignConstants.Animation.standard, value: progress)
+                .animation(.easeInOut(duration: 0.8), value: progress)
+                .shadow(
+                    color: Color.App.accent.color(for: colorScheme).opacity(0.3),
+                    radius: 4,
+                    x: 0,
+                    y: 2
+                )
         }
     }
 }
