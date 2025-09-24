@@ -62,6 +62,10 @@ struct AppDetailView: View {
     @Binding var showingRestorePicker: Bool
     @Environment(\.colorScheme) var colorScheme
     
+    private var hasValidSelection: Bool {
+        !backupManager.apps.filter { $0.isSelected && $0.isInstalled }.isEmpty
+    }
+    
     var body: some View {
         VStack(spacing: 0) {
             // Header
@@ -81,8 +85,40 @@ struct AppDetailView: View {
             }
             
             Spacer()
+            
+            HStack {
+                Spacer()
+                
+                Button(action: performBackup) {
+                    Label(NSLocalizedString("Detail_Action_Backup_Selected", comment: ""), systemImage: "arrow.up.circle.fill")
+                }
+                .buttonStyle(PrimaryButtonStyle())
+                .disabled(!hasValidSelection)
+            }
+            .padding(20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+    
+    private func performBackup() {
+        withAnimation(DesignConstants.Animation.standard) {
+            isProcessing = true
+            progress = 0.0
+        }
+        
+        Task { @MainActor in
+            while progress < 0.95 {
+                try? await Task.sleep(nanoseconds: 40_000_000)
+                progress += 0.04
+            }
+            
+            backupManager.performBackup()
+            
+            progress = 1.0
+            try? await Task.sleep(nanoseconds: 375_000_000)
+            isProcessing = false
+            progress = 0.0
+        }
     }
 }
 
