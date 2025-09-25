@@ -100,7 +100,7 @@ extension Color {
 
         // Content area backgrounds (floating windows)
         static let contentAreaBackground = AdaptiveColor(
-            light: Color(hex: "FAF8F5"),
+            light: Color(hex: "fdfbfa"),
             dark: Color(hex: "1C1C1E")
         )
 

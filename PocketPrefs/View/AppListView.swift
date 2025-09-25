@@ -77,7 +77,7 @@ struct AppListHeader: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 18) {
             // Search bar
             HStack {
                 Image(systemName: "magnifyingglass")
@@ -133,7 +133,7 @@ struct AppListHeader: View {
                     Text(NSLocalizedString("Select_All", comment: ""))
                         .font(DesignConstants.Typography.body)
                 }
-                .toggleStyle(.checkbox)
+                .toggleStyle(CustomCheckboxToggleStyle())
                 
                 Spacer()
                 
@@ -144,7 +144,7 @@ struct AppListHeader: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 18)
-        .padding(.bottom, 8)
+        .padding(.bottom, 11)
         .background(
             Color.App.contentAreaBackground.color(for: colorScheme)
         )
@@ -186,13 +186,13 @@ struct AppListItem: View {
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 5) {
             // Checkbox
             Toggle("", isOn: Binding(
                 get: { app.isSelected },
                 set: { _ in backupManager.toggleSelection(for: app) }
             ))
-            .toggleStyle(.checkbox)
+            .toggleStyle(CustomCheckboxToggleStyle())
             .disabled(currentMode == .backup ? !app.isInstalled : false)
             
             // App Icon

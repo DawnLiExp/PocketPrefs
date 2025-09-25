@@ -9,6 +9,7 @@ import SwiftUI
 
 // MARK: - App Delegate
 
+/// Handles application lifecycle events and window configuration
 class AppDelegate: NSObject, NSApplicationDelegate {
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Configure window appearance after launch
@@ -18,18 +19,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 window.titlebarAppearsTransparent = true
                 window.titleVisibility = .hidden
                 window.styleMask.insert(.fullSizeContentView)
-                
-                // Remove toolbar separator
+
+                // Create unified toolbar appearance without separator
                 window.toolbarStyle = .unified
-                
+
                 // Enable window dragging from background
-                window.isMovableByWindowBackground = true
-                
-                // Don't set backgroundColor to clear - let SwiftUI handle the background
-                // This ensures the window has proper background color
-                // window.backgroundColor = NSColor.clear  // REMOVED
-                
-                // Set minimum window size
+                // window.isMovableByWindowBackground = true
+
                 window.minSize = NSSize(
                     width: DesignConstants.Layout.minWindowWidth,
                     height: DesignConstants.Layout.minWindowHeight
@@ -37,7 +33,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             }
         }
     }
-    
+
+    /// Terminate application when last window closes (standard behavior for utility apps)
     func applicationShouldTerminateAfterLastWindowClosed(_ sender: NSApplication) -> Bool {
         return true
     }
@@ -45,25 +42,26 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
 // MARK: - Custom Window Background
 
+/// Manages window background appearance with color scheme adaptation
 struct WindowBackgroundView: NSViewRepresentable {
     @Environment(\.colorScheme) var colorScheme
-    
+
     func makeNSView(context: Context) -> NSView {
         let view = NSView()
         updateBackground(view)
         return view
     }
-    
+
     func updateNSView(_ nsView: NSView, context: Context) {
         updateBackground(nsView)
     }
-    
+
+    /// Applies color scheme-appropriate background with transparency
     private func updateBackground(_ view: NSView) {
         DispatchQueue.main.async {
             if let window = view.window {
-                // Apply visual effect view for proper background
                 window.titlebarAppearsTransparent = true
-                
+
                 // Set background based on color scheme
                 if colorScheme == .dark {
                     window.backgroundColor = NSColor(red: 0.05, green: 0.05, blue: 0.05, alpha: 0.95)
@@ -89,7 +87,7 @@ struct PocketPrefsApp: App {
                 // Window background handler
                 WindowBackgroundView()
                     .ignoresSafeArea()
-                
+
                 // Main content
                 MainView()
                     .environmentObject(themeManager)
@@ -108,6 +106,7 @@ struct PocketPrefsApp: App {
                         Button(action: { themeManager.setTheme(theme) }) {
                             HStack {
                                 Text(theme.displayName)
+                                // Show checkmark for currently selected theme
                                 if themeManager.currentTheme == theme {
                                     Image(systemName: "checkmark")
                                 }

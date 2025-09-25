@@ -2,7 +2,7 @@
 //  RestoreListView.swift
 //  PocketPrefs
 //
-//  Created by Me2 on 2025/9/18.
+//  Restore backup list and management view
 //
 
 import SwiftUI
@@ -54,7 +54,7 @@ struct RestoreListHeader: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 20) {
+        VStack(alignment: .leading, spacing: 18) {
             // Display the title for the restore backup view
             Text(NSLocalizedString("Restore_Backup_Title", comment: ""))
                 .font(DesignConstants.Typography.title)
@@ -101,7 +101,7 @@ struct RestoreListHeader: View {
                         Text(NSLocalizedString("Select_All", comment: ""))
                             .font(DesignConstants.Typography.body)
                     }
-                    .toggleStyle(.checkbox)
+                    .toggleStyle(CustomCheckboxToggleStyle())
                     
                     Spacer()
                     
@@ -124,7 +124,7 @@ struct RestoreListHeader: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 20)
-        .padding(.bottom, 8)
+        .padding(.bottom, 11)
         .background(
             Color.App.contentAreaBackground.color(for: colorScheme)
         )
@@ -384,13 +384,13 @@ struct RestoreAppItem: View {
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
-        HStack(spacing: 12) {
+        HStack(spacing: 5) {
             // Checkbox
             Toggle("", isOn: Binding(
                 get: { app.isSelected },
                 set: { _ in backupManager.toggleRestoreSelection(for: app) }
             ))
-            .toggleStyle(.checkbox)
+            .toggleStyle(CustomCheckboxToggleStyle())
             
             // App Icon - Get icon from backupManager
             Group {

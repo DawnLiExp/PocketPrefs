@@ -13,6 +13,7 @@
 		FC195B772E7EB80B00258310 /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4B2E7EB80B00258310 /* BackupManager.swift */; };
 		FC195B792E7EB80B00258310 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FC195B552E7EB80B00258310 /* Assets.xcassets */; };
 		FC195B7B2E7EB80B00258310 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = FC195B532E7EB80B00258310 /* Localizable.strings */; };
+		FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */; };
 		FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED942E7EF4D600764A17 /* PathPickerView.swift */; };
 		FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */; };
 		FCD990722E7EC53600C7087A /* AppListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990672E7EC53600C7087A /* AppListView.swift */; };
@@ -42,6 +43,7 @@
 		FC195B512E7EB80B00258310 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		FC195B522E7EB80B00258310 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		FC195B552E7EB80B00258310 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCheckboxToggleStyle.swift; sourceTree = "<group>"; };
 		FCAFED942E7EF4D600764A17 /* PathPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathPickerView.swift; sourceTree = "<group>"; };
 		FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
 		FCD990612E7EC53600C7087A /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
@@ -141,6 +143,7 @@
 		FCD990812E7EC55700C7087A /* View */ = {
 			isa = PBXGroup;
 			children = (
+				FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */,
 				FCD990672E7EC53600C7087A /* AppListView.swift */,
 				FCD990682E7EC53600C7087A /* ColorExtensions.swift */,
 				FCD990692E7EC53600C7087A /* CommonComponents.swift */,
@@ -256,6 +259,7 @@
 				FCD9907C2E7EC53600C7087A /* BackupService.swift in Sources */,
 				FCD9907D2E7EC53600C7087A /* FileOperationService.swift in Sources */,
 				FCD9907E2E7EC53600C7087A /* RestoreService.swift in Sources */,
+				FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */,
 				FC195B692E7EB80B00258310 /* AppConfig.swift in Sources */,
 				FC195B6A2E7EB80B00258310 /* AppError.swift in Sources */,
 				FC195B6C2E7EB80B00258310 /* BackupModels.swift in Sources */,
