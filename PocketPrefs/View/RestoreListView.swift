@@ -11,7 +11,7 @@ import SwiftUI
 struct RestoreListView: View {
     @ObservedObject var backupManager: BackupManager
     @Binding var selectedApp: AppConfig?
-    @State private var showingFilePicker = false
+
     @State private var selectedBackupApp: BackupAppInfo?
     @State private var searchText = ""
     @State private var isRefreshing = false
@@ -21,7 +21,7 @@ struct RestoreListView: View {
         VStack(spacing: 0) {
             RestoreListHeader(
                 backupManager: backupManager,
-                showingFilePicker: $showingFilePicker,
+
                 searchText: $searchText,
                 isRefreshing: $isRefreshing
             )
@@ -34,41 +34,12 @@ struct RestoreListView: View {
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .fileImporter(
-            isPresented: $showingFilePicker,
-            allowedContentTypes: [.folder],
-            allowsMultipleSelection: false
-        ) { result in
-            handleFilePicker(result: result)
-        }
-    }
-    
-    private func handleFilePicker(result: Result<[URL], Error>) {
-        switch result {
-        case .success(let urls):
-            if let url = urls.first {
-                var customBackup = BackupInfo(
-                    path: url.path,
-                    name: url.lastPathComponent,
-                    date: Date()
-                )
-                customBackup.apps = backupManager.scanAppsInBackup(at: url.path)
-                
-                if !customBackup.apps.isEmpty {
-                    backupManager.availableBackups.insert(customBackup, at: 0)
-                    backupManager.selectBackup(customBackup)
-                }
-            }
-        case .failure(let error):
-            print("Failed to select backup: \(error)")
-        }
     }
 }
 
 /// Header view for the restore list, including backup selection, search, and refresh functionality.
 struct RestoreListHeader: View {
     @ObservedObject var backupManager: BackupManager
-    @Binding var showingFilePicker: Bool
     @Binding var searchText: String
     @Binding var isRefreshing: Bool
     @Environment(\.colorScheme) var colorScheme
@@ -92,8 +63,7 @@ struct RestoreListHeader: View {
             // Backup selector with refresh button
             HStack(spacing: 12) {
                 BackupSelectorView(
-                    backupManager: backupManager,
-                    showingFilePicker: $showingFilePicker
+                    backupManager: backupManager
                 )
                 
                 // Refresh button positioned after selector
@@ -230,14 +200,19 @@ struct RefreshButton: View {
     
     var body: some View {
         Button(action: action) {
-            Image(systemName: "arrow.clockwise")
-                .font(.system(size: 14, weight: .medium))
-                .foregroundColor(Color.App.primary.color(for: colorScheme))
-                .rotationEffect(.degrees(isRefreshing ? 360 : 0))
-                .animation(
-                    isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default,
-                    value: isRefreshing
-                )
+            ZStack {
+                Color.clear
+                    .contentShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
+                
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Color.App.primary.color(for: colorScheme))
+                    .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                    .animation(
+                        isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default,
+                        value: isRefreshing
+                    )
+            }
         }
         .buttonStyle(PlainButtonStyle())
         .frame(width: 32, height: 32)
@@ -256,7 +231,6 @@ struct RefreshButton: View {
 /// A view for selecting a backup from available options or browsing for a new one.
 struct BackupSelectorView: View {
     @ObservedObject var backupManager: BackupManager
-    @Binding var showingFilePicker: Bool
     @Environment(\.colorScheme) var colorScheme
     
     // Custom wrapper for picker selection binding
@@ -266,28 +240,37 @@ struct BackupSelectorView: View {
             set: { newValue in
                 if let backup = newValue {
                     backupManager.selectBackup(backup)
-                } else {
-                    // User selected "browse" option
-                    showingFilePicker = true
                 }
             }
         )
     }
     
     var body: some View {
-        Picker(NSLocalizedString("Select Backup:", comment: ""), selection: pickerBinding) {
-            ForEach(backupManager.availableBackups) { backup in
-                Text(formatBackupName(backup.name))
-                    .tag(backup as BackupInfo?)
+        if backupManager.availableBackups.isEmpty {
+            Text(NSLocalizedString("No_Backups_Found", comment: "No backups available"))
+                .font(DesignConstants.Typography.body)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(.vertical, 9)
+                .padding(.horizontal, 12)
+                .background(
+                    RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                        .fill(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.7))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                        .stroke(Color.App.lightSeparator.color(for: colorScheme).opacity(0.7), lineWidth: 1.0)
+                )
+        } else {
+            Picker(NSLocalizedString("Select Backup:", comment: ""), selection: pickerBinding) {
+                ForEach(backupManager.availableBackups) { backup in
+                    Text(formatBackupName(backup.name))
+                        .tag(backup as BackupInfo?)
+                }
             }
-            
-            Divider()
-            
-            Text(NSLocalizedString("Select from other location...", comment: ""))
-                .tag(nil as BackupInfo?)
+            .pickerStyle(.menu)
+            .frame(maxWidth: .infinity)
         }
-        .pickerStyle(.menu)
-        .frame(maxWidth: .infinity)
     }
     
     private func formatBackupName(_ name: String) -> String {
@@ -317,7 +300,7 @@ struct RestoreListContent: View {
     }
     
     var body: some View {
-        if backupManager.selectedBackup != nil {
+        if backupManager.selectedBackup != nil && !backupManager.availableBackups.isEmpty {
             if filteredApps.isEmpty && !searchText.isEmpty {
                 // Empty search results
                 SearchEmptyState(searchText: searchText)
@@ -382,7 +365,7 @@ struct RestoreEmptyState: View {
             Text(NSLocalizedString("Restore_Empty_State_No_Backups", comment: ""))
                 .font(DesignConstants.Typography.headline)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
-            Text(NSLocalizedString("Restore_Empty_State_Select_Location_Or_Create_Backup", comment: ""))
+            Text(NSLocalizedString("Restore_Empty_State_Create_Backup_Prompt", comment: ""))
                 .font(DesignConstants.Typography.body)
                 .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.8))
             Spacer()

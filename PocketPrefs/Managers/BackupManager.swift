@@ -92,7 +92,13 @@ class BackupManager: ObservableObject {
     func scanBackups() async {
         availableBackups = await backupService.scanBackups()
         
-        if let firstBackup = availableBackups.first {
+        // If the currently selected backup is no longer in the available backups, deselect it.
+        if let currentSelected = selectedBackup, !availableBackups.contains(currentSelected) {
+            selectedBackup = nil
+        }
+        
+        // If no backup is selected or the selected backup was deselected, try to select the first one.
+        if selectedBackup == nil, let firstBackup = availableBackups.first {
             selectBackup(firstBackup)
         }
         

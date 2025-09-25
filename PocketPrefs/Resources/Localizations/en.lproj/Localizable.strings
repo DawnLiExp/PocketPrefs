@@ -13,12 +13,14 @@
 "Restore_No_Apps_Processed" = "No app configurations were restored";
 "Restore_Backup_Title" = "Restore Backup";
 "Restore_Empty_State_No_Backups" = "No backups found";
-"Restore_Empty_State_Select_Location_Or_Create_Backup" = "Select another location or create a backup first";
 "Restore_App_Status_Not_Installed" = "Not Installed";
 "Restore_App_Status_Installed" = "Installed";
 "Restore_App_Config_Files_Count" = "%d config files";
+"Restore_Empty_State_No_Backups" = "No backups created yet";
+"Restore_Empty_State_Create_Backup_Prompt" = "Switch to Backup mode to create your first backup";
 "Select Backup:" = "Select Backup:";
 "Select from other location..." = "Select from other location...";
+"No_Backups_Found" = "No backups available";
 
 /* Detail View  */
 "Detail_Restore_Empty_State_No_Apps_Selected" = "No app configurations selected";

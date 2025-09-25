@@ -13,12 +13,14 @@
 "Restore_No_Apps_Processed" = "没有恢复任何应用配置";
 "Restore_Backup_Title" = "恢复备份";
 "Restore_Empty_State_No_Backups" = "没有找到备份";
-"Restore_Empty_State_Select_Location_Or_Create_Backup" = "请选择其他位置或先创建备份";
 "Restore_App_Status_Not_Installed" = "未安装";
 "Restore_App_Status_Installed" = "已安装";
 "Restore_App_Config_Files_Count" = "%d 个配置文件";
+"Restore_Empty_State_No_Backups" = "尚未创建任何备份";
+"Restore_Empty_State_Create_Backup_Prompt" = "请切换到备份模式创建首份备份";
 "Select Backup:" = "选择备份:";
 "Select from other location..." = "从其他位置选择...";
+"No_Backups_Found" = "暂无备份文件";
 
 /* Detail View */
 "Detail_Restore_Empty_State_No_Apps_Selected" = "没有选择任何应用配置";
