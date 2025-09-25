@@ -18,7 +18,7 @@
 "Restore_App_Config_Files_Count" = "%d 个配置文件";
 "Restore_Empty_State_No_Backups" = "尚未创建任何备份";
 "Restore_Empty_State_Create_Backup_Prompt" = "请切换到备份模式创建首份备份";
-"Select Backup:" = "选择备份:";
+"Select_Backup_Label" = "选择备份:";
 "Select from other location..." = "从其他位置选择...";
 "No_Backups_Found" = "暂无备份文件";
 

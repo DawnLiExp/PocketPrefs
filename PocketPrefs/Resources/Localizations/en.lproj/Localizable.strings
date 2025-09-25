@@ -18,7 +18,7 @@
 "Restore_App_Config_Files_Count" = "%d config files";
 "Restore_Empty_State_No_Backups" = "No backups created yet";
 "Restore_Empty_State_Create_Backup_Prompt" = "Switch to Backup mode to create your first backup";
-"Select Backup:" = "Select Backup:";
+"Select_Backup_Label" = "Select Backup:";
 "Select from other location..." = "Select from other location...";
 "No_Backups_Found" = "No backups available";
 

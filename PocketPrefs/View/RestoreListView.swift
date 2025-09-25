@@ -62,7 +62,7 @@ struct RestoreListHeader: View {
             
             // Backup selector with refresh button
             HStack(spacing: 12) {
-                BackupSelectorView(
+                CustomBackupPicker(
                     backupManager: backupManager
                 )
                 
@@ -217,64 +217,10 @@ struct RefreshButton: View {
         .buttonStyle(PlainButtonStyle())
         .frame(width: 32, height: 32)
         .background(
-            (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.5)
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                .stroke(Color.App.lightSeparator.color(for: colorScheme), lineWidth: 0.5)
+            Color.App.contentAreaBackground.color(for: colorScheme)
         )
         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
         .disabled(isRefreshing)
-    }
-}
-
-/// A view for selecting a backup from available options or browsing for a new one.
-struct BackupSelectorView: View {
-    @ObservedObject var backupManager: BackupManager
-    @Environment(\.colorScheme) var colorScheme
-    
-    // Custom wrapper for picker selection binding
-    private var pickerBinding: Binding<BackupInfo?> {
-        Binding(
-            get: { backupManager.selectedBackup },
-            set: { newValue in
-                if let backup = newValue {
-                    backupManager.selectBackup(backup)
-                }
-            }
-        )
-    }
-    
-    var body: some View {
-        if backupManager.availableBackups.isEmpty {
-            Text(NSLocalizedString("No_Backups_Found", comment: "No backups available"))
-                .font(DesignConstants.Typography.body)
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, 9)
-                .padding(.horizontal, 12)
-                .background(
-                    RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                        .fill(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.7))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                        .stroke(Color.App.lightSeparator.color(for: colorScheme).opacity(0.7), lineWidth: 1.0)
-                )
-        } else {
-            Picker(NSLocalizedString("Select Backup:", comment: ""), selection: pickerBinding) {
-                ForEach(backupManager.availableBackups) { backup in
-                    Text(formatBackupName(backup.name))
-                        .tag(backup as BackupInfo?)
-                }
-            }
-            .pickerStyle(.menu)
-            .frame(maxWidth: .infinity)
-        }
-    }
-    
-    private func formatBackupName(_ name: String) -> String {
-        name.replacingOccurrences(of: "Backup_", with: "")
     }
 }
 
