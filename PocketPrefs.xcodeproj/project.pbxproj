@@ -35,6 +35,7 @@
 		FCD990B82E7EDEEB00C7087A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990B72E7EDEE900C7087A /* SettingsView.swift */; };
 		FCD990BC2E7EDF0500C7087A /* CustomAppManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990BB2E7EDF0300C7087A /* CustomAppManager.swift */; };
 		FCD990C02E7EDF1D00C7087A /* UserConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */; };
+		FCFA34992E86CE2F00BCA325 /* IconConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCFA34982E86CE2D00BCA325 /* IconConfiguration.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -69,6 +70,7 @@
 		FCD990BB2E7EDF0300C7087A /* CustomAppManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomAppManager.swift; sourceTree = "<group>"; };
 		FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserConfigStore.swift; sourceTree = "<group>"; };
 		FCF9C4E92E7ADA4000013E27 /* PocketPrefs.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PocketPrefs.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		FCFA34982E86CE2D00BCA325 /* IconConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconConfiguration.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -177,6 +179,7 @@
 			children = (
 				FCD990612E7EC53600C7087A /* BackupService.swift */,
 				FCD990622E7EC53600C7087A /* FileOperationService.swift */,
+				FCFA34982E86CE2D00BCA325 /* IconConfiguration.swift */,
 				FCD990632E7EC53600C7087A /* IconService.swift */,
 				FCD990642E7EC53600C7087A /* RestoreService.swift */,
 				FCD990652E7EC53600C7087A /* ThemeManager.swift */,
@@ -303,6 +306,7 @@
 				FC195B692E7EB80B00258310 /* AppConfig.swift in Sources */,
 				FC195B6A2E7EB80B00258310 /* AppError.swift in Sources */,
 				FC195B6C2E7EB80B00258310 /* BackupModels.swift in Sources */,
+				FCFA34992E86CE2F00BCA325 /* IconConfiguration.swift in Sources */,
 				FC195B772E7EB80B00258310 /* BackupManager.swift in Sources */,
 				FCD990BC2E7EDF0500C7087A /* CustomAppManager.swift in Sources */,
 			);

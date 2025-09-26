@@ -30,13 +30,9 @@ final class IconService {
     }
     
     private func fetchIcon(for bundleId: String, category: AppCategory) -> NSImage {
-        // Handle special cases for terminal tools
-        switch bundleId {
-        case "oh-my-zsh": return createTerminalIcon(with: "Z")
-        case "git": return createTerminalIcon(with: "G")
-        case "ssh": return createTerminalIcon(with: "S")
-        case "homebrew": return createTerminalIcon(with: "H")
-        default: break
+        // Handle special cases for terminal tools using configuration
+        if let config = TerminalApps.configuration(for: bundleId) {
+            return createTerminalIcon(with: config)
         }
         
         // Try to get app icon
@@ -50,27 +46,33 @@ final class IconService {
         return NSImage(systemSymbolName: category.icon, accessibilityDescription: nil) ?? NSImage()
     }
     
-    private func createTerminalIcon(with letter: String) -> NSImage {
-        let size = NSSize(width: 32, height: 32)
+    private func createTerminalIcon(with config: TerminalIconConfig) -> NSImage {
+        let size = IconConstants.standardSize
         return NSImage(size: size, flipped: false) { rect in
-            NSColor.darkGray.setFill()
-            let path = NSBezierPath(roundedRect: rect, xRadius: 6, yRadius: 6)
+            // Add padding to match system app icons visual size
+            let iconRect = rect.insetBy(dx: IconConstants.terminalPadding, dy: IconConstants.terminalPadding)
+            
+            // Background with adjusted corner radius
+            config.backgroundColor.setFill()
+            let path = NSBezierPath(roundedRect: iconRect, xRadius: IconConstants.terminalCornerRadius, yRadius: IconConstants.terminalCornerRadius)
             path.fill()
             
+            // Terminal prompt design
             let paragraphStyle = NSMutableParagraphStyle()
             paragraphStyle.alignment = .center
             
+            // Adjusted font size for smaller icon area
             let attributes: [NSAttributedString.Key: Any] = [
-                .font: NSFont.monospacedSystemFont(ofSize: 18, weight: .bold),
-                .foregroundColor: NSColor.systemGreen,
+                .font: NSFont.monospacedSystemFont(ofSize: IconConstants.terminalFontSize, weight: .bold),
+                .foregroundColor: config.textColor,
                 .paragraphStyle: paragraphStyle
             ]
             
-            let text = ">_\(letter)"
+            let text = ">_\(config.letter)"
             let textSize = text.size(withAttributes: attributes)
             let textRect = NSRect(
-                x: (rect.width - textSize.width) / 2,
-                y: (rect.height - textSize.height) / 2,
+                x: iconRect.origin.x + (iconRect.width - textSize.width) / 2,
+                y: iconRect.origin.y + (iconRect.height - textSize.height) / 2,
                 width: textSize.width,
                 height: textSize.height
             )
@@ -80,7 +82,8 @@ final class IconService {
         }
     }
     
-    private func resizedIcon(_ icon: NSImage, size: NSSize = NSSize(width: 32, height: 32)) -> NSImage {
+    private func resizedIcon(_ icon: NSImage) -> NSImage {
+        let size = IconConstants.standardSize
         let resized = NSImage(size: size)
         resized.lockFocus()
         icon.draw(
