@@ -129,6 +129,46 @@
 			path = Localizations;
 			sourceTree = "<group>";
 		};
+		FC68CD222E865E1A003BBDD4 /* Main */ = {
+			isa = PBXGroup;
+			children = (
+				FCD990672E7EC53600C7087A /* AppListView.swift */,
+				FCD9906A2E7EC53600C7087A /* DetailView.swift */,
+				FCD9906B2E7EC53600C7087A /* MainView.swift */,
+				FCD9906C2E7EC53600C7087A /* RestoreListView.swift */,
+				FCD9906D2E7EC53600C7087A /* SidebarView.swift */,
+			);
+			path = Main;
+			sourceTree = "<group>";
+		};
+		FC68CD232E865E30003BBDD4 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				FCAFED942E7EF4D600764A17 /* PathPickerView.swift */,
+				FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */,
+				FCD990B72E7EDEE900C7087A /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		FC68CD242E865E41003BBDD4 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FCD990692E7EC53600C7087A /* CommonComponents.swift */,
+				FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */,
+				FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */,
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
+		FC68CD252E865E4E003BBDD4 /* Extensions */ = {
+			isa = PBXGroup;
+			children = (
+				FCD990682E7EC53600C7087A /* ColorExtensions.swift */,
+			);
+			path = Extensions;
+			sourceTree = "<group>";
+		};
 		FCD990802E7EC54200C7087A /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -145,18 +185,10 @@
 		FCD990812E7EC55700C7087A /* View */ = {
 			isa = PBXGroup;
 			children = (
-				FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */,
-				FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */,
-				FCD990672E7EC53600C7087A /* AppListView.swift */,
-				FCD990682E7EC53600C7087A /* ColorExtensions.swift */,
-				FCD990692E7EC53600C7087A /* CommonComponents.swift */,
-				FCD9906A2E7EC53600C7087A /* DetailView.swift */,
-				FCD9906B2E7EC53600C7087A /* MainView.swift */,
-				FCD9906C2E7EC53600C7087A /* RestoreListView.swift */,
-				FCD9906D2E7EC53600C7087A /* SidebarView.swift */,
-				FCD990B72E7EDEE900C7087A /* SettingsView.swift */,
-				FCAFED942E7EF4D600764A17 /* PathPickerView.swift */,
-				FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */,
+				FC68CD222E865E1A003BBDD4 /* Main */,
+				FC68CD242E865E41003BBDD4 /* Components */,
+				FC68CD252E865E4E003BBDD4 /* Extensions */,
+				FC68CD232E865E30003BBDD4 /* Settings */,
 			);
 			path = View;
 			sourceTree = "<group>";
