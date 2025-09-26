@@ -78,26 +78,22 @@ class BackupManager: ObservableObject {
         logger.info("Loaded \(self.apps.count) apps (including \(self.userStore.customApps.count) custom apps)")
     }
     
-    // Get icon for app
     func getIcon(for app: AppConfig) -> NSImage {
         iconService.getIcon(for: app.bundleId, category: app.category)
     }
     
-    // Get icon for backup app
     func getIcon(for backupApp: BackupAppInfo) -> NSImage {
         iconService.getIcon(for: backupApp.bundleId, category: backupApp.category)
     }
     
-    // Scan for existing backups
     func scanBackups() async {
         availableBackups = await backupService.scanBackups()
         
-        // If the currently selected backup is no longer in the available backups, deselect it.
+        // Update selection state
         if let currentSelected = selectedBackup, !availableBackups.contains(currentSelected) {
             selectedBackup = nil
         }
         
-        // If no backup is selected or the selected backup was deselected, try to select the first one.
         if selectedBackup == nil, let firstBackup = availableBackups.first {
             selectBackup(firstBackup)
         }
@@ -105,33 +101,28 @@ class BackupManager: ObservableObject {
         logger.info("Found \(self.availableBackups.count) backups")
     }
     
-    // Select a backup
     func selectBackup(_ backup: BackupInfo) {
         selectedBackup = backup
     }
     
-    // Toggle app selection
     func toggleSelection(for app: AppConfig) {
         if let index = apps.firstIndex(where: { $0.id == app.id }) {
             apps[index].isSelected.toggle()
         }
     }
     
-    // Select all apps
     func selectAll() {
         for index in apps.indices where apps[index].isInstalled {
             apps[index].isSelected = true
         }
     }
     
-    // Deselect all apps
     func deselectAll() {
         for index in apps.indices {
             apps[index].isSelected = false
         }
     }
     
-    // Toggle restore selection
     func toggleRestoreSelection(for app: BackupAppInfo) {
         guard let currentBackup = selectedBackup,
               let backupIndex = availableBackups.firstIndex(where: { $0.id == currentBackup.id }),
@@ -139,13 +130,10 @@ class BackupManager: ObservableObject {
         else { return }
         
         availableBackups[backupIndex].apps[appIndex].isSelected.toggle()
-        
-        // Update selectedBackup to trigger UI update
         selectedBackup = availableBackups[backupIndex]
         objectWillChange.send()
     }
     
-    // Perform backup
     func performBackup() {
         Task {
             await performBackupAsync()
@@ -157,33 +145,36 @@ class BackupManager: ObservableObject {
         currentProgress = 0.0
         statusMessage = NSLocalizedString("Backup_Starting", comment: "")
         
-        // Monitor progress
-        let progressTask = Task { [weak self] in
-            var progress = 0.0
-            while progress < 0.95 && !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 80_000_000) // 0.1 second
-                progress += 0.03
-                await MainActor.run {
-                    self?.currentProgress = min(progress, 0.95)
-                }
+        // Start progress monitoring with structured concurrency
+        await withTaskGroup(of: Void.self) { group in
+            // Progress monitoring task
+            group.addTask { [weak self] in
+                await self?.monitorProgress(targetProgress: 0.95, duration: 3.0)
             }
+            
+            // Backup operation task
+            group.addTask { [weak self] in
+                guard let self = self else { return }
+                let result = await self.backupService.performBackup(apps: self.apps)
+                
+                await MainActor.run {
+                    self.currentProgress = 1.0
+                    self.statusMessage = result.statusMessage
+                }
+                
+                await self.scanBackups()
+            }
+            
+            // Wait for all tasks to complete
+            await group.waitForAll()
         }
         
-        let result = await backupService.performBackup(apps: apps)
-        progressTask.cancel()
-        
-        currentProgress = 1.0
-        statusMessage = result.statusMessage
-        
-        // Refresh backups list
-        await scanBackups()
-        
-        try? await Task.sleep(nanoseconds: 1_500_000_000) // 2 seconds
+        // Cleanup after completion
+        try? await Task.sleep(for: .seconds(1.5))
         isProcessing = false
         currentProgress = 0.0
     }
     
-    // Perform restore
     func performRestore(from path: String) {
         guard let backup = selectedBackup else {
             logger.error("No backup selected for restore")
@@ -200,44 +191,54 @@ class BackupManager: ObservableObject {
         currentProgress = 0.0
         statusMessage = NSLocalizedString("Restore_Starting", comment: "")
         
-        // Monitor progress
-        let progressTask = Task { [weak self] in
-            var progress = 0.0
-            while progress < 0.95 && !Task.isCancelled {
-                try? await Task.sleep(nanoseconds: 80_000_000)
-                progress += 0.03
-                await MainActor.run {
-                    self?.currentProgress = min(progress, 0.95)
-                }
+        // Start progress monitoring with structured concurrency
+        await withTaskGroup(of: Void.self) { group in
+            // Progress monitoring task
+            group.addTask { [weak self] in
+                await self?.monitorProgress(targetProgress: 0.95, duration: 3.0)
             }
+            
+            // Restore operation task
+            group.addTask { [weak self] in
+                guard let self = self else { return }
+                let result = await self.restoreService.performRestore(backup: backup)
+                
+                await MainActor.run {
+                    self.currentProgress = 1.0
+                    self.statusMessage = result.statusMessage
+                }
+                
+                await self.loadApps()
+            }
+            
+            // Wait for all tasks to complete
+            await group.waitForAll()
         }
         
-        let result = await restoreService.performRestore(backup: backup)
-        progressTask.cancel()
-        
-        currentProgress = 1.0
-        statusMessage = result.statusMessage
-        
-        // Refresh app installation status
-        await loadApps()
-        
-        try? await Task.sleep(nanoseconds: 1_500_000_000)
+        // Cleanup after completion
+        try? await Task.sleep(for: .seconds(1.5))
         isProcessing = false
         currentProgress = 0.0
     }
     
-    // Scan apps in backup (for file picker)
-    func scanAppsInBackup(at path: String) -> [BackupAppInfo] {
-        // Create a synchronous wrapper for the async operation
-        var result: [BackupAppInfo] = []
-        let semaphore = DispatchSemaphore(value: 0)
+    // Progress monitoring helper using structured concurrency
+    private func monitorProgress(targetProgress: Double, duration: TimeInterval) async {
+        let steps = 30
+        let stepDuration = duration / Double(steps)
+        let progressIncrement = targetProgress / Double(steps)
         
-        Task {
-            result = await backupService.scanAppsInBackup(at: path)
-            semaphore.signal()
+        for step in 0 ..< steps {
+            guard !Task.isCancelled else { break }
+            
+            let newProgress = Double(step + 1) * progressIncrement
+            currentProgress = min(newProgress, targetProgress)
+            
+            try? await Task.sleep(for: .seconds(stepDuration))
         }
-        
-        semaphore.wait()
-        return result
+    }
+    
+    // Scan apps in backup - async only
+    func scanAppsInBackup(at path: String) async -> [BackupAppInfo] {
+        await backupService.scanAppsInBackup(at: path)
     }
 }

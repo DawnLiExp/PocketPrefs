@@ -13,6 +13,7 @@
 		FC195B772E7EB80B00258310 /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4B2E7EB80B00258310 /* BackupManager.swift */; };
 		FC195B792E7EB80B00258310 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FC195B552E7EB80B00258310 /* Assets.xcassets */; };
 		FC195B7B2E7EB80B00258310 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = FC195B532E7EB80B00258310 /* Localizable.strings */; };
+		FC33DF562E8716CA007C47E5 /* ConcurrencyHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC33DF552E8716C8007C47E5 /* ConcurrencyHelpers.swift */; };
 		FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */; };
 		FC68CD272E866826003BBDD4 /* ImportExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC68CD262E866824003BBDD4 /* ImportExportManager.swift */; };
 		FC74CB462E85915F00F33BD4 /* CustomBackupPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */; };
@@ -46,6 +47,7 @@
 		FC195B512E7EB80B00258310 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		FC195B522E7EB80B00258310 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		FC195B552E7EB80B00258310 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		FC33DF552E8716C8007C47E5 /* ConcurrencyHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcurrencyHelpers.swift; sourceTree = "<group>"; };
 		FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCheckboxToggleStyle.swift; sourceTree = "<group>"; };
 		FC68CD262E866824003BBDD4 /* ImportExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportExportManager.swift; sourceTree = "<group>"; };
 		FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBackupPicker.swift; sourceTree = "<group>"; };
@@ -178,6 +180,7 @@
 			isa = PBXGroup;
 			children = (
 				FCD990612E7EC53600C7087A /* BackupService.swift */,
+				FC33DF552E8716C8007C47E5 /* ConcurrencyHelpers.swift */,
 				FCD990622E7EC53600C7087A /* FileOperationService.swift */,
 				FCFA34982E86CE2D00BCA325 /* IconConfiguration.swift */,
 				FCD990632E7EC53600C7087A /* IconService.swift */,
@@ -290,6 +293,7 @@
 				FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */,
 				FC68CD272E866826003BBDD4 /* ImportExportManager.swift in Sources */,
 				FCD990B82E7EDEEB00C7087A /* SettingsView.swift in Sources */,
+				FC33DF562E8716CA007C47E5 /* ConcurrencyHelpers.swift in Sources */,
 				FCD990752E7EC53600C7087A /* CommonComponents.swift in Sources */,
 				FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */,
 				FCD990762E7EC53600C7087A /* DetailView.swift in Sources */,
