@@ -27,9 +27,19 @@ class CustomAppManager: ObservableObject {
     
     func loadCustomApps() {
         customApps = userStore.customApps
-    
-        selectedApp = nil
-        selectedAppIds.removeAll()
+        
+        // Maintain selected app reference after reload
+        if let currentSelectedId = selectedApp?.id,
+           let updatedApp = customApps.first(where: { $0.id == currentSelectedId })
+        {
+            selectedApp = updatedApp
+        } else {
+            selectedApp = nil
+        }
+        
+        // Clean up selected IDs if apps no longer exist
+        let currentAppIds = Set(customApps.map { $0.id })
+        selectedAppIds = selectedAppIds.intersection(currentAppIds)
     }
     
     func createNewApp(name: String, bundleId: String) -> AppConfig {
@@ -52,28 +62,41 @@ class CustomAppManager: ObservableObject {
         
         userStore.addApp(app)
         loadCustomApps()
-        selectedApp = customApps.last
+        
+        // Select the newly added app
+        selectedApp = customApps.last { $0.bundleId == app.bundleId }
     }
     
-    // Update an existing app
     func updateApp(_ app: AppConfig) {
         userStore.updateApp(app)
-        loadCustomApps()
-    
-        if let updated = customApps.first(where: { $0.id == app.id }) {
-            selectedApp = updated
+        
+        // Update local array immediately for responsive UI
+        if let index = customApps.firstIndex(where: { $0.id == app.id }) {
+            customApps[index] = app
+            // Update selected app reference if it's the one being updated
+            if selectedApp?.id == app.id {
+                selectedApp = app
+            }
         }
+        
+        // Trigger save to persistent storage
+        userStore.save()
+        
+        // Post notification for other components
+        NotificationCenter.default.post(name: .customAppsChanged, object: nil)
     }
     
-    // Remove selected apps
     func removeSelectedApps() {
+        // Clear selected app if it's being removed
+        if let selectedId = selectedApp?.id, selectedAppIds.contains(selectedId) {
+            selectedApp = nil
+        }
+        
         userStore.removeApps(selectedAppIds)
         selectedAppIds.removeAll()
-        selectedApp = nil
         loadCustomApps()
     }
     
-    // Add path to selected app
     func addPath(to app: AppConfig, path: String) {
         var updatedApp = app
         if !updatedApp.configPaths.contains(path) {
@@ -82,7 +105,6 @@ class CustomAppManager: ObservableObject {
         }
     }
     
-    // Remove path from app
     func removePath(from app: AppConfig, at index: Int) {
         guard index < app.configPaths.count else { return }
         
@@ -91,7 +113,6 @@ class CustomAppManager: ObservableObject {
         updateApp(updatedApp)
     }
     
-    // Edit path in app
     func editPath(in app: AppConfig, at index: Int, newPath: String) {
         guard index < app.configPaths.count else { return }
         
@@ -100,7 +121,6 @@ class CustomAppManager: ObservableObject {
         updateApp(updatedApp)
     }
     
-    // Toggle app selection
     func toggleSelection(for appId: UUID) {
         if selectedAppIds.contains(appId) {
             selectedAppIds.remove(appId)
@@ -109,35 +129,30 @@ class CustomAppManager: ObservableObject {
         }
     }
     
-    // Select all apps
     func selectAll() {
         selectedAppIds = Set(customApps.map { $0.id })
     }
     
-    // Deselect all apps
     func deselectAll() {
         selectedAppIds.removeAll()
     }
     
-    // Validate bundle ID format
     func isValidBundleId(_ bundleId: String) -> Bool {
-        // 支持更灵活的格式，包括单词如 "git", "ssh" 等
+        // Support flexible formats including simple names like "git", "ssh"
         if bundleId.isEmpty { return false }
         
-        // 简单的验证：字母开头，允许字母、数字、点、横线
+        // Simple validation: starts with letter, allows letters, numbers, dots, hyphens
         let pattern = "^[a-zA-Z][a-zA-Z0-9.-]*$"
         let regex = try? NSRegularExpression(pattern: pattern)
         let range = NSRange(location: 0, length: bundleId.utf16.count)
         return regex?.firstMatch(in: bundleId, range: range) != nil
     }
     
-    // Check if path exists
     func pathExists(_ path: String) -> Bool {
         let expandedPath = NSString(string: path).expandingTildeInPath
         return FileManager.default.fileExists(atPath: expandedPath)
     }
     
-    // Get path type (file or directory)
     func getPathType(_ path: String) -> PathType {
         let expandedPath = NSString(string: path).expandingTildeInPath
         var isDirectory: ObjCBool = false

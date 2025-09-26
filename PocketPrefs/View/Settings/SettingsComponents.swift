@@ -266,6 +266,11 @@ struct CustomAppDetailView: View {
             .padding(20)
         }
         .onAppear {
+            // Initialize paths when view first appears
+            paths = app.configPaths
+        }
+        .onChange(of: app.id) { _, _ in
+            // Update paths when app changes (critical fix)
             paths = app.configPaths
         }
     }
@@ -280,7 +285,6 @@ struct CustomAppDetailView: View {
         var updatedApp = app
         updatedApp.name = tempName
         manager.updateApp(updatedApp)
-        manager.selectedApp = updatedApp
         editingName = false
     }
     
@@ -293,7 +297,6 @@ struct CustomAppDetailView: View {
         var updatedApp = app
         updatedApp.configPaths = newPaths
         manager.updateApp(updatedApp)
-        manager.selectedApp = updatedApp
     }
 }
 
