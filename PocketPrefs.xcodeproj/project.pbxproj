@@ -100,6 +100,7 @@
 			children = (
 				FC195B4B2E7EB80B00258310 /* BackupManager.swift */,
 				FCD990BB2E7EDF0300C7087A /* CustomAppManager.swift */,
+				FC68CD262E866824003BBDD4 /* ImportExportManager.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -146,7 +147,6 @@
 		FC68CD232E865E30003BBDD4 /* Settings */ = {
 			isa = PBXGroup;
 			children = (
-				FC68CD262E866824003BBDD4 /* ImportExportManager.swift */,
 				FCAFED942E7EF4D600764A17 /* PathPickerView.swift */,
 				FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */,
 				FCD990B72E7EDEE900C7087A /* SettingsView.swift */,

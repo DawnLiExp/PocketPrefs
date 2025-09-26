@@ -23,16 +23,38 @@ class CustomAppManager: ObservableObject {
     
     init() {
         loadCustomApps()
+        setupNotifications()
+    }
+    
+    private func setupNotifications() {
+        NotificationCenter.default.addObserver(
+            self,
+            selector: #selector(handleCustomAppsChanged),
+            name: .customAppsChanged,
+            object: nil
+        )
+    }
+    
+    @objc private func handleCustomAppsChanged() {
+        Task { @MainActor in
+            loadCustomApps()
+        }
     }
     
     func loadCustomApps() {
         customApps = userStore.customApps
         
-        // Maintain selected app reference after reload
+        // Force update selected app to trigger view refresh
         if let currentSelectedId = selectedApp?.id,
            let updatedApp = customApps.first(where: { $0.id == currentSelectedId })
         {
-            selectedApp = updatedApp
+            // Temporarily clear and reset to force view update
+            let tempApp = updatedApp
+            selectedApp = nil
+            Task { @MainActor in
+                try? await Task.sleep(nanoseconds: 1_000_000)
+                self.selectedApp = tempApp
+            }
         } else {
             selectedApp = nil
         }
@@ -40,6 +62,9 @@ class CustomAppManager: ObservableObject {
         // Clean up selected IDs if apps no longer exist
         let currentAppIds = Set(customApps.map { $0.id })
         selectedAppIds = selectedAppIds.intersection(currentAppIds)
+        
+        // Trigger UI update
+        objectWillChange.send()
     }
     
     func createNewApp(name: String, bundleId: String) -> AppConfig {
@@ -73,7 +98,7 @@ class CustomAppManager: ObservableObject {
         // Update local array immediately for responsive UI
         if let index = customApps.firstIndex(where: { $0.id == app.id }) {
             customApps[index] = app
-            // Update selected app reference if it's the one being updated
+            // Force refresh selected app to trigger view updates
             if selectedApp?.id == app.id {
                 selectedApp = app
             }
@@ -81,9 +106,6 @@ class CustomAppManager: ObservableObject {
         
         // Trigger save to persistent storage
         userStore.save()
-        
-        // Post notification for other components
-        NotificationCenter.default.post(name: .customAppsChanged, object: nil)
     }
     
     func removeSelectedApps() {
@@ -176,5 +198,9 @@ class CustomAppManager: ObservableObject {
             case .unknown: return "questionmark.circle"
             }
         }
+    }
+    
+    deinit {
+        NotificationCenter.default.removeObserver(self)
     }
 }

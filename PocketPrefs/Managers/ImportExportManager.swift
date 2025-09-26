@@ -23,12 +23,29 @@ class ImportExportManager: ObservableObject {
     
     // MARK: - Export
     
-    func exportCustomApps() async {
+    func exportCustomApps(selectedIds: Set<UUID>? = nil) async {
+        // Determine apps to export
+        let appsToExport: [AppConfig]
+        let exportTypeMessage: String
+        
+        if let selectedIds = selectedIds, !selectedIds.isEmpty {
+            appsToExport = userStore.customApps.filter { selectedIds.contains($0.id) }
+            exportTypeMessage = String(format: NSLocalizedString("Export_Selected_Message", comment: ""), appsToExport.count)
+        } else {
+            appsToExport = userStore.customApps
+            exportTypeMessage = NSLocalizedString("Export_All_Message", comment: "")
+        }
+        
+        guard !appsToExport.isEmpty else {
+            logger.warning("No apps to export")
+            return
+        }
+        
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.json]
         panel.nameFieldStringValue = "PocketPrefs_CustomApps_\(dateString()).json"
         panel.title = NSLocalizedString("Export_Title", comment: "")
-        panel.message = NSLocalizedString("Export_Message", comment: "")
+        panel.message = exportTypeMessage
         
         let response = await panel.beginSheetModal(for: NSApp.keyWindow!)
         guard response == .OK, let url = panel.url else {
@@ -36,24 +53,24 @@ class ImportExportManager: ObservableObject {
             return
         }
         
-        await performExport(to: url)
+        await performExport(apps: appsToExport, to: url)
     }
     
-    private func performExport(to url: URL) async {
+    private func performExport(apps: [AppConfig], to url: URL) async {
         do {
             let exportData = ExportData(
                 version: 1,
                 exportDate: Date(),
-                customApps: userStore.customApps
+                customApps: apps
             )
             
             let data = try encoder.encode(exportData)
             try data.write(to: url)
             
-            logger.info("Successfully exported \(self.userStore.customApps.count) custom apps")
+            logger.info("Successfully exported \(apps.count) custom apps")
             await showSuccessAlert(
                 message: String(format: NSLocalizedString("Export_Success", comment: ""),
-                                userStore.customApps.count)
+                                apps.count)
             )
         } catch {
             logger.error("Export failed: \(error)")
@@ -103,8 +120,14 @@ class ImportExportManager: ObservableObject {
                 return
             }
             
-            // Perform merge
+            // Perform merge with notification
             let mergeResult = await mergeImportedApps(exportData.customApps)
+            
+            // Force reload after import
+            NotificationCenter.default.post(name: .customAppsChanged, object: nil)
+            
+            // Small delay to ensure UI updates
+            try? await Task.sleep(nanoseconds: 100_000_000)
             
             // Show result
             await showImportResult(mergeResult)
@@ -127,24 +150,44 @@ class ImportExportManager: ObservableObject {
         
         for importedApp in importedApps {
             if let existingIndex = userStore.customApps.firstIndex(where: { $0.bundleId == importedApp.bundleId }) {
-                // Update existing app if paths differ
+                // Replace existing app with imported configuration
                 let existingApp = userStore.customApps[existingIndex]
-                if Set(existingApp.configPaths) != Set(importedApp.configPaths) {
-                    var mergedApp = existingApp
-                    // Merge paths (union)
-                    let mergedPaths = Set(existingApp.configPaths).union(Set(importedApp.configPaths))
-                    mergedApp.configPaths = Array(mergedPaths).sorted()
-                    userStore.updateApp(mergedApp)
+                
+                // Deep comparison of configuration
+                let pathsChanged = Set(existingApp.configPaths) != Set(importedApp.configPaths)
+                let nameChanged = existingApp.name != importedApp.name
+                
+                if pathsChanged || nameChanged {
+                    // Create updated app preserving ID for UI consistency
+                    var replacementApp = importedApp
+                    replacementApp.id = existingApp.id
+                    replacementApp.isUserAdded = true
+                    replacementApp.category = .custom
+                    
+                    // Update through UserConfigStore to ensure proper notification
+                    userStore.customApps[existingIndex] = replacementApp
                     updated += 1
+                    
+                    logger.info("Updated app: \(replacementApp.name) with \(replacementApp.configPaths.count) paths")
                 } else {
                     skipped += 1
+                    logger.info("Skipped unchanged app: \(existingApp.name)")
                 }
             } else {
                 // Add new app
-                userStore.addApp(importedApp)
+                var newApp = importedApp
+                newApp.id = UUID()
+                newApp.isUserAdded = true
+                newApp.category = .custom
+                userStore.customApps.append(newApp)
                 added += 1
+                
+                logger.info("Added new app: \(newApp.name) with \(newApp.configPaths.count) paths")
             }
         }
+        
+        // Save all changes at once
+        userStore.save()
         
         return MergeResult(added: added, updated: updated, skipped: skipped)
     }
@@ -161,12 +204,27 @@ class ImportExportManager: ObservableObject {
                 let newCount = newApps.filter { !existingBundleIds.contains($0.bundleId) }.count
                 let updateCount = newApps.filter { existingBundleIds.contains($0.bundleId) }.count
                 
-                alert.informativeText = String(
+                var detailMessage = String(
                     format: NSLocalizedString("Import_Confirmation_Message", comment: ""),
                     newApps.count,
                     newCount,
                     updateCount
                 )
+                
+                // Add details about apps with paths
+                let appsWithPaths = newApps.filter { !$0.configPaths.isEmpty }
+                if !appsWithPaths.isEmpty {
+                    detailMessage += "\n\n" + NSLocalizedString("Import_Apps_With_Paths", comment: "")
+                    for app in appsWithPaths.prefix(5) {
+                        let pathCountFormat = NSLocalizedString("Import_Path_Count", comment: "")
+                        detailMessage += "\n• \(app.name): \(String(format: pathCountFormat, app.configPaths.count))"
+                    }
+                    if appsWithPaths.count > 5 {
+                        detailMessage += "\n• ..."
+                    }
+                }
+                
+                alert.informativeText = detailMessage
                 
                 alert.addButton(withTitle: NSLocalizedString("Import_Proceed", comment: ""))
                 alert.addButton(withTitle: NSLocalizedString("Common_Cancel", comment: ""))
@@ -177,14 +235,18 @@ class ImportExportManager: ObservableObject {
     }
     
     private func showImportResult(_ result: MergeResult) async {
-        await showSuccessAlert(
-            message: String(
-                format: NSLocalizedString("Import_Result", comment: ""),
-                result.added,
-                result.updated,
-                result.skipped
-            )
+        var message = String(
+            format: NSLocalizedString("Import_Result", comment: ""),
+            result.added,
+            result.updated,
+            result.skipped
         )
+        
+        if result.updated > 0 {
+            message += "\n\n" + NSLocalizedString("Import_Update_Complete", comment: "")
+        }
+        
+        await showSuccessAlert(message: message)
     }
     
     private func showSuccessAlert(message: String) async {

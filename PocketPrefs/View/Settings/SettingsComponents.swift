@@ -192,8 +192,12 @@ struct CustomAppDetailView: View {
     @State private var editingBundleId = false
     @State private var tempName = ""
     @State private var tempBundleId = ""
-    @State private var paths: [String] = []
     @Environment(\.colorScheme) var colorScheme
+    
+    // Use computed property instead of @State to ensure sync
+    private var currentPaths: [String] {
+        app.configPaths
+    }
     
     var body: some View {
         ScrollView {
@@ -255,24 +259,14 @@ struct CustomAppDetailView: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
                 
                 // Configuration Paths Section
-                PathPickerView(paths: $paths, manager: manager)
+                PathPickerViewWrapper(app: app, manager: manager)
                     .padding()
                     .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
                     .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
-                    .onChange(of: paths) { _, newPaths in
-                        savePathChanges(newPaths)
-                    }
             }
             .padding(20)
         }
-        .onAppear {
-            // Initialize paths when view first appears
-            paths = app.configPaths
-        }
-        .onChange(of: app.id) { _, _ in
-            // Update paths when app changes (critical fix)
-            paths = app.configPaths
-        }
+        .id(app.id) // Force view refresh when app changes
     }
     
     private func startNameEdit() {
@@ -291,6 +285,37 @@ struct CustomAppDetailView: View {
     private func cancelNameEdit() {
         editingName = false
         tempName = ""
+    }
+}
+
+// MARK: - Path Picker Wrapper for Better State Management
+
+struct PathPickerViewWrapper: View {
+    let app: AppConfig
+    @ObservedObject var manager: CustomAppManager
+    @State private var localPaths: [String] = []
+    
+    var body: some View {
+        PathPickerView(
+            paths: Binding(
+                get: { localPaths },
+                set: { newPaths in
+                    localPaths = newPaths
+                    savePathChanges(newPaths)
+                }
+            ),
+            manager: manager
+        )
+        .onAppear {
+            localPaths = app.configPaths
+        }
+        .onChange(of: app.configPaths) { _, newPaths in
+            // Sync local state with app paths when they change externally
+            if localPaths != newPaths {
+                localPaths = newPaths
+            }
+        }
+        .id(app.id) // Force recreate when app ID changes
     }
     
     private func savePathChanges(_ newPaths: [String]) {

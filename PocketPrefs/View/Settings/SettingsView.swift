@@ -176,10 +176,27 @@ struct SettingsView: View {
 
 struct ImportExportToolbar: View {
     @ObservedObject var importExportManager: ImportExportManager
-    let customAppManager: CustomAppManager
+    @ObservedObject var customAppManager: CustomAppManager
     @State private var isExporting = false
     @State private var isImporting = false
     @Environment(\.colorScheme) var colorScheme
+    
+    private var exportButtonLabel: String {
+        if !customAppManager.selectedAppIds.isEmpty {
+            return String(format: NSLocalizedString("Export_Selected_Button", comment: ""),
+                          customAppManager.selectedAppIds.count)
+        } else {
+            return NSLocalizedString("Export_All_Button", comment: "")
+        }
+    }
+    
+    private var exportTooltip: String {
+        if !customAppManager.selectedAppIds.isEmpty {
+            return NSLocalizedString("Export_Selected_Tooltip", comment: "")
+        } else {
+            return NSLocalizedString("Export_All_Tooltip", comment: "")
+        }
+    }
     
     var body: some View {
         HStack(spacing: 8) {
@@ -203,26 +220,38 @@ struct ImportExportToolbar: View {
             Button(action: {
                 isExporting = true
                 Task {
-                    await importExportManager.exportCustomApps()
+                    let idsToExport = customAppManager.selectedAppIds.isEmpty ? nil : customAppManager.selectedAppIds
+                    await importExportManager.exportCustomApps(selectedIds: idsToExport)
                     isExporting = false
                 }
             }) {
-                Label(NSLocalizedString("Export_Button", comment: ""),
-                      systemImage: "square.and.arrow.up")
+                Label(exportButtonLabel, systemImage: "square.and.arrow.up")
                     .font(DesignConstants.Typography.caption)
             }
             .buttonStyle(.bordered)
             .disabled(customAppManager.customApps.isEmpty || isImporting || isExporting)
-            .help(NSLocalizedString("Export_Tooltip", comment: ""))
+            .help(exportTooltip)
             
             Spacer()
             
             // Apps count indicator
             if !customAppManager.customApps.isEmpty {
-                Text(String(format: NSLocalizedString("Settings_Apps_Count", comment: ""),
-                            customAppManager.customApps.count))
-                    .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                HStack(spacing: 4) {
+                    if !customAppManager.selectedAppIds.isEmpty {
+                        Text(String(format: NSLocalizedString("Selected_Count_Simple", comment: ""),
+                                    customAppManager.selectedAppIds.count))
+                            .font(DesignConstants.Typography.caption)
+                            .foregroundColor(Color.App.accent.color(for: colorScheme))
+                        
+                        Text("•")
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    }
+                    
+                    Text(String(format: NSLocalizedString("Settings_Apps_Count", comment: ""),
+                                customAppManager.customApps.count))
+                        .font(DesignConstants.Typography.caption)
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                }
             }
         }
         .padding(.horizontal, 12)

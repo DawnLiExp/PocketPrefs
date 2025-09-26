@@ -117,30 +117,37 @@
 
 /* Import/Export Feature */
 "Import_Button" = "导入";
-"Export_Button" = "导出";
+"Export_All_Button" = "导出全部";
+"Export_Selected_Button" = "导出（%d 个选中）";
 "Import_Tooltip" = "从文件导入自定义应用配置";
-"Export_Tooltip" = "导出自定义应用配置到文件";
+"Export_All_Tooltip" = "导出所有自定义应用到文件";
+"Export_Selected_Tooltip" = "导出选中的应用到文件";
 "Settings_Apps_Count" = "%d 个应用";
+"Selected_Count_Simple" = "%d 个选中";
 
 /* Export Dialog */
 "Export_Title" = "导出自定义应用";
-"Export_Message" = "选择保存自定义应用配置的位置";
-"Export_Success" = "成功导出 %d 个自定义应用";
+"Export_All_Message" = "导出所有自定义应用配置";
+"Export_Selected_Message" = "导出 %d 个选中的应用配置";
+"Export_Success" = "成功导出 %d 个应用配置";
 "Export_Failed" = "导出失败";
 
 /* Import Dialog */
 "Import_Title" = "导入自定义应用";
-"Import_Message" = "选择要导入的自定义应用配置文件";
+"Import_Message" = "选择包含自定义应用配置的 JSON 文件";
 "Import_Failed" = "导入失败";
 "Import_Proceed" = "导入";
 
 /* Import Confirmation */
 "Import_Confirmation_Title" = "确认导入";
-"Import_Confirmation_Message" = "找到 %d 个应用待导入：\n• %d 个新应用将被添加\n• %d 个已有应用将被更新";
-"Import_Result" = "导入完成：\n• 新增：%d 个应用\n• 更新：%d 个应用\n• 跳过：%d 个应用";
+"Import_Confirmation_Message" = "找到 %d 个应用待导入：\n• %d 个新应用将被添加\n• %d 个已有应用将被替换";
+"Import_Result" = "导入完成：\n• 新增：%d 个应用\n• 替换：%d 个应用\n• 跳过：%d 个应用";
+"Import_Apps_With_Paths" = "包含配置路径的应用：";
+"Import_Path_Count" = "%d 个路径";
+"Import_Update_Complete" = "配置已成功更新";
 
 /* Import Errors */
-"Import_Error_Version" = "文件版本不兼容";
+"Import_Error_Version" = "文件格式与当前版本不兼容";
 "Import_Error_Format" = "文件格式无效";
 
 /* Common */

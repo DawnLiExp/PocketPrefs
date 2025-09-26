@@ -117,28 +117,39 @@
 
 /* Import/Export Feature */
 "Import_Button" = "Import";
-"Export_Button" = "Export";
+"Export_All_Button" = "Export All";
+"Export_Selected_Button" = "Export (%d Selected)";
 "Import_Tooltip" = "Import custom apps configuration from file";
-"Export_Tooltip" = "Export custom apps configuration to file";
+"Export_All_Tooltip" = "Export all custom apps to file";
+"Export_Selected_Tooltip" = "Export selected apps to file";
 "Settings_Apps_Count" = "%d apps";
+"Selected_Count_Simple" = "%d selected";
 
 /* Export Dialog */
 "Export_Title" = "Export Custom Apps";
-"Export_Message" = "Choose location to save custom apps configuration";
-"Export_Success" = "Successfully exported %d custom apps";
+"Export_All_Message" = "Export all custom apps configuration";
+"Export_Selected_Message" = "Export %d selected apps configuration";
+"Export_Success" = "Successfully exported %d app configuration(s)";
 "Export_Failed" = "Export Failed";
 
 /* Import Dialog */
 "Import_Title" = "Import Custom Apps";
-"Import_Message" = "Select custom apps configuration file to import";
+"Import_Message" = "Select a JSON file containing custom app configurations";
 "Import_Failed" = "Import Failed";
 "Import_Proceed" = "Import";
 
 /* Import Confirmation */
 "Import_Confirmation_Title" = "Confirm Import";
-"Import_Confirmation_Message" = "Found %d apps to import:\n• %d new apps will be added\n• %d existing apps will be updated";
-"Import_Result" = "Import completed:\n• Added: %d apps\n• Updated: %d apps\n• Skipped: %d apps";
+"Import_Confirmation_Message" = "Found %d apps to import:\n• %d new apps will be added\n• %d existing apps will be replaced";
+"Import_Result" = "Import completed:\n• Added: %d apps\n• Replaced: %d apps\n• Skipped: %d apps";
+"Import_Apps_With_Paths" = "Apps with saved paths:";
+"Import_Path_Count" = "%d path(s)";
+"Import_Update_Complete" = "Configuration updated successfully.";
 
 /* Import Errors */
 "Import_Error_Version" = "Incompatible file version";
 "Import_Error_Format" = "Invalid file format";
+
+/* Common */
+"Success" = "Success";
+"Common_Cancel" = "Cancel";
