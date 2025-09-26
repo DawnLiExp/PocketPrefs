@@ -9,6 +9,7 @@ import SwiftUI
 
 struct SettingsView: View {
     @StateObject private var customAppManager = CustomAppManager()
+    @StateObject private var importExportManager = ImportExportManager()
     @State private var searchText = ""
     @State private var showingAddAppSheet = false
     @State private var newAppName = ""
@@ -73,6 +74,14 @@ struct SettingsView: View {
                             .padding(12)
                         }
                     }
+                    
+                    Divider()
+                    
+                    // Bottom toolbar with Import/Export buttons
+                    ImportExportToolbar(
+                        importExportManager: importExportManager,
+                        customAppManager: customAppManager
+                    )
                 }
                 .frame(width: 320)
                 .background(Color.App.controlBackground.color(for: colorScheme))
@@ -160,5 +169,64 @@ struct SettingsView: View {
         if alert.runModal() == .alertFirstButtonReturn {
             customAppManager.removeSelectedApps()
         }
+    }
+}
+
+// MARK: - Import/Export Toolbar
+
+struct ImportExportToolbar: View {
+    @ObservedObject var importExportManager: ImportExportManager
+    let customAppManager: CustomAppManager
+    @State private var isExporting = false
+    @State private var isImporting = false
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            // Import button
+            Button(action: {
+                isImporting = true
+                Task {
+                    await importExportManager.importCustomApps()
+                    isImporting = false
+                }
+            }) {
+                Label(NSLocalizedString("Import_Button", comment: ""),
+                      systemImage: "square.and.arrow.down")
+                    .font(DesignConstants.Typography.caption)
+            }
+            .buttonStyle(.bordered)
+            .disabled(isImporting || isExporting)
+            .help(NSLocalizedString("Import_Tooltip", comment: ""))
+            
+            // Export button
+            Button(action: {
+                isExporting = true
+                Task {
+                    await importExportManager.exportCustomApps()
+                    isExporting = false
+                }
+            }) {
+                Label(NSLocalizedString("Export_Button", comment: ""),
+                      systemImage: "square.and.arrow.up")
+                    .font(DesignConstants.Typography.caption)
+            }
+            .buttonStyle(.bordered)
+            .disabled(customAppManager.customApps.isEmpty || isImporting || isExporting)
+            .help(NSLocalizedString("Export_Tooltip", comment: ""))
+            
+            Spacer()
+            
+            // Apps count indicator
+            if !customAppManager.customApps.isEmpty {
+                Text(String(format: NSLocalizedString("Settings_Apps_Count", comment: ""),
+                            customAppManager.customApps.count))
+                    .font(DesignConstants.Typography.caption)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
     }
 }

@@ -114,3 +114,31 @@
 "Selected_Count" = "Selected %d / %d";
 "Search_No_Results" = "No apps found for \"%@\"";
 "Search_Try_Different_Keyword" = "Try a different keyword";
+
+/* Import/Export Feature */
+"Import_Button" = "Import";
+"Export_Button" = "Export";
+"Import_Tooltip" = "Import custom apps configuration from file";
+"Export_Tooltip" = "Export custom apps configuration to file";
+"Settings_Apps_Count" = "%d apps";
+
+/* Export Dialog */
+"Export_Title" = "Export Custom Apps";
+"Export_Message" = "Choose location to save custom apps configuration";
+"Export_Success" = "Successfully exported %d custom apps";
+"Export_Failed" = "Export Failed";
+
+/* Import Dialog */
+"Import_Title" = "Import Custom Apps";
+"Import_Message" = "Select custom apps configuration file to import";
+"Import_Failed" = "Import Failed";
+"Import_Proceed" = "Import";
+
+/* Import Confirmation */
+"Import_Confirmation_Title" = "Confirm Import";
+"Import_Confirmation_Message" = "Found %d apps to import:\n• %d new apps will be added\n• %d existing apps will be updated";
+"Import_Result" = "Import completed:\n• Added: %d apps\n• Updated: %d apps\n• Skipped: %d apps";
+
+/* Import Errors */
+"Import_Error_Version" = "Incompatible file version";
+"Import_Error_Format" = "Invalid file format";
