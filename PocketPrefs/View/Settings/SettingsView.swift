@@ -183,16 +183,16 @@ struct ImportExportToolbar: View {
     
     private var exportButtonLabel: String {
         if !customAppManager.selectedAppIds.isEmpty {
-            return String(format: NSLocalizedString("Export_Selected_Button", comment: ""),
-                          customAppManager.selectedAppIds.count)
+            return NSLocalizedString("Export_Selected", comment: "")
         } else {
-            return NSLocalizedString("Export_All_Button", comment: "")
+            return NSLocalizedString("Export_All", comment: "")
         }
     }
-    
+
     private var exportTooltip: String {
         if !customAppManager.selectedAppIds.isEmpty {
-            return NSLocalizedString("Export_Selected_Tooltip", comment: "")
+            return String(format: NSLocalizedString("Export_Selected_Tooltip_Count", comment: ""),
+                          customAppManager.selectedAppIds.count)
         } else {
             return NSLocalizedString("Export_All_Tooltip", comment: "")
         }

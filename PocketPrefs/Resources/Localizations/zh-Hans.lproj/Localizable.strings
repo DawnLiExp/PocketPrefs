@@ -12,7 +12,6 @@
 "Restore_Partial_Success_Message" = "⚠️ 恢复完成。成功: %d 个，失败: %@";
 "Restore_No_Apps_Processed" = "没有恢复任何应用配置";
 "Restore_Backup_Title" = "恢复备份";
-"Restore_Empty_State_No_Backups" = "没有找到备份";
 "Restore_App_Status_Not_Installed" = "未安装";
 "Restore_App_Status_Installed" = "已安装";
 "Restore_App_Config_Files_Count" = "%d 个配置文件";
@@ -103,11 +102,6 @@
 "Settings_Add_First_App_Hint" = "点击\"添加应用\"配置新的应用备份";
 "Settings_Select_App_To_Configure" = "选择一个应用进行配置";
 
-/* Common Actions */
-"Common_Save" = "保存";
-"Common_Cancel" = "取消";
-"Common_Delete" = "删除";
-
 /* Search Field */
 "Search_Placeholder" = "搜索...";
 "Select_All" = "全选";
@@ -118,16 +112,17 @@
 /* Import/Export Feature */
 "Import_Button" = "导入";
 "Export_All_Button" = "导出全部";
-"Export_Selected_Button" = "导出（%d 个选中）";
 "Import_Tooltip" = "从文件导入自定义应用配置";
 "Export_All_Tooltip" = "导出所有自定义应用到文件";
-"Export_Selected_Tooltip" = "导出选中的应用到文件";
 "Settings_Apps_Count" = "%d 个应用";
 "Selected_Count_Simple" = "%d 个选中";
 
 /* Export Dialog */
 "Export_Title" = "导出自定义应用";
 "Export_All_Message" = "导出所有自定义应用配置";
+"Export_All" = "导出全部";
+"Export_Selected" = "导出选中";
+"Export_Selected_Tooltip_Count" = "导出 %d 个选中的应用配置到文件";
 "Export_Selected_Message" = "导出 %d 个选中的应用配置";
 "Export_Success" = "成功导出 %d 个应用配置";
 "Export_Failed" = "导出失败";
@@ -153,3 +148,5 @@
 /* Common */
 "Success" = "成功";
 "Common_Cancel" = "取消";
+"Common_Save" = "保存";
+"Common_Delete" = "删除";

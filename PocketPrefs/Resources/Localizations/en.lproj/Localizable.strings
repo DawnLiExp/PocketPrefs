@@ -12,7 +12,6 @@
 "Restore_Partial_Success_Message" = "⚠️ Restore complete. Success: %d, Failed: %@";
 "Restore_No_Apps_Processed" = "No app configurations were restored";
 "Restore_Backup_Title" = "Restore Backup";
-"Restore_Empty_State_No_Backups" = "No backups found";
 "Restore_App_Status_Not_Installed" = "Not Installed";
 "Restore_App_Status_Installed" = "Installed";
 "Restore_App_Config_Files_Count" = "%d config files";
@@ -103,11 +102,6 @@
 "Settings_Add_First_App_Hint" = "Click 'Add App' to configure a new application for backup";
 "Settings_Select_App_To_Configure" = "Select an app to configure";
 
-/* Common Actions */
-"Common_Save" = "Save";
-"Common_Cancel" = "Cancel";
-"Common_Delete" = "Delete";
-
 /* Search Field */
 "Search_Placeholder" = "Search...";
 "Select_All" = "Select All";
@@ -118,16 +112,17 @@
 /* Import/Export Feature */
 "Import_Button" = "Import";
 "Export_All_Button" = "Export All";
-"Export_Selected_Button" = "Export (%d Selected)";
 "Import_Tooltip" = "Import custom apps configuration from file";
 "Export_All_Tooltip" = "Export all custom apps to file";
-"Export_Selected_Tooltip" = "Export selected apps to file";
 "Settings_Apps_Count" = "%d apps";
 "Selected_Count_Simple" = "%d selected";
 
 /* Export Dialog */
 "Export_Title" = "Export Custom Apps";
 "Export_All_Message" = "Export all custom apps configuration";
+"Export_All" = "Export All";
+"Export_Selected" = "Export Selected";
+"Export_Selected_Tooltip_Count" = "Export %d selected app configuration(s) to a file";
 "Export_Selected_Message" = "Export %d selected apps configuration";
 "Export_Success" = "Successfully exported %d app configuration(s)";
 "Export_Failed" = "Export Failed";
@@ -153,3 +148,5 @@
 /* Common */
 "Success" = "Success";
 "Common_Cancel" = "Cancel";
+"Common_Save" = "Save";
+"Common_Delete" = "Delete";
