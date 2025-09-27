@@ -2,32 +2,30 @@
 //  ConcurrencyHelpers.swift
 //  PocketPrefs
 //
-//  Swift 6 concurrency helpers and utilities
+//  Swift 6 concurrency utilities
 //
 
 import Foundation
 
-// MARK: - Async Bridge Utilities
+// MARK: - Concurrency Errors
 
-/// Provides utilities for bridging between async and sync contexts
-/// Note: These should be used sparingly during migration to full async/await
-enum ConcurrencyBridge {
-    /// Execute an async operation from a synchronous context
-    /// - Warning: This blocks the current thread and should be avoided where possible
-    @available(*, deprecated, message: "Migrate to async/await")
-    static func runBlocking<T: Sendable>(_ operation: @escaping @Sendable () async -> T) -> T {
-        let semaphore = DispatchSemaphore(value: 0)
-        var result: T!
-
-        Task.detached {
-            result = await operation()
-            semaphore.signal()
+enum ConcurrencyError: LocalizedError {
+    case timeout
+    case cancelled
+    
+    var errorDescription: String? {
+        switch self {
+        case .timeout:
+            return "Operation timed out"
+        case .cancelled:
+            return "Operation was cancelled"
         }
-
-        semaphore.wait()
-        return result
     }
+}
 
+// MARK: - Timeout Utilities
+
+enum ConcurrencyUtilities {
     /// Execute an async operation with a timeout
     static func withTimeout<T: Sendable>(
         seconds: TimeInterval,
@@ -37,31 +35,15 @@ enum ConcurrencyBridge {
             group.addTask {
                 try await operation()
             }
-
+            
             group.addTask {
                 try await Task.sleep(for: .seconds(seconds))
                 throw ConcurrencyError.timeout
             }
-
+            
             let result = try await group.next()!
             group.cancelAll()
             return result
-        }
-    }
-}
-
-// MARK: - Concurrency Errors
-
-enum ConcurrencyError: LocalizedError {
-    case timeout
-    case cancelled
-
-    var errorDescription: String? {
-        switch self {
-        case .timeout:
-            return "Operation timed out"
-        case .cancelled:
-            return "Operation was cancelled"
         }
     }
 }
@@ -73,7 +55,7 @@ extension Task where Success == Never, Failure == Never {
     static func sleep(seconds: Double) async throws {
         try await Task.sleep(for: .seconds(seconds))
     }
-
+    
     /// Sleep for a specified number of milliseconds
     static func sleep(milliseconds: Int) async throws {
         try await Task.sleep(for: .milliseconds(milliseconds))
@@ -92,12 +74,7 @@ extension AsyncSequence {
 // MARK: - MainActor Utilities
 
 @MainActor
-class MainActorUtilities {
-    /// Run a closure on the main actor with guaranteed execution
-    static func run<T: Sendable>(_ operation: @MainActor @Sendable () async throws -> T) async rethrows -> T {
-        try await operation()
-    }
-
+struct MainActorUtilities {
     /// Run a closure on the main actor with a delay
     static func runAfter<T: Sendable>(
         seconds: Double,
