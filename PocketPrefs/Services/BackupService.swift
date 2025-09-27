@@ -14,7 +14,7 @@ actor BackupService {
     private let baseDir = NSHomeDirectory() + "/Documents/PocketPrefsBackups"
     
     private enum Config {
-        static let dateFormat = "yyyy-M-d, h-mm a"
+        static let backupDateFormat = "yyyy-MM-dd_HH-mm-ss"
         static let backupPrefix = "Backup_"
         static let configFileName = "app_config.json"
     }
@@ -134,18 +134,36 @@ actor BackupService {
         }
         
         do {
+            // Sort directory names descending. The new format "Backup_YYYY-MM-DD_HH-mm-ss" sorts correctly.
+            // Old formats will be sorted alphabetically after the new ones.
             let backupDirs = try fileManager.contentsOfDirectory(atPath: baseDir)
                 .filter { $0.hasPrefix(Config.backupPrefix) }
-                .sorted { $0 > $1 }
-            
+                .sorted(by: >) // Descending sort
+
             var backups: [BackupInfo] = []
             
             for dirName in backupDirs {
                 let backupPath = "\(baseDir)/\(dirName)"
+                
+                // The date is primarily for display. The sorting is handled by the directory name.
+                let date: Date
+                if let parsedDate = parseDateFromBackupName(dirName) {
+                    date = parsedDate
+                } else {
+                    // Fallback for any old/unrecognized formats.
+                    if let attributes = try? fileManager.attributesOfItem(atPath: backupPath),
+                       let modDate = attributes[.modificationDate] as? Date
+                    {
+                        date = modDate
+                    } else {
+                        date = Date.distantPast // Should not happen
+                    }
+                }
+
                 var backup = BackupInfo(
                     path: backupPath,
                     name: dirName,
-                    date: parseDateFromBackupName(dirName) ?? Date()
+                    date: date
                 )
                 
                 backup.apps = await scanAppsInBackup(at: backupPath)
@@ -215,15 +233,12 @@ actor BackupService {
             return nil
         }
     }
-    
+
     private func createBackupPath() -> String {
-        let timestamp = DateFormatter.localizedString(
-            from: Date(),
-            dateStyle: .short,
-            timeStyle: .short
-        )
-        .replacingOccurrences(of: "/", with: "-")
-        .replacingOccurrences(of: ":", with: "-")
+        let formatter = DateFormatter()
+        formatter.dateFormat = Config.backupDateFormat
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        let timestamp = formatter.string(from: Date())
         
         return "\(baseDir)/\(Config.backupPrefix)\(timestamp)"
     }
@@ -234,9 +249,11 @@ actor BackupService {
     
     private func parseDateFromBackupName(_ name: String) -> Date? {
         let dateString = name.replacingOccurrences(of: Config.backupPrefix, with: "")
+        
         let formatter = DateFormatter()
-        formatter.dateFormat = Config.dateFormat
-        formatter.locale = Locale(identifier: "en_US")
+        formatter.dateFormat = Config.backupDateFormat
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        
         return formatter.date(from: dateString)
     }
 }
