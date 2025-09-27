@@ -10,7 +10,6 @@ import SwiftUI
 
 // MARK: - DetailContainerView
 
-/// A container view that manages the display of app details or placeholders based on the current mode and processing state.
 struct DetailContainerView: View {
     let selectedApp: AppConfig?
     @ObservedObject var backupManager: BackupManager
@@ -52,7 +51,6 @@ struct DetailContainerView: View {
 
 // MARK: - AppDetailView
 
-/// Displays the detailed view for a selected application in backup mode.
 struct AppDetailView: View {
     let app: AppConfig
     @ObservedObject var backupManager: BackupManager
@@ -74,7 +72,7 @@ struct AppDetailView: View {
                 currentMode: currentMode
             )
             
-            // Config Paths List - display only
+            // Config Paths List
             ScrollView {
                 VStack(spacing: 8) {
                     ForEach(app.configPaths, id: \.self) { path in
@@ -90,7 +88,10 @@ struct AppDetailView: View {
                 Spacer()
                 
                 Button(action: performBackup) {
-                    Label(NSLocalizedString("Detail_Action_Backup_Selected", comment: ""), systemImage: "arrow.up.circle.fill")
+                    Label(
+                        NSLocalizedString("Detail_Action_Backup_Selected", comment: ""),
+                        systemImage: "arrow.up.circle.fill"
+                    )
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .disabled(!hasValidSelection)
@@ -107,18 +108,15 @@ struct AppDetailView: View {
         }
         
         Task { @MainActor in
-            // Monitor progress to 98% for smooth visual completion
+            // Progress monitoring
             while progress < 0.98 {
                 try? await Task.sleep(for: .milliseconds(30))
-                progress += 0.0294 // Reach 0.98 in ~1 second
+                progress += 0.0294
             }
             
             backupManager.performBackup()
             
-            // Ensure full circle completion
             progress = 1.0
-            
-            // Visual pause at 100%
             try? await Task.sleep(for: .seconds(0.5))
             
             isProcessing = false
@@ -129,7 +127,6 @@ struct AppDetailView: View {
 
 // MARK: - AppDetailHeader
 
-/// Header for the application detail view, showing app name, bundle ID, and installation status.
 struct AppDetailHeader: View {
     let app: AppConfig
     let currentMode: MainView.AppMode
@@ -155,26 +152,30 @@ struct AppDetailHeader: View {
                 
                 if currentMode == .backup {
                     if app.isInstalled {
-                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Installed", comment: ""), color: Color.App.success.color(for: colorScheme))
+                        StatusBadge(
+                            text: NSLocalizedString("Detail_App_Status_Installed", comment: ""),
+                            color: Color.App.success.color(for: colorScheme)
+                        )
                     } else {
-                        StatusBadge(text: NSLocalizedString("Detail_App_Status_Not_Installed", comment: ""), color: Color.App.warning.color(for: colorScheme))
+                        StatusBadge(
+                            text: NSLocalizedString("Detail_App_Status_Not_Installed", comment: ""),
+                            color: Color.App.warning.color(for: colorScheme)
+                        )
                     }
                 }
             }
             
-            // Configuration paths count
             Text(String(format: NSLocalizedString("AppList_App_Config_Paths_Count", comment: ""), app.configPaths.count))
                 .font(DesignConstants.Typography.body)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
         }
         .padding(20)
-        .background(
-            Color.App.contentAreaBackground.color(for: colorScheme)
-        )
+        .background(Color.App.contentAreaBackground.color(for: colorScheme))
     }
 }
 
-/// Displays a single configuration path item with file size and Show in Finder functionality.
+// MARK: - ConfigPathItem
+
 struct ConfigPathItem: View {
     let path: String
     @State private var isHovered = false
@@ -201,11 +202,14 @@ struct ConfigPathItem: View {
             
             Spacer()
             
-            // Show in Finder button
             Button(action: showInFinder) {
                 Image(systemName: "magnifyingglass.circle")
                     .font(.system(size: 16))
-                    .foregroundColor(isHovered ? (Color.App.primary.color(for: colorScheme)) : (Color.App.secondary.color(for: colorScheme)))
+                    .foregroundColor(
+                        isHovered
+                            ? Color.App.primary.color(for: colorScheme)
+                            : Color.App.secondary.color(for: colorScheme)
+                    )
             }
             .buttonStyle(.plain)
             .help("Show in Finder")
@@ -226,11 +230,12 @@ struct ConfigPathItem: View {
         let expandedPath = NSString(string: path).expandingTildeInPath
         let url = URL(fileURLWithPath: expandedPath)
         
-        // Check if file/directory exists
         if FileManager.default.fileExists(atPath: expandedPath) {
-            NSWorkspace.shared.selectFile(expandedPath, inFileViewerRootedAtPath: url.deletingLastPathComponent().path)
+            NSWorkspace.shared.selectFile(
+                expandedPath,
+                inFileViewerRootedAtPath: url.deletingLastPathComponent().path
+            )
         } else {
-            // If file doesn't exist, open parent directory
             let parentURL = url.deletingLastPathComponent()
             if FileManager.default.fileExists(atPath: parentURL.path) {
                 NSWorkspace.shared.open(parentURL)
@@ -244,14 +249,14 @@ struct ConfigPathItem: View {
         
         await MainActor.run {
             do {
-                let resourceValues = try url.resourceValues(forKeys: [.totalFileSizeKey, .fileSizeKey, .isDirectoryKey])
+                let resourceValues = try url.resourceValues(
+                    forKeys: [.totalFileSizeKey, .fileSizeKey, .isDirectoryKey]
+                )
                 
                 let size: Int64
                 if resourceValues.isDirectory == true {
-                    // Calculate directory size
                     size = directorySize(at: url)
                 } else {
-                    // File size
                     size = Int64(resourceValues.totalFileSize ?? resourceValues.fileSize ?? 0)
                 }
                 
@@ -275,7 +280,9 @@ struct ConfigPathItem: View {
         
         for case let fileURL as URL in enumerator {
             do {
-                let resourceValues = try fileURL.resourceValues(forKeys: [.totalFileSizeKey, .fileSizeKey])
+                let resourceValues = try fileURL.resourceValues(
+                    forKeys: [.totalFileSizeKey, .fileSizeKey]
+                )
                 let fileSize = Int64(resourceValues.totalFileSize ?? resourceValues.fileSize ?? 0)
                 totalSize += fileSize
             } catch {
@@ -295,16 +302,14 @@ struct ConfigPathItem: View {
     }
 }
 
-// MARK: - Placeholder Views
+// MARK: - BackupPlaceholderView
 
-/// Placeholder view displayed when no application is selected in backup mode.
 struct BackupPlaceholderView: View {
     @ObservedObject var backupManager: BackupManager
     @Binding var isProcessing: Bool
     @Binding var progress: Double
     @Environment(\.colorScheme) var colorScheme
     
-    // Check if there are any selected apps that are also installed
     private var hasValidSelection: Bool {
         !backupManager.apps.filter { $0.isSelected && $0.isInstalled }.isEmpty
     }
@@ -350,18 +355,14 @@ struct BackupPlaceholderView: View {
         }
         
         Task { @MainActor in
-            // Monitor progress to 98% for smooth visual completion
             while progress < 0.98 {
                 try? await Task.sleep(for: .milliseconds(30))
-                progress += 0.0294 // Reach 0.98 in ~1 second
+                progress += 0.0294
             }
             
             backupManager.performBackup()
             
-            // Ensure full circle completion
             progress = 1.0
-            
-            // Visual pause at 100%
             try? await Task.sleep(for: .seconds(0.5))
             
             isProcessing = false
@@ -370,7 +371,8 @@ struct BackupPlaceholderView: View {
     }
 }
 
-/// Placeholder view displayed when no backup is selected in restore mode.
+// MARK: - RestorePlaceholderView
+
 struct RestorePlaceholderView: View {
     @ObservedObject var backupManager: BackupManager
     @Binding var isProcessing: Bool
@@ -394,7 +396,8 @@ struct RestorePlaceholderView: View {
     }
 }
 
-/// Displays the detailed content of a selected backup in restore mode.
+// MARK: - RestoreDetailContent
+
 struct RestoreDetailContent: View {
     @ObservedObject var backupManager: BackupManager
     let backup: BackupInfo
@@ -402,17 +405,16 @@ struct RestoreDetailContent: View {
     @Binding var progress: Double
     @Environment(\.colorScheme) var colorScheme
     
-    // Computed property to get selected apps count with proper reactivity
     private var selectedAppsCount: Int {
         backupManager.selectedBackup?.apps.filter { $0.isSelected }.count ?? 0
     }
     
-    // Computed property for uninstalled selected apps
     private var uninstalledSelectedCount: Int {
-        backupManager.selectedBackup?.apps.filter { !$0.isCurrentlyInstalled && $0.isSelected }.count ?? 0
+        backupManager.selectedBackup?.apps.filter {
+            !$0.isCurrentlyInstalled && $0.isSelected
+        }.count ?? 0
     }
     
-    // Computed property to check if any apps are selected
     private var hasSelectedApps: Bool {
         selectedAppsCount > 0
     }
@@ -430,30 +432,51 @@ struct RestoreDetailContent: View {
                         Text(formatBackupName(backup.name))
                             .font(DesignConstants.Typography.title)
                         
-                        Text(String(format: NSLocalizedString("Detail_Restore_Backup_App_Count", comment: ""), backup.apps.count))
-                            .font(DesignConstants.Typography.caption)
-                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                        Text(String(
+                            format: NSLocalizedString("Detail_Restore_Backup_App_Count", comment: ""),
+                            backup.apps.count
+                        ))
+                        .font(DesignConstants.Typography.caption)
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
                     }
                     
                     Spacer()
                 }
                 
                 VStack(alignment: .leading, spacing: 8) {
-                    Label(String(format: NSLocalizedString("Detail_Restore_Selected_Apps_Count", comment: ""), selectedAppsCount),
-                          systemImage: "checkmark.circle.fill")
-                        .font(DesignConstants.Typography.body)
-                        .foregroundColor(selectedAppsCount > 0 ? (Color.App.success.color(for: colorScheme)) : (Color.App.secondary.color(for: colorScheme)))
+                    Label(
+                        String(
+                            format: NSLocalizedString("Detail_Restore_Selected_Apps_Count", comment: ""),
+                            selectedAppsCount
+                        ),
+                        systemImage: "checkmark.circle.fill"
+                    )
+                    .font(DesignConstants.Typography.body)
+                    .foregroundColor(
+                        selectedAppsCount > 0
+                            ? Color.App.success.color(for: colorScheme)
+                            : Color.App.secondary.color(for: colorScheme)
+                    )
                     
-                    Label(String(format: NSLocalizedString("Detail_Restore_Uninstalled_Apps_Count", comment: ""), uninstalledSelectedCount),
-                          systemImage: "exclamationmark.triangle.fill")
-                        .font(DesignConstants.Typography.body)
-                        .foregroundColor(uninstalledSelectedCount > 0 ? (Color.App.warning.color(for: colorScheme)) : (Color.App.secondary.color(for: colorScheme)))
+                    Label(
+                        String(
+                            format: NSLocalizedString("Detail_Restore_Uninstalled_Apps_Count", comment: ""),
+                            uninstalledSelectedCount
+                        ),
+                        systemImage: "exclamationmark.triangle.fill"
+                    )
+                    .font(DesignConstants.Typography.body)
+                    .foregroundColor(
+                        uninstalledSelectedCount > 0
+                            ? Color.App.warning.color(for: colorScheme)
+                            : Color.App.secondary.color(for: colorScheme)
+                    )
                 }
             }
             .padding(20)
             .background(Color.App.contentAreaBackground.color(for: colorScheme))
             
-            // Selected apps list - no internal separator
+            // Selected apps list
             if hasSelectedApps {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
@@ -461,11 +484,16 @@ struct RestoreDetailContent: View {
                             .font(DesignConstants.Typography.headline)
                             .padding(.bottom, 8)
                         
-                        // Use selectedBackup for real-time updates
                         ForEach(backupManager.selectedBackup?.apps.filter { $0.isSelected } ?? []) { app in
                             HStack {
-                                Image(systemName: app.isCurrentlyInstalled ? "checkmark.circle" : "exclamationmark.circle")
-                                    .foregroundColor(app.isCurrentlyInstalled ? (Color.App.success.color(for: colorScheme)) : (Color.App.warning.color(for: colorScheme)))
+                                Image(systemName: app.isCurrentlyInstalled
+                                    ? "checkmark.circle"
+                                    : "exclamationmark.circle")
+                                    .foregroundColor(
+                                        app.isCurrentlyInstalled
+                                            ? Color.App.success.color(for: colorScheme)
+                                            : Color.App.warning.color(for: colorScheme)
+                                    )
                                 
                                 Text(app.name)
                                     .font(DesignConstants.Typography.body)
@@ -484,7 +512,7 @@ struct RestoreDetailContent: View {
                     .padding(16)
                 }
             } else {
-                // Empty state when no apps selected
+                // Empty state
                 VStack(spacing: 16) {
                     Image(systemName: "info.circle")
                         .font(.system(size: 48))
@@ -504,7 +532,10 @@ struct RestoreDetailContent: View {
                 Spacer()
                 
                 Button(action: performRestore) {
-                    Label(NSLocalizedString("Detail_Restore_Action_Restore_Selected", comment: ""), systemImage: "arrow.down.circle.fill")
+                    Label(
+                        NSLocalizedString("Detail_Restore_Action_Restore_Selected", comment: ""),
+                        systemImage: "arrow.down.circle.fill"
+                    )
                 }
                 .buttonStyle(PrimaryButtonStyle())
                 .disabled(!hasSelectedApps)
@@ -520,18 +551,15 @@ struct RestoreDetailContent: View {
         }
         
         Task { @MainActor in
-            // Monitor progress to 98% for smooth visual completion
             while progress < 0.98 {
                 try? await Task.sleep(for: .milliseconds(30))
-                progress += 0.0294 // Reach 0.98 in ~1 second
+                progress += 0.0294
             }
             
-            backupManager.performRestore(from: backup.path)
+            // Call performRestore without parameters
+            backupManager.performRestore()
             
-            // Ensure full circle completion
             progress = 1.0
-            
-            // Visual pause at 100%
             try? await Task.sleep(for: .seconds(0.5))
             
             isProcessing = false
@@ -544,7 +572,8 @@ struct RestoreDetailContent: View {
     }
 }
 
-/// Placeholder view for restore mode when no backup is selected.
+// MARK: - RestoreEmptyDetail
+
 struct RestoreEmptyDetail: View {
     @Environment(\.colorScheme) var colorScheme
     
