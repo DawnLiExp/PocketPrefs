@@ -2,7 +2,7 @@
 //  ColorExtensions.swift
 //  PocketPrefs
 //
-//  Color utilities and adaptive color palette
+//  Color utilities and adaptive color palette with enhanced glass effects
 //
 
 import SwiftUI
@@ -92,7 +92,7 @@ extension Color {
             dark: Color(hex: "0A84FF")
         )
 
-        // New unified background system
+        // Enhanced unified background system with glass support
         static let unifiedBackground = AdaptiveColor(
             light: Color(hex: "F5F2ED"),
             dark: Color(hex: "44444E")
@@ -203,12 +203,31 @@ extension LinearGradient {
     }
 }
 
+// MARK: - Enhanced Glass Effect Materials
+
+/// Material definitions for consistent glass effects across interface areas
+enum GlassMaterial {
+    /// Primary glass material for main background areas
+    static let primary = Material.ultraThinMaterial
+    
+    /// Sidebar glass material with subtle differentiation
+    static let sidebar = Material.thinMaterial
+    
+    /// Title bar compatible material
+    static let titleBar = Material.ultraThinMaterial
+}
+
 // MARK: - View Extensions for Backgrounds
 
 extension View {
-    /// Applies the new unified background (main + sidebar) with glass effect
+    /// Enhanced unified background with improved glass effect
     func unifiedBackground() -> some View {
-        modifier(UnifiedBackgroundModifier())
+        modifier(EnhancedUnifiedBackgroundModifier())
+    }
+
+    /// Enhanced sidebar background for visual unity with subtle differentiation
+    func enhancedSidebarBackground() -> some View {
+        modifier(EnhancedSidebarBackgroundModifier())
     }
 
     /// Applies content area background (floating window effect)
@@ -216,32 +235,62 @@ extension View {
         modifier(ContentAreaBackgroundModifier())
     }
 
-    /// Applies a sidebar background style.
+    /// Legacy sidebar background (preserved for compatibility)
     func sidebarBackground() -> some View {
         modifier(SidebarBackgroundModifier())
     }
 
-    /// Applies a content background style.
+    /// Legacy content background (preserved for compatibility)
     func contentBackground() -> some View {
         modifier(ContentBackgroundModifier())
     }
 }
 
-private struct UnifiedBackgroundModifier: ViewModifier {
+// MARK: - Enhanced Background Modifiers
+
+private struct EnhancedUnifiedBackgroundModifier: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
 
     func body(content: Content) -> some View {
         content
             .background(
                 ZStack {
-                    // Base color with transparency for glass effect
-                    (Color.App.unifiedBackground.color(for: colorScheme))
-                        .opacity(0.80)
+                    // Base unified color layer
+                    Color.App.unifiedBackground.color(for: colorScheme)
+                        .opacity(0.72)
 
-                    // Material layer for blur
+                    // Primary glass material layer
                     Rectangle()
-                        .fill(.ultraThinMaterial)
-                        .opacity(0.75)
+                        .fill(GlassMaterial.primary)
+                        .opacity(0.85)
+                        
+                    // Subtle color tint overlay for depth
+                    Color.App.unifiedBackground.color(for: colorScheme)
+                        .opacity(0.08)
+                }
+            )
+    }
+}
+
+private struct EnhancedSidebarBackgroundModifier: ViewModifier {
+    @Environment(\.colorScheme) var colorScheme
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                ZStack {
+                    // Base unified color layer with slightly different opacity for visual differentiation
+                    Color.App.unifiedBackground.color(for: colorScheme)
+                        .opacity(0.68)
+
+                    // Sidebar-specific glass material
+                    Rectangle()
+                        .fill(GlassMaterial.sidebar)
+                        .opacity(0.82)
+                        
+                    // Subtle warmth tint for differentiation while maintaining unity
+                    Color.App.unifiedBackground.color(for: colorScheme)
+                        .opacity(0.12)
                 }
             )
     }
@@ -265,6 +314,8 @@ private struct ContentAreaBackgroundModifier: ViewModifier {
     }
 }
 
+// MARK: - Legacy Background Modifiers (Preserved)
+
 private struct SidebarBackgroundModifier: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
 
@@ -273,7 +324,7 @@ private struct SidebarBackgroundModifier: ViewModifier {
             .background(
                 ZStack {
                     // Base color with transparency
-                    (Color.App.unifiedBackground.color(for: colorScheme))
+                    Color.App.unifiedBackground.color(for: colorScheme)
                         .opacity(0.30)
 
                     // Material layer
@@ -315,7 +366,7 @@ private struct SoftShadowModifier: ViewModifier {
     func body(content: Content) -> some View {
         content
             .shadow(
-                color: (Color.App.primary.color(for: colorScheme)).opacity(0.1),
+                color: Color.App.primary.color(for: colorScheme).opacity(0.1),
                 radius: 8,
                 x: 0,
                 y: 2
@@ -334,7 +385,7 @@ private struct ElevationShadowModifier: ViewModifier {
 
         return content
             .shadow(
-                color: (Color.App.primary.color(for: colorScheme)).opacity(min(opacity, 0.2)),
+                color: Color.App.primary.color(for: colorScheme).opacity(min(opacity, 0.2)),
                 radius: radius,
                 x: 0,
                 y: y
@@ -342,7 +393,8 @@ private struct ElevationShadowModifier: ViewModifier {
     }
 }
 
-// Common adaptive colors
+// MARK: - Enhanced Adaptive Colors
+
 extension AdaptiveColor {
     static let cardBackground = AdaptiveColor(
         light: Color(hex: "FFFFFF", opacity: 0.7),
@@ -357,5 +409,11 @@ extension AdaptiveColor {
     static let glassOverlay = AdaptiveColor(
         light: Color(hex: "FFFFFF", opacity: 0.5),
         dark: Color(hex: "FFFFFF", opacity: 0.1)
+    )
+    
+    /// Enhanced glass tint for unified visual hierarchy
+    static let glassTint = AdaptiveColor(
+        light: Color(hex: "F5F2ED", opacity: 0.4),
+        dark: Color(hex: "44444E", opacity: 0.3)
     )
 }

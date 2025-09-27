@@ -2,12 +2,12 @@
 //  ThemeManager.swift
 //  PocketPrefs
 //
-//  Theme management and design constants
+//  Enhanced theme management with glass effect support and structured concurrency
 //
 
 import SwiftUI
 
-// MARK: - Theme Manager
+// MARK: - Enhanced Theme Manager
 
 @MainActor
 class ThemeManager: ObservableObject {
@@ -24,13 +24,16 @@ class ThemeManager: ObservableObject {
         currentTheme = Theme(rawValue: storedTheme) ?? .system
     }
 
+    /// Set theme with animation
     func setTheme(_ theme: Theme) {
-        currentTheme = theme
-        storedTheme = theme.rawValue
+        withAnimation(DesignConstants.Animation.smooth) {
+            currentTheme = theme
+            storedTheme = theme.rawValue
+        }
     }
 }
 
-// MARK: - Theme Definition
+// MARK: - Enhanced Theme Definition
 
 enum Theme: String, CaseIterable {
     case system
@@ -52,12 +55,50 @@ enum Theme: String, CaseIterable {
         case .dark: return .dark
         }
     }
+    
+    /// Glass effect configuration for each theme
+    var glassConfiguration: GlassConfiguration {
+        switch self {
+        case .system:
+            return GlassConfiguration.adaptive
+        case .light:
+            return GlassConfiguration.light
+        case .dark:
+            return GlassConfiguration.dark
+        }
+    }
 }
 
-// MARK: - Design Constants
+// MARK: - Glass Configuration
+
+struct GlassConfiguration {
+    let backgroundOpacity: Double
+    let materialIntensity: Double
+    let tintOpacity: Double
+    
+    static let adaptive = GlassConfiguration(
+        backgroundOpacity: 0.72,
+        materialIntensity: 0.85,
+        tintOpacity: 0.08
+    )
+    
+    static let light = GlassConfiguration(
+        backgroundOpacity: 0.72,
+        materialIntensity: 0.85,
+        tintOpacity: 0.08
+    )
+    
+    static let dark = GlassConfiguration(
+        backgroundOpacity: 0.72,
+        materialIntensity: 0.85,
+        tintOpacity: 0.08
+    )
+}
+
+// MARK: - Enhanced Design Constants
 
 enum DesignConstants {
-    // Layout
+    // Layout with glass effect considerations
     enum Layout {
         static let sidebarWidth: CGFloat = 76
         static let listWidth: CGFloat = 280
@@ -70,47 +111,111 @@ enum DesignConstants {
         static let spacing: CGFloat = 16
         static let smallSpacing: CGFloat = 8
         static let itemPadding: CGFloat = 12
+        
+        // Glass effect specific spacing
+        static let glassSpacing: CGFloat = 13
+        static let titleBarHeight: CGFloat = 28
     }
 
-    // Typography
+    // Enhanced typography with glass effect readability
     enum Typography {
         static let largeTitle: Font = .system(size: 26, weight: .bold, design: .rounded)
         static let title: Font = .system(size: 18, weight: .semibold, design: .rounded)
         static let headline: Font = .system(size: 12, weight: .semibold, design: .rounded)
-        static let body: Font = .system(size: 12)
-        static let caption: Font = .system(size: 11)
-        static let tiny: Font = .system(size: 10)
+        static let body: Font = .system(size: 12, weight: .medium) // Slightly bolder for glass backgrounds
+        static let caption: Font = .system(size: 11, weight: .medium)
+        static let tiny: Font = .system(size: 10, weight: .medium)
     }
 
-    // Animation
+    // Enhanced animations for glass effects
     enum Animation {
         static let standard = SwiftUI.Animation.spring(response: 0.35, dampingFraction: 0.86)
         static let quick = SwiftUI.Animation.spring(response: 0.25, dampingFraction: 0.9)
         static let smooth = SwiftUI.Animation.easeInOut(duration: 0.3)
+        static let glass = SwiftUI.Animation.easeInOut(duration: 0.25) // Optimized for glass transitions
     }
 }
 
-// MARK: - Visual Effects
+// MARK: - Enhanced Visual Effects
 
-struct GlassEffect: ViewModifier {
+struct EnhancedGlassEffect: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
+    let intensity: Double
+    
+    init(intensity: Double = 1.0) {
+        self.intensity = intensity
+    }
 
     func body(content: Content) -> some View {
         content
-            .background(.ultraThinMaterial)
             .background(
-                AdaptiveColor.glassOverlay.color(for: colorScheme)
+                ZStack {
+                    // Base glass material
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.85 * intensity)
+                    
+                    // Enhanced glass overlay
+                    AdaptiveColor.glassOverlay.color(for: colorScheme)
+                        .opacity(0.5 * intensity)
+                }
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius)
                     .stroke(
-                        Color.App.lightSeparator.color(for: colorScheme),
+                        Color.App.lightSeparator.color(for: colorScheme).opacity(0.5 * intensity),
                         lineWidth: 0.5
                     )
             )
             .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
     }
 }
+
+struct EnhancedCardEffect: ViewModifier {
+    @Environment(\.colorScheme) var colorScheme
+    let isSelected: Bool
+    let glassIntensity: Double
+    
+    init(isSelected: Bool = false, glassIntensity: Double = 0.8) {
+        self.isSelected = isSelected
+        self.glassIntensity = glassIntensity
+    }
+
+    func body(content: Content) -> some View {
+        content
+            .background(
+                ZStack {
+                    // Base selection background
+                    RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                        .fill(
+                            isSelected
+                                ? Color.App.accent.color(for: colorScheme).opacity(0.1)
+                                : Color.clear
+                        )
+                    
+                    // Glass effect background
+                    RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.6 * glassIntensity)
+                    
+                    // Hover background
+                    RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                        .fill(Color.App.hoverBackground.color(for: colorScheme))
+                }
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                    .stroke(
+                        isSelected
+                            ? Color.App.accent.color(for: colorScheme).opacity(0.3)
+                            : Color.clear,
+                        lineWidth: 1
+                    )
+            )
+    }
+}
+
+// MARK: - Legacy Card Effect (for compatibility)
 
 struct CardEffect: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
@@ -138,13 +243,17 @@ struct CardEffect: ViewModifier {
     }
 }
 
-// MARK: - View Extensions
+// MARK: - Enhanced View Extensions
 
 extension View {
-    func glassEffect() -> some View {
-        modifier(GlassEffect())
+    func enhancedGlassEffect(intensity: Double = 1.0) -> some View {
+        modifier(EnhancedGlassEffect(intensity: intensity))
     }
 
+    func enhancedCardEffect(isSelected: Bool = false, glassIntensity: Double = 0.8) -> some View {
+        modifier(EnhancedCardEffect(isSelected: isSelected, glassIntensity: glassIntensity))
+    }
+    
     func cardEffect(isSelected: Bool = false) -> some View {
         modifier(CardEffect(isSelected: isSelected))
     }
@@ -159,7 +268,17 @@ private struct SectionBackgroundModifier: ViewModifier {
 
     func body(content: Content) -> some View {
         content
-            .background((Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.2))
+            .background(
+                ZStack {
+                    // Base section background
+                    Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.2)
+                    
+                    // Subtle glass overlay
+                    Rectangle()
+                        .fill(.ultraThinMaterial)
+                        .opacity(0.3)
+                }
+            )
             .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
     }
 }

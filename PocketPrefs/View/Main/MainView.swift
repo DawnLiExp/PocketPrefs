@@ -2,7 +2,7 @@
 //  MainView.swift
 //  PocketPrefs
 //
-//  Main container view with three-column layout
+//  Main container view with three-column layout and enhanced glass effects
 //
 
 import SwiftUI
@@ -17,10 +17,11 @@ struct MainView: View {
     @State private var progress: Double = 0.0
     @Environment(\.colorScheme) var colorScheme
     
-    // Layout constants
+    // Layout constants optimized for glass effect visibility
     private enum Layout {
         static let unifiedSpacing: CGFloat = 13
         static let sidebarGap: CGFloat = 0
+        static let topPadding: CGFloat = 0 // No top padding to blend with title bar
     }
     
     enum AppMode: String, CaseIterable {
@@ -48,30 +49,13 @@ struct MainView: View {
     
     var body: some View {
         ZStack {
-            // Full background with glass effect
+            // Enhanced unified background with glass effect
             Color.clear
                 .unifiedBackground()
-                .ignoresSafeArea()
+                .ignoresSafeArea(.all)
             
-            // Content area
-            HStack(spacing: 0) {
-                // Left Sidebar
-                SidebarView(currentMode: $currentMode)
-                    .frame(width: DesignConstants.Layout.sidebarWidth)
-                
-                // Main content area
-                contentArea
-                    .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
-                    .shadow(
-                        color: shadowColor,
-                        radius: 4,
-                        x: 0,
-                        y: 2
-                    )
-                    .padding(.leading, Layout.sidebarGap)
-                    .padding(.trailing, Layout.unifiedSpacing)
-                    .padding(.bottom, Layout.unifiedSpacing)
-            }
+            // Main content container
+            contentContainer
         }
         .frame(
             minWidth: DesignConstants.Layout.minWindowWidth,
@@ -81,7 +65,29 @@ struct MainView: View {
     }
     
     @ViewBuilder
-    private var contentArea: some View {
+    private var contentContainer: some View {
+        HStack(spacing: Layout.sidebarGap) {
+            // Enhanced sidebar with glass effect
+            enhancedSidebar
+                .frame(width: DesignConstants.Layout.sidebarWidth)
+            
+            // Main content area with floating effect
+            floatingContentArea
+                .padding(.trailing, Layout.unifiedSpacing)
+                .padding(.bottom, Layout.unifiedSpacing)
+                .padding(.top, Layout.topPadding)
+        }
+    }
+    
+    @ViewBuilder
+    private var enhancedSidebar: some View {
+        SidebarView(currentMode: $currentMode)
+            .enhancedSidebarBackground()
+            .frame(maxHeight: .infinity)
+    }
+    
+    @ViewBuilder
+    private var floatingContentArea: some View {
         HStack(spacing: 0) {
             // Middle list area
             listView
@@ -90,15 +96,12 @@ struct MainView: View {
                     idealWidth: DesignConstants.Layout.listWidth,
                     maxWidth: DesignConstants.Layout.listWidth + 60
                 )
-                .background(backgroundColor)
+                .background(contentAreaBackgroundColor)
             
-            // Divider
-            RoundedRectangle(cornerRadius: 0.5)
-                .fill(.ultraThinMaterial)
-                .frame(width: 1)
-                .background(dividerColor)
+            // Subtle content divider
+            contentDivider
             
-            // Right detail area - using the existing DetailContainerView
+            // Right detail area
             DetailContainerView(
                 selectedApp: selectedApp,
                 backupManager: backupManager,
@@ -108,8 +111,23 @@ struct MainView: View {
                 showingRestorePicker: $showingRestorePicker
             )
             .frame(maxWidth: .infinity)
-            .background(backgroundColor)
+            .background(contentAreaBackgroundColor)
         }
+        .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
+        .shadow(
+            color: shadowColor,
+            radius: 6,
+            x: 0,
+            y: 3
+        )
+        .overlay(
+            // Subtle border for content area definition
+            RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius)
+                .stroke(
+                    Color.App.lightSeparator.color(for: colorScheme).opacity(0.2),
+                    lineWidth: 0.5
+                )
+        )
     }
     
     @ViewBuilder
@@ -129,19 +147,37 @@ struct MainView: View {
         }
     }
     
-    private var backgroundColor: Color {
+    @ViewBuilder
+    private var contentDivider: some View {
+        Rectangle()
+            .fill(.ultraThinMaterial)
+            .overlay(
+                Rectangle()
+                    .fill(
+                        Color.App.lightSeparator
+                            .color(for: colorScheme)
+                            .opacity(0.25)
+                    )
+            )
+            .frame(width: 1)
+    }
+    
+    // MARK: - Computed Properties
+    
+    private var contentAreaBackgroundColor: Color {
         Color.App.contentAreaBackground.color(for: colorScheme)
     }
     
     private var shadowColor: Color {
         colorScheme == .dark
-            ? Color.black.opacity(0.3)
-            : Color.black.opacity(0.08)
+            ? Color.black.opacity(0.4)
+            : Color.black.opacity(0.12)
     }
-    
-    private var dividerColor: Color {
-        Color.App.lightSeparator
-            .color(for: colorScheme)
-            .opacity(0.3)
-    }
+}
+
+// MARK: - Preview
+
+#Preview {
+    MainView()
+        .frame(width: 900, height: 600)
 }
