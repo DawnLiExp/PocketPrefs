@@ -5,18 +5,16 @@
 //  File operation utilities with async support
 //
 
-import Foundation
 import AppKit
+import Foundation
 import os.log
 
 actor FileOperationService {
     static let shared = FileOperationService()
     private let logger = Logger(subsystem: "com.pocketprefs", category: "FileOperation")
-    private let maxConcurrentOperations = 4
     
     private init() {}
     
-    // Check if app is installed
     func checkIfAppInstalled(bundleId: String) async -> Bool {
         let fileManager = FileManager.default
         
@@ -29,7 +27,7 @@ actor FileOperationService {
             return fileManager.fileExists(atPath: NSHomeDirectory() + "/.ssh")
         case "homebrew":
             return fileManager.fileExists(atPath: "/usr/local/bin/brew") ||
-                   fileManager.fileExists(atPath: "/opt/homebrew/bin/brew")
+                fileManager.fileExists(atPath: "/opt/homebrew/bin/brew")
         default:
             return await MainActor.run {
                 NSWorkspace.shared.urlForApplication(withBundleIdentifier: bundleId) != nil
@@ -37,7 +35,6 @@ actor FileOperationService {
         }
     }
     
-    // Copy file with error handling
     func copyFile(from source: String, to destination: String) async throws {
         let fileManager = FileManager.default
         let expandedSource = NSString(string: source).expandingTildeInPath
@@ -63,7 +60,6 @@ actor FileOperationService {
         logger.debug("Copied file from \(source) to \(destination)")
     }
     
-    // Backup existing file before overwriting
     func backupExistingFile(_ path: String) async throws {
         let fileManager = FileManager.default
         let expandedPath = NSString(string: path).expandingTildeInPath
@@ -80,7 +76,6 @@ actor FileOperationService {
         }
     }
     
-    // Create directory with intermediate directories
     func createDirectory(at path: String) async throws {
         let fileManager = FileManager.default
         let expandedPath = NSString(string: path).expandingTildeInPath
@@ -91,7 +86,6 @@ actor FileOperationService {
         )
     }
     
-    // Check if file exists
     func fileExists(at path: String) -> Bool {
         FileManager.default.fileExists(atPath: path)
     }
