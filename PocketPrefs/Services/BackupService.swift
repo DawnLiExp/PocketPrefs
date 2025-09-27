@@ -13,7 +13,12 @@ actor BackupService {
     private let fileOps = FileOperationService.shared
     private let baseDir = NSHomeDirectory() + "/Documents/PocketPrefsBackups"
     
-    // Perform backup with async/await and TaskGroup
+    private enum Config {
+        static let dateFormat = "yyyy-M-d, h-mm a"
+        static let backupPrefix = "Backup_"
+        static let configFileName = "app_config.json"
+    }
+    
     func performBackup(apps: [AppConfig]) async -> BackupResult {
         let selectedApps = apps.filter { $0.isSelected && $0.isInstalled }
         
@@ -23,10 +28,7 @@ actor BackupService {
         }
         
         // Create backup directory
-        let timestamp = DateFormatter.localizedString(from: Date(), dateStyle: .short, timeStyle: .short)
-            .replacingOccurrences(of: "/", with: "-")
-            .replacingOccurrences(of: ":", with: "-")
-        let backupDir = "\(baseDir)/Backup_\(timestamp)"
+        let backupDir = createBackupPath()
         
         do {
             try await fileOps.createDirectory(at: backupDir)
@@ -40,7 +42,7 @@ actor BackupService {
             )
         }
         
-        // Backup apps concurrently with TaskGroup
+        // Backup apps concurrently
         var successCount = 0
         var failedApps: [(String, Error)] = []
         
@@ -71,9 +73,8 @@ actor BackupService {
         )
     }
     
-    // Backup a single app
     private func backupSingleApp(_ app: AppConfig, to backupDir: String) async -> Result<Void, Error> {
-        let appBackupDir = "\(backupDir)/\(app.name.replacingOccurrences(of: " ", with: "_"))"
+        let appBackupDir = "\(backupDir)/\(sanitizeName(app.name))"
         
         do {
             try await fileOps.createDirectory(at: appBackupDir)
@@ -82,27 +83,18 @@ actor BackupService {
             try await withThrowingTaskGroup(of: Void.self) { group in
                 for path in app.configPaths {
                     group.addTask {
-                        let expandedPath = NSString(string: path).expandingTildeInPath
-                        
-                        // Check file existence through fileOps
-                        if await self.fileOps.fileExists(at: expandedPath) {
-                            let fileName = URL(fileURLWithPath: expandedPath).lastPathComponent
-                            let destPath = "\(appBackupDir)/\(fileName)"
-                            try await self.fileOps.copyFile(from: expandedPath, to: destPath)
-                        }
+                        await self.backupConfigFile(
+                            path: path,
+                            to: appBackupDir
+                        )
                     }
                 }
                 
-                // Wait for all file operations
                 try await group.waitForAll()
             }
             
             // Save app configuration
-            let encoder = JSONEncoder()
-            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-            let configData = try encoder.encode(app)
-            let configURL = URL(fileURLWithPath: "\(appBackupDir)/app_config.json")
-            try configData.write(to: configURL)
+            try await saveAppConfig(app, to: appBackupDir)
             
             return .success(())
         } catch {
@@ -110,7 +102,29 @@ actor BackupService {
         }
     }
     
-    // Scan existing backups
+    private func backupConfigFile(path: String, to destinationDir: String) async {
+        let expandedPath = NSString(string: path).expandingTildeInPath
+        
+        if await fileOps.fileExists(at: expandedPath) {
+            let fileName = URL(fileURLWithPath: expandedPath).lastPathComponent
+            let destPath = "\(destinationDir)/\(fileName)"
+            
+            do {
+                try await fileOps.copyFile(from: expandedPath, to: destPath)
+            } catch {
+                logger.warning("Failed to backup file \(path): \(error)")
+            }
+        }
+    }
+    
+    private func saveAppConfig(_ app: AppConfig, to directory: String) async throws {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+        let configData = try encoder.encode(app)
+        let configURL = URL(fileURLWithPath: "\(directory)/\(Config.configFileName)")
+        try configData.write(to: configURL)
+    }
+    
     func scanBackups() async -> [BackupInfo] {
         let fileManager = FileManager.default
         
@@ -121,7 +135,7 @@ actor BackupService {
         
         do {
             let backupDirs = try fileManager.contentsOfDirectory(atPath: baseDir)
-                .filter { $0.hasPrefix("Backup_") }
+                .filter { $0.hasPrefix(Config.backupPrefix) }
                 .sorted { $0 > $1 }
             
             var backups: [BackupInfo] = []
@@ -148,7 +162,6 @@ actor BackupService {
         }
     }
     
-    // Scan apps in a specific backup
     func scanAppsInBackup(at path: String) async -> [BackupAppInfo] {
         let fileManager = FileManager.default
         var apps: [BackupAppInfo] = []
@@ -158,30 +171,11 @@ actor BackupService {
                 .filter { !$0.hasPrefix(".") }
             
             for appDir in appDirs {
-                let appPath = "\(path)/\(appDir)"
-                let configPath = "\(appPath)/app_config.json"
-                
-                if fileManager.fileExists(atPath: configPath) {
-                    do {
-                        let configData = try Data(contentsOf: URL(fileURLWithPath: configPath))
-                        let appConfig = try JSONDecoder().decode(AppConfig.self, from: configData)
-                        
-                        let isInstalled = await fileOps.checkIfAppInstalled(bundleId: appConfig.bundleId)
-                        
-                        let backupApp = BackupAppInfo(
-                            name: appConfig.name,
-                            path: appPath,
-                            bundleId: appConfig.bundleId,
-                            configPaths: appConfig.configPaths,
-                            isCurrentlyInstalled: isInstalled,
-                            isSelected: false,
-                            category: appConfig.category
-                        )
-                        
-                        apps.append(backupApp)
-                    } catch {
-                        logger.error("Failed to read app config for \(appDir): \(error)")
-                    }
+                if let backupApp = await loadBackupApp(
+                    from: appDir,
+                    at: path
+                ) {
+                    apps.append(backupApp)
                 }
             }
         } catch {
@@ -191,10 +185,57 @@ actor BackupService {
         return apps
     }
     
+    private func loadBackupApp(from appDir: String, at basePath: String) async -> BackupAppInfo? {
+        let appPath = "\(basePath)/\(appDir)"
+        let configPath = "\(appPath)/\(Config.configFileName)"
+        
+        guard FileManager.default.fileExists(atPath: configPath) else {
+            return nil
+        }
+        
+        do {
+            let configData = try Data(contentsOf: URL(fileURLWithPath: configPath))
+            let appConfig = try JSONDecoder().decode(AppConfig.self, from: configData)
+            
+            let isInstalled = await fileOps.checkIfAppInstalled(
+                bundleId: appConfig.bundleId
+            )
+            
+            return BackupAppInfo(
+                name: appConfig.name,
+                path: appPath,
+                bundleId: appConfig.bundleId,
+                configPaths: appConfig.configPaths,
+                isCurrentlyInstalled: isInstalled,
+                isSelected: false,
+                category: appConfig.category
+            )
+        } catch {
+            logger.error("Failed to read app config for \(appDir): \(error)")
+            return nil
+        }
+    }
+    
+    private func createBackupPath() -> String {
+        let timestamp = DateFormatter.localizedString(
+            from: Date(),
+            dateStyle: .short,
+            timeStyle: .short
+        )
+        .replacingOccurrences(of: "/", with: "-")
+        .replacingOccurrences(of: ":", with: "-")
+        
+        return "\(baseDir)/\(Config.backupPrefix)\(timestamp)"
+    }
+    
+    private func sanitizeName(_ name: String) -> String {
+        name.replacingOccurrences(of: " ", with: "_")
+    }
+    
     private func parseDateFromBackupName(_ name: String) -> Date? {
-        let dateString = name.replacingOccurrences(of: "Backup_", with: "")
+        let dateString = name.replacingOccurrences(of: Config.backupPrefix, with: "")
         let formatter = DateFormatter()
-        formatter.dateFormat = "yyyy-M-d, h-mm a"
+        formatter.dateFormat = Config.dateFormat
         formatter.locale = Locale(identifier: "en_US")
         return formatter.date(from: dateString)
     }
