@@ -12,7 +12,10 @@ actor RestoreService {
     private let logger = Logger(subsystem: "com.pocketprefs", category: "RestoreService")
     private let fileOps = FileOperationService.shared
     
-    // Perform restore with async/await and TaskGroup
+    private enum Config {
+        static let maxConcurrentOperations = 4
+    }
+    
     func performRestore(backup: BackupInfo) async -> RestoreResult {
         let selectedApps = backup.apps.filter { $0.isSelected }
         
@@ -24,34 +27,28 @@ actor RestoreService {
         var successCount = 0
         var failedApps: [(String, Error)] = []
         
-        // Restore apps concurrently with limited concurrency
+        // Restore apps with controlled concurrency
         await withTaskGroup(of: (String, Result<Void, Error>).self) { group in
-            // Limit concurrent operations
-            let maxConcurrent = 4
-            var activeTaskCount = 0
-            var appIterator = selectedApps.makeIterator()
-            
-            while let app = appIterator.next() {
-                if activeTaskCount >= maxConcurrent {
-                    // Wait for one task to complete before adding more
-                    if let (appName, result) = await group.next() {
-                        activeTaskCount -= 1
-                        handleRestoreResult(appName: appName, result: result,
-                                          successCount: &successCount, failedApps: &failedApps)
+            for appBatch in selectedApps.chunked(into: Config.maxConcurrentOperations) {
+                // Process batch concurrently
+                for app in appBatch {
+                    group.addTask {
+                        let result = await self.restoreSingleApp(app)
+                        return (app.name, result)
                     }
                 }
                 
-                group.addTask {
-                    let result = await self.restoreSingleApp(app)
-                    return (app.name, result)
+                // Wait for batch completion
+                for await (appName, result) in group {
+                    switch result {
+                    case .success:
+                        successCount += 1
+                        logger.info("Successfully restored: \(appName)")
+                    case .failure(let error):
+                        failedApps.append((appName, error))
+                        logger.error("Failed to restore \(appName): \(error)")
+                    }
                 }
-                activeTaskCount += 1
-            }
-            
-            // Process remaining tasks
-            for await (appName, result) in group {
-                handleRestoreResult(appName: appName, result: result,
-                                  successCount: &successCount, failedApps: &failedApps)
             }
         }
         
@@ -62,22 +59,8 @@ actor RestoreService {
         )
     }
     
-    private func handleRestoreResult(appName: String, result: Result<Void, Error>,
-                                    successCount: inout Int, failedApps: inout [(String, Error)]) {
-        switch result {
-        case .success:
-            successCount += 1
-            logger.info("Successfully restored: \(appName)")
-        case .failure(let error):
-            failedApps.append((appName, error))
-            logger.error("Failed to restore \(appName): \(error)")
-        }
-    }
-    
-    // Restore a single app
     private func restoreSingleApp(_ app: BackupAppInfo) async -> Result<Void, Error> {
         do {
-            // Restore config files concurrently
             try await withThrowingTaskGroup(of: Void.self) { group in
                 for originalPath in app.configPaths {
                     group.addTask {
@@ -85,12 +68,8 @@ actor RestoreService {
                         let fileName = URL(fileURLWithPath: expandedPath).lastPathComponent
                         let sourcePath = "\(app.path)/\(fileName)"
                         
-                        // Check file existence through fileOps
                         if await self.fileOps.fileExists(at: sourcePath) {
-                            // Backup existing file
                             try await self.fileOps.backupExistingFile(expandedPath)
-                            
-                            // Restore file
                             try await self.fileOps.copyFile(from: sourcePath, to: expandedPath)
                         }
                     }
@@ -101,7 +80,22 @@ actor RestoreService {
             
             return .success(())
         } catch {
-            return .failure(AppError.restoreFailed(app: app.name, reason: error.localizedDescription))
+            return .failure(
+                AppError.restoreFailed(
+                    app: app.name,
+                    reason: error.localizedDescription
+                )
+            )
+        }
+    }
+}
+
+// MARK: - Array Extension for Chunking
+
+private extension Array {
+    func chunked(into size: Int) -> [[Element]] {
+        return stride(from: 0, to: count, by: size).map {
+            Array(self[$0 ..< Swift.min($0 + size, count)])
         }
     }
 }
