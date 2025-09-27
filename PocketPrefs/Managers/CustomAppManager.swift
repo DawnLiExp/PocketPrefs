@@ -72,7 +72,7 @@ class CustomAppManager: ObservableObject {
             name: name,
             bundleId: bundleId,
             configPaths: [],
-            isSelected: true,
+            isSelected: false,
             isInstalled: true,
             category: .custom,
             isUserAdded: true

@@ -68,7 +68,7 @@ class BackupManager: ObservableObject {
             for await (appId, isInstalled) in group {
                 if let index = updatedApps.firstIndex(where: { $0.id == appId }) {
                     updatedApps[index].isInstalled = isInstalled
-                    updatedApps[index].isSelected = isInstalled
+                    updatedApps[index].isSelected = false
                 }
             }
             

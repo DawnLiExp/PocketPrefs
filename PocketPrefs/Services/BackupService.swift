@@ -174,8 +174,8 @@ actor BackupService {
                             bundleId: appConfig.bundleId,
                             configPaths: appConfig.configPaths,
                             isCurrentlyInstalled: isInstalled,
-                            isSelected: isInstalled,
-                            category: appConfig.category // Store category instead of icon
+                            isSelected: false,
+                            category: appConfig.category
                         )
                         
                         apps.append(backupApp)
