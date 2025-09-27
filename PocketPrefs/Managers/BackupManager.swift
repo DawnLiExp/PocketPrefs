@@ -10,7 +10,7 @@ import os.log
 import SwiftUI
 
 @MainActor
-class BackupManager: ObservableObject {
+final class BackupManager: ObservableObject {
     @Published var apps: [AppConfig] = []
     @Published var isProcessing = false
     @Published var statusMessage = ""
@@ -26,6 +26,15 @@ class BackupManager: ObservableObject {
     private let restoreService = RestoreService()
     private let fileOps = FileOperationService.shared
     private let userStore = UserConfigStore.shared
+    
+    // Progress monitoring configuration
+    private enum ProgressConfig {
+        static let targetProgress = 0.98
+        static let duration = 3.0
+        static let steps = 40
+        static let completionPause = 0.5
+        static let finalPause = 0.3
+    }
     
     init() {
         Task {
@@ -54,7 +63,7 @@ class BackupManager: ObservableObject {
     func loadApps() async {
         var allApps = AppConfig.presetConfigs
         allApps.append(contentsOf: userStore.customApps)
-
+        
         await withTaskGroup(of: (UUID, Bool).self) { group in
             for app in allApps {
                 group.addTask { [weak self] in
@@ -90,11 +99,15 @@ class BackupManager: ObservableObject {
         availableBackups = await backupService.scanBackups()
         
         // Update selection state
-        if let currentSelected = selectedBackup, !availableBackups.contains(currentSelected) {
+        if let currentSelected = selectedBackup,
+           !availableBackups.contains(currentSelected)
+        {
             selectedBackup = nil
         }
         
-        if selectedBackup == nil, let firstBackup = availableBackups.first {
+        if selectedBackup == nil,
+           let firstBackup = availableBackups.first
+        {
             selectBackup(firstBackup)
         }
         
@@ -145,40 +158,36 @@ class BackupManager: ObservableObject {
         currentProgress = 0.0
         statusMessage = NSLocalizedString("Backup_Starting", comment: "")
         
-        // Start progress monitoring with structured concurrency
         await withTaskGroup(of: Void.self) { group in
             group.addTask { [weak self] in
-                await self?.monitorProgress(targetProgress: 0.98, duration: 3.0)
+                await self?.monitorProgress(
+                    targetProgress: ProgressConfig.targetProgress,
+                    duration: ProgressConfig.duration
+                )
             }
             
-            // Backup operation task
             group.addTask { [weak self] in
                 guard let self = self else { return }
                 let result = await self.backupService.performBackup(apps: self.apps)
                 
                 await MainActor.run {
-                    // Ensure progress reaches 100%
                     self.currentProgress = 1.0
                     self.statusMessage = result.statusMessage
                 }
                 
-                // Allow animation to complete at 100%
-                try? await Task.sleep(for: .seconds(0.5))
-                
+                try? await Task.sleep(for: .seconds(ProgressConfig.completionPause))
                 await self.scanBackups()
             }
             
-            // Wait for all tasks to complete
             await group.waitForAll()
         }
         
-        // Final cleanup with additional pause
-        try? await Task.sleep(for: .seconds(0.3))
+        try? await Task.sleep(for: .seconds(ProgressConfig.finalPause))
         isProcessing = false
         currentProgress = 0.0
     }
     
-    func performRestore(from path: String) {
+    func performRestore() {
         guard let backup = selectedBackup else {
             logger.error("No backup selected for restore")
             return
@@ -194,43 +203,37 @@ class BackupManager: ObservableObject {
         currentProgress = 0.0
         statusMessage = NSLocalizedString("Restore_Starting", comment: "")
         
-        // Start progress monitoring with structured concurrency
         await withTaskGroup(of: Void.self) { group in
-            // Progress monitoring task - monitor to 0.98 for visual completion
             group.addTask { [weak self] in
-                await self?.monitorProgress(targetProgress: 0.98, duration: 3.0)
+                await self?.monitorProgress(
+                    targetProgress: ProgressConfig.targetProgress,
+                    duration: ProgressConfig.duration
+                )
             }
             
-            // Restore operation task
             group.addTask { [weak self] in
                 guard let self = self else { return }
                 let result = await self.restoreService.performRestore(backup: backup)
                 
                 await MainActor.run {
-                    // Ensure progress reaches 100%
                     self.currentProgress = 1.0
                     self.statusMessage = result.statusMessage
                 }
                 
-                // Allow animation to complete at 100%
-                try? await Task.sleep(for: .seconds(0.5))
-                
+                try? await Task.sleep(for: .seconds(ProgressConfig.completionPause))
                 await self.loadApps()
             }
             
-            // Wait for all tasks to complete
             await group.waitForAll()
         }
         
-        // Final cleanup with additional pause
-        try? await Task.sleep(for: .seconds(0.3))
+        try? await Task.sleep(for: .seconds(ProgressConfig.finalPause))
         isProcessing = false
         currentProgress = 0.0
     }
     
-    // Progress monitoring helper using structured concurrency
     private func monitorProgress(targetProgress: Double, duration: TimeInterval) async {
-        let steps = 40
+        let steps = ProgressConfig.steps
         let stepDuration = duration / Double(steps)
         let progressIncrement = targetProgress / Double(steps)
         
@@ -244,7 +247,6 @@ class BackupManager: ObservableObject {
         }
     }
     
-    // Scan apps in backup - async only
     func scanAppsInBackup(at path: String) async -> [BackupAppInfo] {
         await backupService.scanAppsInBackup(at: path)
     }
