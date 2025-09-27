@@ -142,12 +142,12 @@ class EnhancedWindowBackgroundNSView: NSView {
         switch colorScheme {
         case .dark:
             backgroundColor = NSColor(
-                red: 0.267, green: 0.267, blue: 0.306, alpha: 0.72
-            ) // #44444E with 72% opacity
+                red: 0.267, green: 0.267, blue: 0.306, alpha: 0.68
+            ) // #44444E with 68% opacity
         default:
             backgroundColor = NSColor(
-                red: 0.961, green: 0.949, blue: 0.929, alpha: 0.72
-            ) // #F5F2ED with 72% opacity
+                red: 0.961, green: 0.949, blue: 0.929, alpha: 0.70
+            ) // #F5F2ED with 70% opacity
         }
         
         window.backgroundColor = backgroundColor

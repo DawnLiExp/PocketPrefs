@@ -17,9 +17,7 @@ struct SidebarView: View {
     var body: some View {
         VStack(spacing: 12) {
             // Top spacer for title bar area
-            Spacer()
-                .frame(height: 28)
-            
+       
             // Mode selection buttons with enhanced visual hierarchy
             VStack(spacing: 8) {
                 ForEach(modes, id: \.self) { mode in
@@ -135,14 +133,6 @@ struct SidebarIconButton: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
             .padding(.horizontal, 4)
-            .background(
-                RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                    .fill(
-                        Color.App.accent
-                            .color(for: colorScheme)
-                            .opacity(backgroundOpacity)
-                    )
-            )
             .scaleEffect(isPressing ? 0.96 : 1.0)
             .contentShape(Rectangle())
         }

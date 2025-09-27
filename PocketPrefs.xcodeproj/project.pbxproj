@@ -92,7 +92,6 @@
 				FC195B7F2E7EC4DE00258310 /* Resources */,
 				FC195B7D2E7EC4AB00258310 /* Managers */,
 				FC195B7E2E7EC4BE00258310 /* Models */,
-				FCD990712E7EC53600C7087A /* PocketPrefsApp.swift */,
 				FCD990802E7EC54200C7087A /* Services */,
 				FCD990812E7EC55700C7087A /* View */,
 			);
@@ -198,6 +197,7 @@
 				FC68CD242E865E41003BBDD4 /* Components */,
 				FC68CD252E865E4E003BBDD4 /* Extensions */,
 				FC68CD232E865E30003BBDD4 /* Settings */,
+				FCD990712E7EC53600C7087A /* PocketPrefsApp.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";

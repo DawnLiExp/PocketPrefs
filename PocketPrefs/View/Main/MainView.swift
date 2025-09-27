@@ -82,7 +82,6 @@ struct MainView: View {
     @ViewBuilder
     private var enhancedSidebar: some View {
         SidebarView(currentMode: $currentMode)
-            .enhancedSidebarBackground()
             .frame(maxHeight: .infinity)
     }
     
@@ -116,16 +115,15 @@ struct MainView: View {
         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
         .shadow(
             color: shadowColor,
-            radius: 6,
+            radius: 5,
             x: 0,
-            y: 3
+            y: 2
         )
         .overlay(
-            // Subtle border for content area definition
             RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius)
                 .stroke(
-                    Color.App.lightSeparator.color(for: colorScheme).opacity(0.2),
-                    lineWidth: 0.5
+                    Color.App.contentAreaBorder.color(for: colorScheme),
+                    lineWidth: DesignConstants.Layout.contentAreaBorderWidth
                 )
         )
     }

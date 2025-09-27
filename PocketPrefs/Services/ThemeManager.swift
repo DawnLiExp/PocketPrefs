@@ -55,7 +55,7 @@ enum Theme: String, CaseIterable {
         case .dark: return .dark
         }
     }
-    
+
     /// Glass effect configuration for each theme
     var glassConfiguration: GlassConfiguration {
         switch self {
@@ -75,19 +75,19 @@ struct GlassConfiguration {
     let backgroundOpacity: Double
     let materialIntensity: Double
     let tintOpacity: Double
-    
+
     static let adaptive = GlassConfiguration(
         backgroundOpacity: 0.72,
         materialIntensity: 0.85,
         tintOpacity: 0.08
     )
-    
+
     static let light = GlassConfiguration(
         backgroundOpacity: 0.72,
         materialIntensity: 0.85,
         tintOpacity: 0.08
     )
-    
+
     static let dark = GlassConfiguration(
         backgroundOpacity: 0.72,
         materialIntensity: 0.85,
@@ -111,10 +111,13 @@ enum DesignConstants {
         static let spacing: CGFloat = 16
         static let smallSpacing: CGFloat = 8
         static let itemPadding: CGFloat = 12
-        
+
         // Glass effect specific spacing
         static let glassSpacing: CGFloat = 13
         static let titleBarHeight: CGFloat = 28
+
+        // 可调节参数：内容区域装饰线宽度
+        static let contentAreaBorderWidth: CGFloat = 1.0
     }
 
     // Enhanced typography with glass effect readability
@@ -141,7 +144,7 @@ enum DesignConstants {
 struct EnhancedGlassEffect: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
     let intensity: Double
-    
+
     init(intensity: Double = 1.0) {
         self.intensity = intensity
     }
@@ -154,7 +157,7 @@ struct EnhancedGlassEffect: ViewModifier {
                     Rectangle()
                         .fill(.ultraThinMaterial)
                         .opacity(0.85 * intensity)
-                    
+
                     // Enhanced glass overlay
                     AdaptiveColor.glassOverlay.color(for: colorScheme)
                         .opacity(0.5 * intensity)
@@ -175,7 +178,7 @@ struct EnhancedCardEffect: ViewModifier {
     @Environment(\.colorScheme) var colorScheme
     let isSelected: Bool
     let glassIntensity: Double
-    
+
     init(isSelected: Bool = false, glassIntensity: Double = 0.8) {
         self.isSelected = isSelected
         self.glassIntensity = glassIntensity
@@ -192,12 +195,12 @@ struct EnhancedCardEffect: ViewModifier {
                                 ? Color.App.accent.color(for: colorScheme).opacity(0.1)
                                 : Color.clear
                         )
-                    
+
                     // Glass effect background
                     RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                         .fill(.ultraThinMaterial)
                         .opacity(0.6 * glassIntensity)
-                    
+
                     // Hover background
                     RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                         .fill(Color.App.hoverBackground.color(for: colorScheme))
@@ -253,7 +256,7 @@ extension View {
     func enhancedCardEffect(isSelected: Bool = false, glassIntensity: Double = 0.8) -> some View {
         modifier(EnhancedCardEffect(isSelected: isSelected, glassIntensity: glassIntensity))
     }
-    
+
     func cardEffect(isSelected: Bool = false) -> some View {
         modifier(CardEffect(isSelected: isSelected))
     }
@@ -272,7 +275,7 @@ private struct SectionBackgroundModifier: ViewModifier {
                 ZStack {
                     // Base section background
                     Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.2)
-                    
+
                     // Subtle glass overlay
                     Rectangle()
                         .fill(.ultraThinMaterial)

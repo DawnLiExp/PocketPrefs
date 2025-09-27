@@ -160,6 +160,12 @@ extension Color {
             dark: Color(hex: "8D99AE", opacity: 0.8)
         )
 
+        // Content Area Border for decorative lines
+        static let contentAreaBorder = AdaptiveColor(
+            light: Color(hex: "748873", opacity: 0.4),
+            dark: Color(hex: "7c889e", opacity: 0.4)
+        )
+
         // Status Colors
         static let installed = AdaptiveColor(
             light: Color(hex: "748873", opacity: 0.8),
@@ -208,11 +214,11 @@ extension LinearGradient {
 /// Material definitions for consistent glass effects across interface areas
 enum GlassMaterial {
     /// Primary glass material for main background areas
-    static let primary = Material.ultraThinMaterial
-    
+    static let primary = Material.thinMaterial
+
     /// Sidebar glass material with subtle differentiation
     static let sidebar = Material.thinMaterial
-    
+
     /// Title bar compatible material
     static let titleBar = Material.ultraThinMaterial
 }
@@ -257,13 +263,13 @@ private struct EnhancedUnifiedBackgroundModifier: ViewModifier {
                 ZStack {
                     // Base unified color layer
                     Color.App.unifiedBackground.color(for: colorScheme)
-                        .opacity(0.72)
+                        .opacity(0.70)
 
                     // Primary glass material layer
                     Rectangle()
                         .fill(GlassMaterial.primary)
                         .opacity(0.85)
-                        
+
                     // Subtle color tint overlay for depth
                     Color.App.unifiedBackground.color(for: colorScheme)
                         .opacity(0.08)
@@ -287,7 +293,7 @@ private struct EnhancedSidebarBackgroundModifier: ViewModifier {
                     Rectangle()
                         .fill(GlassMaterial.sidebar)
                         .opacity(0.82)
-                        
+
                     // Subtle warmth tint for differentiation while maintaining unity
                     Color.App.unifiedBackground.color(for: colorScheme)
                         .opacity(0.12)
@@ -410,7 +416,7 @@ extension AdaptiveColor {
         light: Color(hex: "FFFFFF", opacity: 0.5),
         dark: Color(hex: "FFFFFF", opacity: 0.1)
     )
-    
+
     /// Enhanced glass tint for unified visual hierarchy
     static let glassTint = AdaptiveColor(
         light: Color(hex: "F5F2ED", opacity: 0.4),
