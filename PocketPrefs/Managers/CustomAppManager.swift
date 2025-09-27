@@ -10,7 +10,7 @@ import Foundation
 import os.log
 
 @MainActor
-class CustomAppManager: ObservableObject {
+final class CustomAppManager: ObservableObject {
     @Published var customApps: [AppConfig] = []
     @Published var selectedApp: AppConfig?
     @Published var selectedAppIds: Set<UUID> = []
@@ -44,31 +44,24 @@ class CustomAppManager: ObservableObject {
     func loadCustomApps() {
         customApps = userStore.customApps
         
-        // Force update selected app to trigger view refresh
+        // Update selected app if it still exists
         if let currentSelectedId = selectedApp?.id,
            let updatedApp = customApps.first(where: { $0.id == currentSelectedId })
         {
-            // Temporarily clear and reset to force view update
-            let tempApp = updatedApp
-            selectedApp = nil
-            Task { @MainActor in
-                try? await Task.sleep(nanoseconds: 1_000_000)
-                self.selectedApp = tempApp
-            }
+            selectedApp = updatedApp
         } else {
             selectedApp = nil
         }
         
-        // Clean up selected IDs if apps no longer exist
+        // Clean up selected IDs
         let currentAppIds = Set(customApps.map { $0.id })
         selectedAppIds = selectedAppIds.intersection(currentAppIds)
         
-        // Trigger UI update
         objectWillChange.send()
     }
     
     func createNewApp(name: String, bundleId: String) -> AppConfig {
-        return AppConfig(
+        AppConfig(
             name: name,
             bundleId: bundleId,
             configPaths: [],
@@ -98,19 +91,19 @@ class CustomAppManager: ObservableObject {
         // Update local array immediately for responsive UI
         if let index = customApps.firstIndex(where: { $0.id == app.id }) {
             customApps[index] = app
-            // Force refresh selected app to trigger view updates
             if selectedApp?.id == app.id {
                 selectedApp = app
             }
         }
         
-        // Trigger save to persistent storage
         userStore.save()
     }
     
     func removeSelectedApps() {
         // Clear selected app if it's being removed
-        if let selectedId = selectedApp?.id, selectedAppIds.contains(selectedId) {
+        if let selectedId = selectedApp?.id,
+           selectedAppIds.contains(selectedId)
+        {
             selectedApp = nil
         }
         
@@ -160,10 +153,9 @@ class CustomAppManager: ObservableObject {
     }
     
     func isValidBundleId(_ bundleId: String) -> Bool {
-        // Support flexible formats including simple names like "git", "ssh"
-        if bundleId.isEmpty { return false }
+        guard !bundleId.isEmpty else { return false }
         
-        // Simple validation: starts with letter, allows letters, numbers, dots, hyphens
+        // Support flexible formats
         let pattern = "^[a-zA-Z][a-zA-Z0-9.-]*$"
         let regex = try? NSRegularExpression(pattern: pattern)
         let range = NSRange(location: 0, length: bundleId.utf16.count)
