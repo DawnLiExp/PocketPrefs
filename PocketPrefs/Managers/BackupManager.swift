@@ -147,9 +147,8 @@ class BackupManager: ObservableObject {
         
         // Start progress monitoring with structured concurrency
         await withTaskGroup(of: Void.self) { group in
-            // Progress monitoring task
             group.addTask { [weak self] in
-                await self?.monitorProgress(targetProgress: 0.95, duration: 3.0)
+                await self?.monitorProgress(targetProgress: 0.98, duration: 3.0)
             }
             
             // Backup operation task
@@ -158,9 +157,13 @@ class BackupManager: ObservableObject {
                 let result = await self.backupService.performBackup(apps: self.apps)
                 
                 await MainActor.run {
+                    // Ensure progress reaches 100%
                     self.currentProgress = 1.0
                     self.statusMessage = result.statusMessage
                 }
+                
+                // Allow animation to complete at 100%
+                try? await Task.sleep(for: .seconds(0.5))
                 
                 await self.scanBackups()
             }
@@ -169,8 +172,8 @@ class BackupManager: ObservableObject {
             await group.waitForAll()
         }
         
-        // Cleanup after completion
-        try? await Task.sleep(for: .seconds(1.5))
+        // Final cleanup with additional pause
+        try? await Task.sleep(for: .seconds(0.3))
         isProcessing = false
         currentProgress = 0.0
     }
@@ -193,9 +196,9 @@ class BackupManager: ObservableObject {
         
         // Start progress monitoring with structured concurrency
         await withTaskGroup(of: Void.self) { group in
-            // Progress monitoring task
+            // Progress monitoring task - monitor to 0.98 for visual completion
             group.addTask { [weak self] in
-                await self?.monitorProgress(targetProgress: 0.95, duration: 3.0)
+                await self?.monitorProgress(targetProgress: 0.98, duration: 3.0)
             }
             
             // Restore operation task
@@ -204,9 +207,13 @@ class BackupManager: ObservableObject {
                 let result = await self.restoreService.performRestore(backup: backup)
                 
                 await MainActor.run {
+                    // Ensure progress reaches 100%
                     self.currentProgress = 1.0
                     self.statusMessage = result.statusMessage
                 }
+                
+                // Allow animation to complete at 100%
+                try? await Task.sleep(for: .seconds(0.5))
                 
                 await self.loadApps()
             }
@@ -215,15 +222,15 @@ class BackupManager: ObservableObject {
             await group.waitForAll()
         }
         
-        // Cleanup after completion
-        try? await Task.sleep(for: .seconds(1.5))
+        // Final cleanup with additional pause
+        try? await Task.sleep(for: .seconds(0.3))
         isProcessing = false
         currentProgress = 0.0
     }
     
     // Progress monitoring helper using structured concurrency
     private func monitorProgress(targetProgress: Double, duration: TimeInterval) async {
-        let steps = 30
+        let steps = 40
         let stepDuration = duration / Double(steps)
         let progressIncrement = targetProgress / Double(steps)
         

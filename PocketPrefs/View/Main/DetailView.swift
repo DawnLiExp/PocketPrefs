@@ -107,15 +107,20 @@ struct AppDetailView: View {
         }
         
         Task { @MainActor in
-            while progress < 0.95 {
-                try? await Task.sleep(nanoseconds: 40_000_000)
-                progress += 0.04
+            // Monitor progress to 98% for smooth visual completion
+            while progress < 0.98 {
+                try? await Task.sleep(for: .milliseconds(30))
+                progress += 0.0294 // Reach 0.98 in ~1 second
             }
             
             backupManager.performBackup()
             
+            // Ensure full circle completion
             progress = 1.0
-            try? await Task.sleep(nanoseconds: 375_000_000)
+            
+            // Visual pause at 100%
+            try? await Task.sleep(for: .seconds(0.5))
+            
             isProcessing = false
             progress = 0.0
         }
@@ -345,15 +350,20 @@ struct BackupPlaceholderView: View {
         }
         
         Task { @MainActor in
-            while progress < 0.95 {
-                try? await Task.sleep(nanoseconds: 40_000_000)
-                progress += 0.04
+            // Monitor progress to 98% for smooth visual completion
+            while progress < 0.98 {
+                try? await Task.sleep(for: .milliseconds(30))
+                progress += 0.0294 // Reach 0.98 in ~1 second
             }
             
             backupManager.performBackup()
             
+            // Ensure full circle completion
             progress = 1.0
-            try? await Task.sleep(nanoseconds: 375_000_000)
+            
+            // Visual pause at 100%
+            try? await Task.sleep(for: .seconds(0.5))
+            
             isProcessing = false
             progress = 0.0
         }
@@ -500,7 +510,6 @@ struct RestoreDetailContent: View {
                 .disabled(!hasSelectedApps)
             }
             .padding(20)
-            //   .background((Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.3))
         }
     }
     
@@ -511,15 +520,20 @@ struct RestoreDetailContent: View {
         }
         
         Task { @MainActor in
-            while progress < 0.95 {
-                try? await Task.sleep(nanoseconds: 40_000_000)
-                progress += 0.04
+            // Monitor progress to 98% for smooth visual completion
+            while progress < 0.98 {
+                try? await Task.sleep(for: .milliseconds(30))
+                progress += 0.0294 // Reach 0.98 in ~1 second
             }
             
             backupManager.performRestore(from: backup.path)
             
+            // Ensure full circle completion
             progress = 1.0
-            try? await Task.sleep(nanoseconds: 375_000_000)
+            
+            // Visual pause at 100%
+            try? await Task.sleep(for: .seconds(0.5))
+            
             isProcessing = false
             progress = 0.0
         }
