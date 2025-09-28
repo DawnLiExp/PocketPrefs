@@ -1,0 +1,17 @@
+name: build
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macOS-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build
+        run: |
+          xcodebuild \
+            -project PocketPrefs.xcodeproj \
+            -scheme PocketPrefs \
+            clean build
+
