@@ -121,7 +121,7 @@
 "Export_Title" = "Export Custom Apps";
 "Export_All_Message" = "Export all custom apps configuration";
 "Export_All" = "Export All";
-"Export_Selected" = "Export Selected";
+"Export_Selected" = "Export";
 "Export_Selected_Tooltip_Count" = "Export %d selected app configuration(s) to a file";
 "Export_Selected_Message" = "Export %d selected apps configuration";
 "Export_Success" = "Successfully exported %d app configuration(s)";
