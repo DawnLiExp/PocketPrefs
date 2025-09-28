@@ -11,20 +11,40 @@ import Foundation
 
 enum AppCategory: String, Codable, CaseIterable, Sendable {
     case development = "Development"
+    case media = "Media"
     case productivity = "Productivity"
+    case reading = "Reading"
     case system = "System"
     case terminal = "Terminal"
-    case design = "Design"
+    case utility = "Utility"
+    case graphicsDesign = "Graphics & Design"
+    case photography = "Photography"
+    case reference = "Reference"
     case custom = "Custom" // For user-added apps in future
-    
+
     var icon: String {
         switch self {
-        case .development: return "hammer.fill"
-        case .productivity: return "briefcase.fill"
+        case .development:
+            return "hammer"
+        case .media:
+            return "play.circle"
+        case .productivity:
+            return "checklist"
         case .system: return "gear"
-        case .terminal: return "terminal.fill"
-        case .design: return "paintbrush.fill"
-        case .custom: return "plus.circle.fill"
+        case .reading:
+            return "book"
+        case .terminal:
+            return "terminal"
+        case .utility:
+            return "wrench"
+        case .graphicsDesign:
+            return "paintbrush"
+        case .photography:
+            return "camera"
+        case .reference:
+            return "doc.text.magnifyingglass"
+        case .custom:
+            return "person.crop.circle.fill.badge.plus"
         }
     }
 }
@@ -33,18 +53,18 @@ enum AppCategory: String, Codable, CaseIterable, Sendable {
 
 struct AppConfig: Identifiable, Codable, Sendable, Equatable {
     var id = UUID()
-    var name: String  // 从 let 改为 var，允许编辑
+    var name: String
     let bundleId: String
     var configPaths: [String]
     var isSelected: Bool = false
     var isInstalled: Bool = true
     var category: AppCategory = .development
     var isUserAdded: Bool = false
-    
+
     enum CodingKeys: String, CodingKey {
         case name, bundleId, configPaths, category, isUserAdded
     }
-    
+
     static func == (lhs: AppConfig, rhs: AppConfig) -> Bool {
         lhs.id == rhs.id
     }
@@ -54,58 +74,6 @@ struct AppConfig: Identifiable, Codable, Sendable, Equatable {
 
 extension AppConfig {
     static let presetConfigs: [AppConfig] = [
-        // Development Tools
-        AppConfig(
-            name: "Visual Studio Code",
-            bundleId: "com.microsoft.VSCode",
-            configPaths: [
-                "~/Library/Application Support/Code",
-                "~/.vscode"
-            ],
-            category: .development
-        ),
-        
-        AppConfig(
-            name: "Xcode",
-            bundleId: "com.apple.dt.Xcode",
-            configPaths: [
-                "~/Library/Developer/Xcode/UserData",
-                "~/Library/Preferences/com.apple.dt.Xcode.plist"
-            ],
-            category: .development
-        ),
-        
-        AppConfig(
-            name: "Kaleidoscope",
-            bundleId: "com.blackpixel.kaleidoscope",
-            configPaths: [
-                "~/Library/Application Support/Kaleidoscope",
-                "~/Library/Preferences/com.blackpixel.kaleidoscope.plist"
-            ],
-            category: .development
-        ),
-        
-        // Terminal Tools
-        AppConfig(
-            name: "iTerm2",
-            bundleId: "com.googlecode.iterm2",
-            configPaths: [
-                "~/Library/Preferences/com.googlecode.iterm2.plist",
-                "~/Library/Application Support/iTerm2"
-            ],
-            category: .terminal
-        ),
-        
-        AppConfig(
-            name: "Oh My Zsh",
-            bundleId: "oh-my-zsh",
-            configPaths: [
-                "~/.zshrc",
-                "~/.oh-my-zsh/custom"
-            ],
-            category: .terminal
-        ),
-        
         AppConfig(
             name: "Git",
             bundleId: "git",
@@ -115,44 +83,137 @@ extension AppConfig {
             ],
             category: .terminal
         ),
-        
+
+        AppConfig(
+            name: "Oh My Zsh",
+            bundleId: "oh-my-zsh",
+            configPaths: [
+                "~/.zshrc",
+                "~/.oh-my-zsh/custom"
+            ],
+            category: .terminal
+        ),
+
         AppConfig(
             name: "SSH",
             bundleId: "ssh",
             configPaths: ["~/.ssh/config"],
             category: .terminal
         ),
-        
+
         AppConfig(
-            name: "Homebrew",
-            bundleId: "homebrew",
+            name: "BetterTouchTool",
+            bundleId: "com.hegenberg.BetterTouchTool",
             configPaths: [
-                "~/.Brewfile",
-                "/usr/local/etc"
+                "~/Library/Preferences/com.hegenberg.bettertouchtool-setapp.plist",
+                "~/Library/Application Support/BetterTouchTool/"
             ],
-            category: .terminal
+            category: .utility
         ),
-        
-        // Productivity
+
         AppConfig(
-            name: "Transmit",
-            bundleId: "com.panic.Transmit",
+            name: "Calibre",
+            bundleId: "net.kovidgoyal.calibre",
+            configPaths: ["~/Library/Preferences/calibre"],
+            category: .reading
+        ),
+
+        AppConfig(
+            name: "IINA",
+            bundleId: "com.colliderli.iina",
             configPaths: [
-                "~/Library/Application Support/Transmit",
-                "~/Library/Preferences/com.panic.Transmit.plist"
+                "~/Library/Application Support/com.colliderli.iina/plugins",
+                "~/Library/Preferences/com.colliderli.iina.plist",
+                "~/Library/Application Support/com.colliderli.iina/input_conf"
+            ],
+            category: .media
+        ),
+
+        AppConfig(
+            name: "Input Source Pro",
+            bundleId: "com.runjuu.Input-Source-Pro",
+            configPaths: [
+                "~/Library/Application Support/Input Source Pro",
+                "~/Library/Preferences/com.runjuu.Input-Source-Pro.plist"
+            ],
+            category: .utility
+        ),
+
+        AppConfig(
+            name: "Karabiner-Elements",
+            bundleId: "org.pqrs.Karabiner-Elements.Settings",
+            configPaths: [
+                "~/.config/karabiner",
+                "~/Library/Preferences/org.pqrs.Karabiner-Elements.Settings.plist"
+            ],
+            category: .utility
+        ),
+
+        AppConfig(
+            name: "Me2Comic",
+            bundleId: "me2.comic.me2comic",
+            configPaths: ["~/Library/Preferences/me2.comic.me2comic.plist"],
+            category: .graphicsDesign
+        ),
+
+        AppConfig(
+            name: "PopClip",
+            bundleId: "com.pilotmoon.popclip",
+            configPaths: [
+                "~/Library/Application Support/PopClip/Extensions",
+                "~/Library/Preferences/com.pilotmoon.popclip.plist"
             ],
             category: .productivity
         ),
-        
-        // Design
+
         AppConfig(
-            name: "Pixelmator Pro",
-            bundleId: "com.pixelmatorteam.pixelmator.x",
+            name: "reeder",
+            bundleId: "com.reederapp.5.macOS",
             configPaths: [
-                "~/Library/Application Support/Pixelmator Pro",
-                "~/Library/Preferences/com.pixelmatorteam.pixelmator.x.plist"
+                "~/Library/Containers/com.reederapp.5.macOS/Data/Library/Application Support/users.json",
+                "~/Library/Containers/com.reederapp.5.macOS/Data/Library/Preferences/com.reederapp.5.macOS.plist"
             ],
-            category: .design
+            category: .reading
+        ),
+
+        AppConfig(
+            name: "squirrel",
+            bundleId: "im.rime.inputmethod.Squirrel",
+            configPaths: ["~/Library/Rime"],
+            category: .utility
+        ),
+
+        AppConfig(
+            name: "Visual Studio Code",
+            bundleId: "com.microsoft.VSCode",
+            configPaths: [
+                "~/Library/Application Support/Code/User/snippets",
+                "~/Library/Application Support/Code/User/prompts",
+                "~/Library/Application Support/Code/User/keybindings.json",
+                "~/Library/Application Support/Code/User/settings.json",
+                "~/.vscode/extensions"
+            ],
+            category: .development
+        ),
+
+        AppConfig(
+            name: "Warp",
+            bundleId: "dev.warp.Warp-Stable",
+            configPaths: [
+                "~/.warp",
+                "~/Library/Preferences/dev.warp.Warp-Stable.plist"
+            ],
+            category: .terminal
+        ),
+
+        AppConfig(
+            name: "Zed",
+            bundleId: "dev.zed.Zed",
+            configPaths: [
+                "~/.config/zed/settings.json",
+                "~/.config/zed/keymap.json"
+            ],
+            category: .development
         )
     ]
 }
