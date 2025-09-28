@@ -145,19 +145,9 @@ actor BackupService {
             for dirName in backupDirs {
                 let backupPath = "\(baseDir)/\(dirName)"
                 
-                // The date is primarily for display. The sorting is handled by the directory name.
-                let date: Date
-                if let parsedDate = parseDateFromBackupName(dirName) {
-                    date = parsedDate
-                } else {
-                    // Fallback for any old/unrecognized formats.
-                    if let attributes = try? fileManager.attributesOfItem(atPath: backupPath),
-                       let modDate = attributes[.modificationDate] as? Date
-                    {
-                        date = modDate
-                    } else {
-                        date = Date.distantPast // Should not happen
-                    }
+                guard let date = parseDateFromBackupName(dirName) else {
+                    logger.warning("Skipping backup directory '\(dirName)' due to unparseable date format. It might be an old or invalid backup.")
+                    continue
                 }
 
                 var backup = BackupInfo(
