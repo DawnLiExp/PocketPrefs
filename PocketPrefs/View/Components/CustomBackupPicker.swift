@@ -46,23 +46,19 @@ struct CustomBackupPicker: View {
                             }
                         }
                     } label: {
-                        HStack {
-                            Text(backupManager.selectedBackup?.formattedName ?? NSLocalizedString("Select from other location...", comment: "Select a backup"))
-                                .font(DesignConstants.Typography.body)
-                                .foregroundColor(backupManager.selectedBackup != nil ? Color.App.primary.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
-
-                            Spacer()
-                        }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 9)
-                        .background(
-                            RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                                .fill(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.7))
-                        )
-                        .overlay(
-                            RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                                .stroke(Color.App.lightSeparator.color(for: colorScheme).opacity(0.7), lineWidth: 1.0)
-                        )
+                        Text(backupManager.selectedBackup?.formattedName ?? "")
+                            .font(DesignConstants.Typography.body)
+                            .foregroundColor(Color.App.primary.color(for: colorScheme))
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 9)
+                            .background(
+                                RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                                    .fill(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.7))
+                            )
+                            .overlay(
+                                RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                                    .stroke(Color.App.lightSeparator.color(for: colorScheme).opacity(0.7), lineWidth: 1.0)
+                            )
                     }
                     .menuStyle(.borderlessButton)
                     .fixedSize(horizontal: false, vertical: true)
