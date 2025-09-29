@@ -93,3 +93,33 @@ struct RestoreResult: Sendable {
         }
     }
 }
+
+// MARK: - BackupName Formatting Extension
+
+extension BackupInfo {
+    /// Formats the backup name for display.
+    /// It removes the "Backup_" prefix and attempts to reformat the timestamp into a more human-readable, localized string.
+    /// - Returns: The formatted backup name (e.g., "2025年9月27日 下午2:35:00").
+    var formattedName: String {
+        let prefix = "Backup_"
+        guard name.hasPrefix(prefix) else {
+            return name // Return original if prefix not found
+        }
+
+        let dateString = name.replacingOccurrences(of: prefix, with: "")
+
+        let inputFormatter = DateFormatter()
+        inputFormatter.dateFormat = "yyyy-MM-dd_HH-mm-ss"
+        inputFormatter.locale = Locale(identifier: "en_US_POSIX") // Use POSIX locale for consistent parsing
+
+        if let date = inputFormatter.date(from: dateString) {
+            let outputFormatter = DateFormatter()
+            outputFormatter.dateStyle = .long
+            outputFormatter.timeStyle = .medium
+            outputFormatter.locale = Locale.current // Use current locale for user-friendly display
+            return outputFormatter.string(from: date)
+        } else {
+            return dateString // Fallback to raw date string if parsing fails
+        }
+    }
+}
