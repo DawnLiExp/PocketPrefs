@@ -27,6 +27,8 @@ final class BackupManager: ObservableObject {
     private let fileOps = FileOperationService.shared
     private let userStore = UserConfigStore.shared
     
+    private var eventTask: Task<Void, Never>?
+    
     // Progress monitoring configuration
     private enum ProgressConfig {
         static let targetProgress = 0.98
@@ -42,21 +44,30 @@ final class BackupManager: ObservableObject {
             await scanBackups()
         }
         
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(customAppsChanged),
-            name: .customAppsChanged,
-            object: nil
-        )
+        // Subscribe to UserConfigStore events
+        subscribeToEvents()
     }
     
     deinit {
-        NotificationCenter.default.removeObserver(self)
+        eventTask?.cancel()
     }
     
-    @objc private func customAppsChanged() {
-        Task {
-            await loadApps()
+    private func subscribeToEvents() {
+        eventTask?.cancel()
+        eventTask = Task { [weak self] in
+            guard let self else { return }
+            
+            for await event in userStore.events {
+                guard !Task.isCancelled else { break }
+                
+                switch event {
+                case .appsChanged:
+                    await self.loadApps()
+                default:
+                    // Handle specific events if needed
+                    break
+                }
+            }
         }
     }
     
@@ -67,7 +78,7 @@ final class BackupManager: ObservableObject {
         await withTaskGroup(of: (UUID, Bool).self) { group in
             for app in allApps {
                 group.addTask { [weak self] in
-                    guard let self = self else { return (app.id, false) }
+                    guard let self else { return (app.id, false) }
                     let isInstalled = await self.fileOps.checkIfAppInstalled(bundleId: app.bundleId)
                     return (app.id, isInstalled)
                 }
@@ -87,6 +98,8 @@ final class BackupManager: ObservableObject {
         logger.info("Loaded \(self.apps.count) apps (including \(self.userStore.customApps.count) custom apps)")
     }
     
+    // MARK: - Icon Management
+    
     func getIcon(for app: AppConfig) -> NSImage {
         iconService.getIcon(for: app.bundleId, category: app.category)
     }
@@ -94,6 +107,8 @@ final class BackupManager: ObservableObject {
     func getIcon(for backupApp: BackupAppInfo) -> NSImage {
         iconService.getIcon(for: backupApp.bundleId, category: backupApp.category)
     }
+    
+    // MARK: - Backup Operations
     
     func scanBackups() async {
         availableBackups = await backupService.scanBackups()
@@ -117,6 +132,8 @@ final class BackupManager: ObservableObject {
     func selectBackup(_ backup: BackupInfo) {
         selectedBackup = backup
     }
+    
+    // MARK: - Selection Management
     
     func toggleSelection(for app: AppConfig) {
         if let index = apps.firstIndex(where: { $0.id == app.id }) {
@@ -147,6 +164,8 @@ final class BackupManager: ObservableObject {
         objectWillChange.send()
     }
     
+    // MARK: - Backup & Restore
+    
     func performBackup() {
         Task {
             await performBackupAsync()
@@ -162,12 +181,12 @@ final class BackupManager: ObservableObject {
             group.addTask { [weak self] in
                 await self?.monitorProgress(
                     targetProgress: ProgressConfig.targetProgress,
-                    duration: ProgressConfig.duration
+                    duration: ProgressConfig.duration,
                 )
             }
             
             group.addTask { [weak self] in
-                guard let self = self else { return }
+                guard let self else { return }
                 let result = await self.backupService.performBackup(apps: self.apps)
                 
                 await MainActor.run {
@@ -207,12 +226,12 @@ final class BackupManager: ObservableObject {
             group.addTask { [weak self] in
                 await self?.monitorProgress(
                     targetProgress: ProgressConfig.targetProgress,
-                    duration: ProgressConfig.duration
+                    duration: ProgressConfig.duration,
                 )
             }
             
             group.addTask { [weak self] in
-                guard let self = self else { return }
+                guard let self else { return }
                 let result = await self.restoreService.performRestore(backup: backup)
                 
                 await MainActor.run {
@@ -231,6 +250,8 @@ final class BackupManager: ObservableObject {
         isProcessing = false
         currentProgress = 0.0
     }
+    
+    // MARK: - Progress Monitoring
     
     private func monitorProgress(targetProgress: Double, duration: TimeInterval) async {
         let steps = ProgressConfig.steps

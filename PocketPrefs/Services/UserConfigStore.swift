@@ -8,14 +8,29 @@
 import Foundation
 import os.log
 
+// MARK: - Change Event
+
+enum UserConfigEvent: Sendable {
+    case appsChanged([AppConfig])
+    case appAdded(AppConfig)
+    case appUpdated(AppConfig)
+    case appsRemoved(Set<UUID>)
+}
+
+// MARK: - User Config Store
+
 @MainActor
-class UserConfigStore: ObservableObject {
+final class UserConfigStore: ObservableObject {
     static let shared = UserConfigStore()
     
     @Published var customApps: [AppConfig] = []
     
     private let logger = Logger(subsystem: "com.pocketprefs", category: "UserConfigStore")
     private let storageURL: URL
+    
+    // AsyncStream for broadcasting changes
+    private var continuation: AsyncStream<UserConfigEvent>.Continuation?
+    let events: AsyncStream<UserConfigEvent>
     
     private init() {
         let appSupport = FileManager.default.urls(for: .applicationSupportDirectory,
@@ -24,15 +39,27 @@ class UserConfigStore: ObservableObject {
         
         // Create directory if it doesn't exist
         try? FileManager.default.createDirectory(at: appDir,
-                                                withIntermediateDirectories: true)
+                                                 withIntermediateDirectories: true)
         
         self.storageURL = appDir.appendingPathComponent("custom_apps.json")
+        
+        // Initialize async stream
+        let (stream, continuation) = AsyncStream<UserConfigEvent>.makeStream(
+            bufferingPolicy: .bufferingNewest(1),
+        )
+        self.events = stream
+        self.continuation = continuation
         
         // Load existing custom apps
         loadCustomApps()
     }
     
-    // Load custom apps from storage
+    deinit {
+        continuation?.finish()
+    }
+    
+    // MARK: - Storage Operations
+    
     private func loadCustomApps() {
         guard FileManager.default.fileExists(atPath: storageURL.path) else {
             logger.info("No custom apps file found, starting fresh")
@@ -49,7 +76,6 @@ class UserConfigStore: ObservableObject {
         }
     }
     
-    // Save custom apps to storage
     func save() {
         do {
             let encoder = JSONEncoder()
@@ -62,7 +88,8 @@ class UserConfigStore: ObservableObject {
         }
     }
     
-    // Add a new custom app
+    // MARK: - App Management
+    
     func addApp(_ app: AppConfig) {
         var newApp = app
         newApp.isUserAdded = true
@@ -70,33 +97,49 @@ class UserConfigStore: ObservableObject {
         customApps.append(newApp)
         save()
         
-        // Notify BackupManager to reload
-        NotificationCenter.default.post(name: .customAppsChanged, object: nil)
+        // Broadcast change
+        continuation?.yield(.appAdded(newApp))
+        continuation?.yield(.appsChanged(customApps))
     }
     
-    // Update an existing app
     func updateApp(_ app: AppConfig) {
-        if let index = customApps.firstIndex(where: { $0.id == app.id }) {
-            customApps[index] = app
-            save()
-            NotificationCenter.default.post(name: .customAppsChanged, object: nil)
-        }
+        guard let index = customApps.firstIndex(where: { $0.id == app.id }) else { return }
+        
+        customApps[index] = app
+        save()
+        
+        // Broadcast change
+        continuation?.yield(.appUpdated(app))
+        continuation?.yield(.appsChanged(customApps))
     }
     
-    // Remove apps
     func removeApps(_ appIds: Set<UUID>) {
+        guard !appIds.isEmpty else { return }
+        
         customApps.removeAll { appIds.contains($0.id) }
         save()
-        NotificationCenter.default.post(name: .customAppsChanged, object: nil)
+        
+        // Broadcast change
+        continuation?.yield(.appsRemoved(appIds))
+        continuation?.yield(.appsChanged(customApps))
     }
     
-    // Check if bundle ID already exists
+    func replaceAll(_ apps: [AppConfig]) {
+        customApps = apps.map { app in
+            var modifiedApp = app
+            modifiedApp.isUserAdded = true
+            modifiedApp.category = .custom
+            return modifiedApp
+        }
+        save()
+        
+        // Broadcast change
+        continuation?.yield(.appsChanged(customApps))
+    }
+    
+    // MARK: - Queries
+    
     func bundleIdExists(_ bundleId: String) -> Bool {
         customApps.contains { $0.bundleId == bundleId }
     }
-}
-
-// Notification for custom apps changes
-extension Notification.Name {
-    static let customAppsChanged = Notification.Name("customAppsChanged")
 }

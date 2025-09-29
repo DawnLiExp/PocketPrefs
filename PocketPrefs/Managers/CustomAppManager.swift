@@ -21,25 +21,72 @@ final class CustomAppManager: ObservableObject {
     let userStore = UserConfigStore.shared
     private let fileOps = FileOperationService.shared
     
+    private var eventTask: Task<Void, Never>?
+    
     init() {
         loadCustomApps()
-        setupNotifications()
+        subscribeToEvents()
     }
     
-    private func setupNotifications() {
-        NotificationCenter.default.addObserver(
-            self,
-            selector: #selector(handleCustomAppsChanged),
-            name: .customAppsChanged,
-            object: nil
-        )
+    deinit {
+        eventTask?.cancel()
     }
     
-    @objc private func handleCustomAppsChanged() {
-        Task { @MainActor in
-            loadCustomApps()
+    private func subscribeToEvents() {
+        eventTask?.cancel()
+        eventTask = Task { [weak self] in
+            guard let self else { return }
+            
+            for await event in userStore.events {
+                guard !Task.isCancelled else { break }
+                
+                switch event {
+                case .appsChanged:
+                    await self.handleAppsChanged()
+                case .appAdded(let app):
+                    await self.handleAppAdded(app)
+                case .appUpdated(let app):
+                    await self.handleAppUpdated(app)
+                case .appsRemoved(let ids):
+                    await self.handleAppsRemoved(ids)
+                }
+            }
         }
     }
+    
+    // MARK: - Event Handlers
+    
+    private func handleAppsChanged() async {
+        loadCustomApps()
+    }
+    
+    private func handleAppAdded(_ app: AppConfig) async {
+        // Select newly added app
+        loadCustomApps()
+        selectedApp = customApps.first { $0.bundleId == app.bundleId }
+    }
+    
+    private func handleAppUpdated(_ app: AppConfig) async {
+        // Update local state immediately
+        if let index = customApps.firstIndex(where: { $0.id == app.id }) {
+            customApps[index] = app
+            if selectedApp?.id == app.id {
+                selectedApp = app
+            }
+        }
+    }
+    
+    private func handleAppsRemoved(_ ids: Set<UUID>) async {
+        // Clear selection if removed
+        if let selectedId = selectedApp?.id,
+           ids.contains(selectedId)
+        {
+            selectedApp = nil
+        }
+        loadCustomApps()
+    }
+    
+    // MARK: - App Management
     
     func loadCustomApps() {
         customApps = userStore.customApps
@@ -54,7 +101,7 @@ final class CustomAppManager: ObservableObject {
         }
         
         // Clean up selected IDs
-        let currentAppIds = Set(customApps.map { $0.id })
+        let currentAppIds = Set(customApps.map(\.id))
         selectedAppIds = selectedAppIds.intersection(currentAppIds)
         
         objectWillChange.send()
@@ -68,7 +115,7 @@ final class CustomAppManager: ObservableObject {
             isSelected: false,
             isInstalled: true,
             category: .custom,
-            isUserAdded: true
+            isUserAdded: true,
         )
     }
     
@@ -79,38 +126,18 @@ final class CustomAppManager: ObservableObject {
         }
         
         userStore.addApp(app)
-        loadCustomApps()
-        
-        // Select the newly added app
-        selectedApp = customApps.last { $0.bundleId == app.bundleId }
     }
     
     func updateApp(_ app: AppConfig) {
         userStore.updateApp(app)
-        
-        // Update local array immediately for responsive UI
-        if let index = customApps.firstIndex(where: { $0.id == app.id }) {
-            customApps[index] = app
-            if selectedApp?.id == app.id {
-                selectedApp = app
-            }
-        }
-        
-        userStore.save()
     }
     
     func removeSelectedApps() {
-        // Clear selected app if it's being removed
-        if let selectedId = selectedApp?.id,
-           selectedAppIds.contains(selectedId)
-        {
-            selectedApp = nil
-        }
-        
         userStore.removeApps(selectedAppIds)
         selectedAppIds.removeAll()
-        loadCustomApps()
     }
+    
+    // MARK: - Path Management
     
     func addPath(to app: AppConfig, path: String) {
         var updatedApp = app
@@ -136,6 +163,8 @@ final class CustomAppManager: ObservableObject {
         updateApp(updatedApp)
     }
     
+    // MARK: - Selection Management
+    
     func toggleSelection(for appId: UUID) {
         if selectedAppIds.contains(appId) {
             selectedAppIds.remove(appId)
@@ -145,12 +174,14 @@ final class CustomAppManager: ObservableObject {
     }
     
     func selectAll() {
-        selectedAppIds = Set(customApps.map { $0.id })
+        selectedAppIds = Set(customApps.map(\.id))
     }
     
     func deselectAll() {
         selectedAppIds.removeAll()
     }
+    
+    // MARK: - Validation
     
     func isValidBundleId(_ bundleId: String) -> Bool {
         guard !bundleId.isEmpty else { return false }
@@ -185,14 +216,10 @@ final class CustomAppManager: ObservableObject {
         
         var icon: String {
             switch self {
-            case .file: return "doc.fill"
-            case .directory: return "folder.fill"
-            case .unknown: return "questionmark.circle"
+            case .file: "doc.fill"
+            case .directory: "folder.fill"
+            case .unknown: "questionmark.circle"
             }
         }
-    }
-    
-    deinit {
-        NotificationCenter.default.removeObserver(self)
     }
 }

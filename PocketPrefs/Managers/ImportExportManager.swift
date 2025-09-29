@@ -11,7 +11,7 @@ import os.log
 import UniformTypeIdentifiers
 
 @MainActor
-class ImportExportManager: ObservableObject {
+final class ImportExportManager: ObservableObject {
     private let logger = Logger(subsystem: "com.pocketprefs", category: "ImportExport")
     private let userStore = UserConfigStore.shared
     private let encoder = JSONEncoder()
@@ -28,7 +28,7 @@ class ImportExportManager: ObservableObject {
         let appsToExport: [AppConfig]
         let exportTypeMessage: String
         
-        if let selectedIds = selectedIds, !selectedIds.isEmpty {
+        if let selectedIds, !selectedIds.isEmpty {
             appsToExport = userStore.customApps.filter { selectedIds.contains($0.id) }
             exportTypeMessage = String(format: NSLocalizedString("Export_Selected_Message", comment: ""), appsToExport.count)
         } else {
@@ -61,7 +61,7 @@ class ImportExportManager: ObservableObject {
             let exportData = ExportData(
                 version: 1,
                 exportDate: Date(),
-                customApps: apps
+                customApps: apps,
             )
             
             let data = try encoder.encode(exportData)
@@ -70,13 +70,13 @@ class ImportExportManager: ObservableObject {
             logger.info("Successfully exported \(apps.count) custom apps")
             await showSuccessAlert(
                 message: String(format: NSLocalizedString("Export_Success", comment: ""),
-                                apps.count)
+                                apps.count),
             )
         } catch {
             logger.error("Export failed: \(error)")
             await showErrorAlert(
                 message: NSLocalizedString("Export_Failed", comment: ""),
-                informativeText: error.localizedDescription
+                informativeText: error.localizedDescription,
             )
         }
     }
@@ -112,7 +112,7 @@ class ImportExportManager: ObservableObject {
             // Show preview and confirmation
             let shouldProceed = await showImportConfirmation(
                 newApps: exportData.customApps,
-                existingApps: userStore.customApps
+                existingApps: userStore.customApps,
             )
             
             guard shouldProceed else {
@@ -120,11 +120,8 @@ class ImportExportManager: ObservableObject {
                 return
             }
             
-            // Perform merge with notification
+            // Perform merge
             let mergeResult = await mergeImportedApps(exportData.customApps)
-            
-            // Force reload after import
-            NotificationCenter.default.post(name: .customAppsChanged, object: nil)
             
             // Small delay to ensure UI updates
             try? await Task.sleep(nanoseconds: 100_000_000)
@@ -138,7 +135,7 @@ class ImportExportManager: ObservableObject {
                 NSLocalizedString("Import_Failed", comment: "")
             await showErrorAlert(
                 message: errorMessage,
-                informativeText: error.localizedDescription
+                informativeText: error.localizedDescription,
             )
         }
     }
@@ -148,10 +145,12 @@ class ImportExportManager: ObservableObject {
         var updated = 0
         var skipped = 0
         
+        var updatedCustomApps = userStore.customApps
+        
         for importedApp in importedApps {
-            if let existingIndex = userStore.customApps.firstIndex(where: { $0.bundleId == importedApp.bundleId }) {
+            if let existingIndex = updatedCustomApps.firstIndex(where: { $0.bundleId == importedApp.bundleId }) {
                 // Replace existing app with imported configuration
-                let existingApp = userStore.customApps[existingIndex]
+                let existingApp = updatedCustomApps[existingIndex]
                 
                 // Deep comparison of configuration
                 let pathsChanged = Set(existingApp.configPaths) != Set(importedApp.configPaths)
@@ -164,8 +163,7 @@ class ImportExportManager: ObservableObject {
                     replacementApp.isUserAdded = true
                     replacementApp.category = .custom
                     
-                    // Update through UserConfigStore to ensure proper notification
-                    userStore.customApps[existingIndex] = replacementApp
+                    updatedCustomApps[existingIndex] = replacementApp
                     updated += 1
                     
                     logger.info("Updated app: \(replacementApp.name) with \(replacementApp.configPaths.count) paths")
@@ -179,15 +177,15 @@ class ImportExportManager: ObservableObject {
                 newApp.id = UUID()
                 newApp.isUserAdded = true
                 newApp.category = .custom
-                userStore.customApps.append(newApp)
+                updatedCustomApps.append(newApp)
                 added += 1
                 
                 logger.info("Added new app: \(newApp.name) with \(newApp.configPaths.count) paths")
             }
         }
         
-        // Save all changes at once
-        userStore.save()
+        // Replace all apps at once to trigger single event
+        userStore.replaceAll(updatedCustomApps)
         
         return MergeResult(added: added, updated: updated, skipped: skipped)
     }
@@ -196,41 +194,39 @@ class ImportExportManager: ObservableObject {
     
     private func showImportConfirmation(newApps: [AppConfig], existingApps: [AppConfig]) async -> Bool {
         await withCheckedContinuation { continuation in
-            DispatchQueue.main.async {
-                let alert = NSAlert()
-                alert.messageText = NSLocalizedString("Import_Confirmation_Title", comment: "")
-                
-                let existingBundleIds = Set(existingApps.map { $0.bundleId })
-                let newCount = newApps.filter { !existingBundleIds.contains($0.bundleId) }.count
-                let updateCount = newApps.filter { existingBundleIds.contains($0.bundleId) }.count
-                
-                var detailMessage = String(
-                    format: NSLocalizedString("Import_Confirmation_Message", comment: ""),
-                    newApps.count,
-                    newCount,
-                    updateCount
-                )
-                
-                // Add details about apps with paths
-                let appsWithPaths = newApps.filter { !$0.configPaths.isEmpty }
-                if !appsWithPaths.isEmpty {
-                    detailMessage += "\n\n" + NSLocalizedString("Import_Apps_With_Paths", comment: "")
-                    for app in appsWithPaths.prefix(5) {
-                        let pathCountFormat = NSLocalizedString("Import_Path_Count", comment: "")
-                        detailMessage += "\n• \(app.name): \(String(format: pathCountFormat, app.configPaths.count))"
-                    }
-                    if appsWithPaths.count > 5 {
-                        detailMessage += "\n• ..."
-                    }
+            let alert = NSAlert()
+            alert.messageText = NSLocalizedString("Import_Confirmation_Title", comment: "")
+            
+            let existingBundleIds = Set(existingApps.map(\.bundleId))
+            let newCount = newApps.count(where: { !existingBundleIds.contains($0.bundleId) })
+            let updateCount = newApps.count(where: { existingBundleIds.contains($0.bundleId) })
+            
+            var detailMessage = String(
+                format: NSLocalizedString("Import_Confirmation_Message", comment: ""),
+                newApps.count,
+                newCount,
+                updateCount,
+            )
+            
+            // Add details about apps with paths
+            let appsWithPaths = newApps.filter { !$0.configPaths.isEmpty }
+            if !appsWithPaths.isEmpty {
+                detailMessage += "\n\n" + NSLocalizedString("Import_Apps_With_Paths", comment: "")
+                for app in appsWithPaths.prefix(5) {
+                    let pathCountFormat = NSLocalizedString("Import_Path_Count", comment: "")
+                    detailMessage += "\n• \(app.name): \(String(format: pathCountFormat, app.configPaths.count))"
                 }
-                
-                alert.informativeText = detailMessage
-                
-                alert.addButton(withTitle: NSLocalizedString("Import_Proceed", comment: ""))
-                alert.addButton(withTitle: NSLocalizedString("Common_Cancel", comment: ""))
-                
-                continuation.resume(returning: alert.runModal() == .alertFirstButtonReturn)
+                if appsWithPaths.count > 5 {
+                    detailMessage += "\n• ..."
+                }
             }
+            
+            alert.informativeText = detailMessage
+            
+            alert.addButton(withTitle: NSLocalizedString("Import_Proceed", comment: ""))
+            alert.addButton(withTitle: NSLocalizedString("Common_Cancel", comment: ""))
+            
+            continuation.resume(returning: alert.runModal() == .alertFirstButtonReturn)
         }
     }
     
@@ -239,7 +235,7 @@ class ImportExportManager: ObservableObject {
             format: NSLocalizedString("Import_Result", comment: ""),
             result.added,
             result.updated,
-            result.skipped
+            result.skipped,
         )
         
         if result.updated > 0 {
@@ -251,27 +247,23 @@ class ImportExportManager: ObservableObject {
     
     private func showSuccessAlert(message: String) async {
         await withCheckedContinuation { continuation in
-            DispatchQueue.main.async {
-                let alert = NSAlert()
-                alert.messageText = NSLocalizedString("Success", comment: "")
-                alert.informativeText = message
-                alert.alertStyle = .informational
-                alert.runModal()
-                continuation.resume()
-            }
+            let alert = NSAlert()
+            alert.messageText = NSLocalizedString("Success", comment: "")
+            alert.informativeText = message
+            alert.alertStyle = .informational
+            alert.runModal()
+            continuation.resume()
         }
     }
     
     private func showErrorAlert(message: String, informativeText: String) async {
         await withCheckedContinuation { continuation in
-            DispatchQueue.main.async {
-                let alert = NSAlert()
-                alert.messageText = message
-                alert.informativeText = informativeText
-                alert.alertStyle = .warning
-                alert.runModal()
-                continuation.resume()
-            }
+            let alert = NSAlert()
+            alert.messageText = message
+            alert.informativeText = informativeText
+            alert.alertStyle = .warning
+            alert.runModal()
+            continuation.resume()
         }
     }
     
