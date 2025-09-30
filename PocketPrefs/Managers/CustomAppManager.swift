@@ -41,14 +41,17 @@ final class CustomAppManager: ObservableObject {
                 guard !Task.isCancelled else { break }
                 
                 switch event {
-                case .appsChanged:
-                    await self.handleAppsChanged()
                 case .appAdded(let app):
                     await self.handleAppAdded(app)
                 case .appUpdated(let app):
                     await self.handleAppUpdated(app)
                 case .appsRemoved(let ids):
                     await self.handleAppsRemoved(ids)
+                case .batchUpdated:
+                    await self.handleBatchUpdate()
+                case .appsChanged:
+                    // Legacy support - shouldn't occur with new design
+                    await self.handleBatchUpdate()
                 }
             }
         }
@@ -56,14 +59,14 @@ final class CustomAppManager: ObservableObject {
     
     // MARK: - Event Handlers
     
-    private func handleAppsChanged() async {
-        loadCustomApps()
-    }
-    
     private func handleAppAdded(_ app: AppConfig) async {
+        // Add to local array
+        if !customApps.contains(where: { $0.id == app.id }) {
+            customApps.append(app)
+        }
         // Select newly added app
-        loadCustomApps()
-        selectedApp = customApps.first { $0.bundleId == app.bundleId }
+        selectedApp = app
+        objectWillChange.send()
     }
     
     private func handleAppUpdated(_ app: AppConfig) async {
@@ -73,6 +76,7 @@ final class CustomAppManager: ObservableObject {
             if selectedApp?.id == app.id {
                 selectedApp = app
             }
+            objectWillChange.send()
         }
     }
     
@@ -83,6 +87,18 @@ final class CustomAppManager: ObservableObject {
         {
             selectedApp = nil
         }
+        
+        // Remove from local array
+        customApps.removeAll { ids.contains($0.id) }
+        
+        // Clean up selected IDs
+        selectedAppIds = selectedAppIds.subtracting(ids)
+        
+        objectWillChange.send()
+    }
+    
+    private func handleBatchUpdate() async {
+        // Full reload from store
         loadCustomApps()
     }
     

@@ -15,6 +15,7 @@ enum UserConfigEvent: Sendable {
     case appAdded(AppConfig)
     case appUpdated(AppConfig)
     case appsRemoved(Set<UUID>)
+    case batchUpdated([AppConfig]) // For import operations
 }
 
 // MARK: - User Config Store
@@ -97,9 +98,8 @@ final class UserConfigStore: ObservableObject {
         customApps.append(newApp)
         save()
         
-        // Broadcast change
+        // Only broadcast specific event
         continuation?.yield(.appAdded(newApp))
-        continuation?.yield(.appsChanged(customApps))
     }
     
     func updateApp(_ app: AppConfig) {
@@ -108,9 +108,8 @@ final class UserConfigStore: ObservableObject {
         customApps[index] = app
         save()
         
-        // Broadcast change
+        // Only broadcast specific event
         continuation?.yield(.appUpdated(app))
-        continuation?.yield(.appsChanged(customApps))
     }
     
     func removeApps(_ appIds: Set<UUID>) {
@@ -119,12 +118,11 @@ final class UserConfigStore: ObservableObject {
         customApps.removeAll { appIds.contains($0.id) }
         save()
         
-        // Broadcast change
+        // Only broadcast specific event
         continuation?.yield(.appsRemoved(appIds))
-        continuation?.yield(.appsChanged(customApps))
     }
     
-    func replaceAll(_ apps: [AppConfig]) {
+    func batchUpdate(_ apps: [AppConfig]) {
         customApps = apps.map { app in
             var modifiedApp = app
             modifiedApp.isUserAdded = true
@@ -133,8 +131,8 @@ final class UserConfigStore: ObservableObject {
         }
         save()
         
-        // Broadcast change
-        continuation?.yield(.appsChanged(customApps))
+        // Broadcast batch update event
+        continuation?.yield(.batchUpdated(customApps))
     }
     
     // MARK: - Queries

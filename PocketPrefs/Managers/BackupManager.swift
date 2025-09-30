@@ -61,11 +61,10 @@ final class BackupManager: ObservableObject {
                 guard !Task.isCancelled else { break }
                 
                 switch event {
+                case .appAdded, .appUpdated, .appsRemoved, .batchUpdated:
+                    await self.loadApps()
                 case .appsChanged:
                     await self.loadApps()
-                default:
-                    // Handle specific events if needed
-                    break
                 }
             }
         }

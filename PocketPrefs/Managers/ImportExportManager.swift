@@ -145,29 +145,33 @@ final class ImportExportManager: ObservableObject {
         var updated = 0
         var skipped = 0
         
-        var updatedCustomApps = userStore.customApps
+        // Build final app list in-place
+        var finalApps: [AppConfig] = []
+        let existingByBundleId = Dictionary(
+            userStore.customApps.map { ($0.bundleId, $0) },
+            uniquingKeysWith: { first, _ in first },
+        )
         
+        // Process imports
         for importedApp in importedApps {
-            if let existingIndex = updatedCustomApps.firstIndex(where: { $0.bundleId == importedApp.bundleId }) {
-                // Replace existing app with imported configuration
-                let existingApp = updatedCustomApps[existingIndex]
-                
-                // Deep comparison of configuration
+            if let existingApp = existingByBundleId[importedApp.bundleId] {
+                // Check if update needed
                 let pathsChanged = Set(existingApp.configPaths) != Set(importedApp.configPaths)
                 let nameChanged = existingApp.name != importedApp.name
                 
                 if pathsChanged || nameChanged {
-                    // Create updated app preserving ID for UI consistency
+                    // Update existing app
                     var replacementApp = importedApp
                     replacementApp.id = existingApp.id
                     replacementApp.isUserAdded = true
                     replacementApp.category = .custom
-                    
-                    updatedCustomApps[existingIndex] = replacementApp
+                    finalApps.append(replacementApp)
                     updated += 1
                     
                     logger.info("Updated app: \(replacementApp.name) with \(replacementApp.configPaths.count) paths")
                 } else {
+                    // Keep existing unchanged
+                    finalApps.append(existingApp)
                     skipped += 1
                     logger.info("Skipped unchanged app: \(existingApp.name)")
                 }
@@ -177,15 +181,22 @@ final class ImportExportManager: ObservableObject {
                 newApp.id = UUID()
                 newApp.isUserAdded = true
                 newApp.category = .custom
-                updatedCustomApps.append(newApp)
+                finalApps.append(newApp)
                 added += 1
                 
                 logger.info("Added new app: \(newApp.name) with \(newApp.configPaths.count) paths")
             }
         }
         
-        // Replace all apps at once to trigger single event
-        userStore.replaceAll(updatedCustomApps)
+        // Add existing apps not in import
+        for existingApp in userStore.customApps {
+            if !importedApps.contains(where: { $0.bundleId == existingApp.bundleId }) {
+                finalApps.append(existingApp)
+            }
+        }
+        
+        // Single batch update
+        userStore.batchUpdate(finalApps)
         
         return MergeResult(added: added, updated: updated, skipped: skipped)
     }
