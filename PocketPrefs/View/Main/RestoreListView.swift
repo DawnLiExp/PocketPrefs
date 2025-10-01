@@ -23,14 +23,14 @@ struct RestoreListView: View {
                 backupManager: backupManager,
 
                 searchText: $searchText,
-                isRefreshing: $isRefreshing
+                isRefreshing: $isRefreshing,
             )
-            
+            .padding(.bottom, 6)
             // No internal separator
             RestoreListContent(
                 backupManager: backupManager,
                 selectedBackupApp: $selectedBackupApp,
-                searchText: searchText
+                searchText: searchText,
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -50,7 +50,7 @@ struct RestoreListHeader: View {
         let filteredApps = backup.apps.filter {
             searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText)
         }
-        return !filteredApps.isEmpty && filteredApps.allSatisfy { $0.isSelected }
+        return !filteredApps.isEmpty && filteredApps.allSatisfy(\.isSelected)
     }
     
     var body: some View {
@@ -63,7 +63,7 @@ struct RestoreListHeader: View {
             // Backup selector with refresh button
             HStack(spacing: 12) {
                 CustomBackupPicker(
-                    backupManager: backupManager
+                    backupManager: backupManager,
                 )
                 
                 // Refresh button positioned after selector
@@ -73,7 +73,7 @@ struct RestoreListHeader: View {
                         Task { @MainActor in
                             await refreshBackups()
                         }
-                    }
+                    },
                 )
             }
             
@@ -96,7 +96,7 @@ struct RestoreListHeader: View {
                                     backupManager.toggleRestoreSelection(for: app)
                                 }
                             }
-                        }
+                        },
                     )) {
                         Text(NSLocalizedString("Select_All", comment: ""))
                             .font(DesignConstants.Typography.body)
@@ -109,12 +109,11 @@ struct RestoreListHeader: View {
                     if let backup = backupManager.selectedBackup {
                         let filteredCount = backup.apps
                             .filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
-                            .filter { $0.isSelected }
-                            .count
+                            .count(where: { $0.isSelected })
+                            
                         let totalFilteredCount = backup.apps
-                            .filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
-                            .count
-                        
+                            .count(where: { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) })
+                            
                         Text(String(format: NSLocalizedString("Selected_Count", comment: ""), filteredCount, totalFilteredCount))
                             .font(DesignConstants.Typography.caption)
                             .foregroundColor(Color.App.secondary.color(for: colorScheme))
@@ -126,7 +125,7 @@ struct RestoreListHeader: View {
         .padding(.top, 20)
         .padding(.bottom, 11)
         .background(
-            Color.App.contentAreaBackground.color(for: colorScheme)
+            Color.App.contentAreaBackground.color(for: colorScheme),
         )
     }
     
@@ -177,15 +176,15 @@ struct SearchFieldView: View {
         .background(
             RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                 .fill(
-                    (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.7)
-                )
+                    (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.7),
+                ),
         )
         .overlay(
             RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                 .stroke(
                     Color.App.lightSeparator.color(for: colorScheme).opacity(0.7),
-                    lineWidth: 1.0
-                )
+                    lineWidth: 1.0,
+                ),
         )
 
         .animation(.easeInOut(duration: 0.15), value: isFocused)
@@ -210,14 +209,14 @@ struct RefreshButton: View {
                     .rotationEffect(.degrees(isRefreshing ? 360 : 0))
                     .animation(
                         isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default,
-                        value: isRefreshing
+                        value: isRefreshing,
                     )
             }
         }
         .buttonStyle(PlainButtonStyle())
         .frame(width: 32, height: 32)
         .background(
-            Color.App.contentAreaBackground.color(for: colorScheme)
+            Color.App.contentAreaBackground.color(for: colorScheme),
         )
         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
         .disabled(isRefreshing)
@@ -246,8 +245,8 @@ struct RestoreListContent: View {
     }
     
     var body: some View {
-        if backupManager.selectedBackup != nil && !backupManager.availableBackups.isEmpty {
-            if filteredApps.isEmpty && !searchText.isEmpty {
+        if backupManager.selectedBackup != nil, !backupManager.availableBackups.isEmpty {
+            if filteredApps.isEmpty, !searchText.isEmpty {
                 // Empty search results
                 SearchEmptyState(searchText: searchText)
             } else {
@@ -258,7 +257,7 @@ struct RestoreListContent: View {
                             RestoreAppItem(
                                 app: app,
                                 isSelected: selectedBackupApp?.id == app.id,
-                                backupManager: backupManager
+                                backupManager: backupManager,
                             ) {
                                 withAnimation(DesignConstants.Animation.quick) {
                                     selectedBackupApp = app
@@ -266,7 +265,8 @@ struct RestoreListContent: View {
                             }
                         }
                     }
-                    .padding(16)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
                 }
             }
         } else {
@@ -334,7 +334,7 @@ struct RestoreAppItem: View {
             // Checkbox
             Toggle("", isOn: Binding(
                 get: { app.isSelected },
-                set: { _ in backupManager.toggleRestoreSelection(for: app) }
+                set: { _ in backupManager.toggleRestoreSelection(for: app) },
             ))
             .toggleStyle(CustomCheckboxToggleStyle())
             
@@ -359,13 +359,13 @@ struct RestoreAppItem: View {
                         StatusBadge(
                             text: NSLocalizedString("Restore_App_Status_Not_Installed", comment: ""),
                             color: Color.App.warning.color(for: colorScheme),
-                            style: .compact
+                            style: .compact,
                         )
                     } else {
                         StatusBadge(
                             text: NSLocalizedString("Restore_App_Status_Installed", comment: ""),
                             color: Color.App.success.color(for: colorScheme),
-                            style: .compact
+                            style: .compact,
                         )
                     }
                 }

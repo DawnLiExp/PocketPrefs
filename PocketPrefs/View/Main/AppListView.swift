@@ -50,7 +50,8 @@ struct AppListView: View {
                             }
                         }
                     }
-                    .padding(16)
+                    .padding(.horizontal, 16)
+                    .padding(.bottom, 16)
                 }
             }
         }
@@ -76,7 +77,7 @@ struct AppListHeader: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
+        VStack(alignment: .leading, spacing: 12) {
             // Search bar
             HStack {
                 Image(systemName: "magnifyingglass")
@@ -163,7 +164,7 @@ struct AppListHeader: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 18)
-        .padding(.bottom, 11)
+        .padding(.bottom, 18)
         .background(
             Color.App.contentAreaBackground.color(for: colorScheme),
         )
