@@ -2,39 +2,50 @@
 //  PreferencesManager.swift
 //  PocketPrefs
 //
-//  Manages application preferences including backup directory configuration
+//  Manages application preferences with AsyncStream events
 //
 
 import Foundation
 import os.log
 import SwiftUI
 
-// MARK: - Notification Names
+// MARK: - Preferences Events
 
-extension Notification.Name {
-    static let backupDirectoryChanged = Notification.Name("backupDirectoryChanged")
+enum PreferencesEvent: Sendable {
+    case directoryChanged(path: String)
+    case statusUpdated(PreferencesManager.DirectoryStatus)
 }
+
+// MARK: - Preferences Manager
 
 @MainActor
 final class PreferencesManager: ObservableObject {
+    enum DirectoryStatus: Equatable, Sendable {
+        case unknown
+        case valid
+        case invalid(reason: String)
+        case creating
+    }
+
     static let shared = PreferencesManager()
     
     private let logger = Logger(subsystem: "com.pocketprefs", category: "PreferencesManager")
-    
     private static let defaultBackupPath = NSHomeDirectory() + "/Documents/PocketPrefsBackups"
     
     @AppStorage("backupDirectory") private var storedBackupDirectory: String = ""
     @Published var backupDirectory: String = ""
     @Published var directoryStatus: DirectoryStatus = .unknown
     
-    enum DirectoryStatus: Equatable {
-        case unknown
-        case valid
-        case invalid(reason: String)
-        case creating
-    }
+    private var continuation: AsyncStream<PreferencesEvent>.Continuation?
+    let events: AsyncStream<PreferencesEvent>
     
     private init() {
+        let (stream, continuation) = AsyncStream<PreferencesEvent>.makeStream(
+            bufferingPolicy: .bufferingNewest(1),
+        )
+        self.events = stream
+        self.continuation = continuation
+        
         if storedBackupDirectory.isEmpty {
             storedBackupDirectory = Self.defaultBackupPath
             backupDirectory = Self.defaultBackupPath
@@ -47,7 +58,11 @@ final class PreferencesManager: ObservableObject {
         }
     }
     
-    // MARK: - Public Methods
+    deinit {
+        continuation?.finish()
+    }
+    
+    // MARK: - Public API
     
     func setBackupDirectory(_ path: String) async {
         let expandedPath = NSString(string: path).expandingTildeInPath
@@ -57,14 +72,8 @@ final class PreferencesManager: ObservableObject {
         await validateAndCreateDirectory()
         
         if case .valid = directoryStatus {
-            NotificationCenter.default.post(
-                name: .backupDirectoryChanged,
-                object: nil,
-                userInfo: ["newPath": expandedPath],
-            )
-            logger.info("Backup directory updated and notification sent: \(expandedPath)")
-        } else {
-            logger.warning("Backup directory invalid, notification not sent")
+            continuation?.yield(.directoryChanged(path: expandedPath))
+            logger.info("Backup directory changed: \(expandedPath)")
         }
     }
     
@@ -74,17 +83,23 @@ final class PreferencesManager: ObservableObject {
     
     func validateAndCreateDirectory() async {
         directoryStatus = .creating
+        continuation?.yield(.statusUpdated(.creating))
         
         let fileManager = FileManager.default
         var isDirectory: ObjCBool = false
         
         if fileManager.fileExists(atPath: backupDirectory, isDirectory: &isDirectory) {
-            if isDirectory.boolValue {
-                directoryStatus = .valid
-                logger.info("Backup directory validated: \(self.backupDirectory)")
+            let newStatus: DirectoryStatus = isDirectory.boolValue
+                ? .valid
+                : .invalid(reason: NSLocalizedString("Preferences_Error_Not_Directory", comment: ""))
+            
+            directoryStatus = newStatus
+            continuation?.yield(.statusUpdated(newStatus))
+            
+            if case .valid = newStatus {
+                logger.info("Directory validated: \(self.backupDirectory)")
             } else {
-                directoryStatus = .invalid(reason: NSLocalizedString("Preferences_Error_Not_Directory", comment: ""))
-                logger.error("Path exists but is not a directory: \(self.backupDirectory)")
+                logger.error("Path exists but not directory: \(self.backupDirectory)")
             }
         } else {
             do {
@@ -94,15 +109,18 @@ final class PreferencesManager: ObservableObject {
                     attributes: nil,
                 )
                 directoryStatus = .valid
-                logger.info("Backup directory created: \(self.backupDirectory)")
+                continuation?.yield(.statusUpdated(.valid))
+                logger.info("Directory created: \(self.backupDirectory)")
             } catch {
-                directoryStatus = .invalid(reason: error.localizedDescription)
-                logger.error("Failed to create backup directory: \(error)")
+                let newStatus = DirectoryStatus.invalid(reason: error.localizedDescription)
+                directoryStatus = newStatus
+                continuation?.yield(.statusUpdated(newStatus))
+                logger.error("Failed to create directory: \(error)")
             }
         }
     }
     
-    // MARK: - Helper Methods
+    // MARK: - Helpers
     
     func isDefaultPath() -> Bool {
         backupDirectory == Self.defaultBackupPath

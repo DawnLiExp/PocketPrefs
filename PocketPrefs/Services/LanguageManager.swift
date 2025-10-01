@@ -2,18 +2,12 @@
 //  LanguageManager.swift
 //  PocketPrefs
 //
-//  Language preference management with notification-based refresh
+//  Language preference management with SwiftUI observation
 //
 
 import Foundation
 import os.log
 import SwiftUI
-
-// MARK: - Notification Names
-
-extension Notification.Name {
-    static let languageDidChange = Notification.Name("languageDidChange")
-}
 
 // MARK: - Language Manager
 
@@ -27,7 +21,6 @@ final class LanguageManager: ObservableObject {
     @AppStorage("preferredLanguage") private var storedLanguage: String = ""
     
     private init() {
-        // Initialize with stored or detected system language
         if storedLanguage.isEmpty {
             let detected = Self.detectSystemLanguage()
             currentLanguage = detected
@@ -37,7 +30,6 @@ final class LanguageManager: ObservableObject {
         }
     }
     
-    /// Set application language with animation and notification
     func setLanguage(_ language: AppLanguage) {
         guard currentLanguage != language else { return }
         
@@ -46,17 +38,9 @@ final class LanguageManager: ObservableObject {
             storedLanguage = language.rawValue
         }
         
-        // Post notification for views that need to refresh
-        NotificationCenter.default.post(
-            name: .languageDidChange,
-            object: nil,
-            userInfo: ["language": language.rawValue],
-        )
-        
-        logger.info("Language changed to: \(language.rawValue)")
+        logger.info("Language changed: \(language.rawValue)")
     }
     
-    /// Detect system language preference
     private static func detectSystemLanguage() -> AppLanguage {
         let preferredLanguages = Locale.preferredLanguages
         if let first = preferredLanguages.first, first.hasPrefix("zh-Hans") {

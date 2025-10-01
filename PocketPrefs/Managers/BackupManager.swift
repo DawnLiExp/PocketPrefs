@@ -2,10 +2,10 @@
 //  BackupManager.swift
 //  PocketPrefs
 //
-//  Main backup manager coordinating all operations
+//  Main backup manager with structured concurrency and AsyncStream events
 //
 
-@preconcurrency import Foundation
+import Foundation
 import os.log
 import SwiftUI
 
@@ -29,8 +29,8 @@ final class BackupManager: ObservableObject {
     private let fileOps = FileOperationService.shared
     private let userStore = UserConfigStore.shared
     
-    private var eventTask: Task<Void, Never>?
-    private nonisolated(unsafe) var directoryChangeObserver: NSObjectProtocol?
+    private var storeEventTask: Task<Void, Never>?
+    private var prefsEventTask: Task<Void, Never>?
     
     private enum ProgressConfig {
         static let targetProgress = 0.98
@@ -46,49 +46,43 @@ final class BackupManager: ObservableObject {
             await scanBackups()
         }
         
-        subscribeToEvents()
-        observeDirectoryChanges()
+        subscribeToStoreEvents()
+        subscribeToPreferencesEvents()
     }
     
     deinit {
-        eventTask?.cancel()
-        if let observer = directoryChangeObserver {
-            NotificationCenter.default.removeObserver(observer)
-        }
+        storeEventTask?.cancel()
+        prefsEventTask?.cancel()
     }
     
     // MARK: - Event Subscriptions
     
-    private func subscribeToEvents() {
-        eventTask?.cancel()
-        eventTask = Task { [weak self] in
+    private func subscribeToStoreEvents() {
+        storeEventTask?.cancel()
+        storeEventTask = Task { [weak self] in
             guard let self else { return }
             
             for await event in userStore.events {
                 guard !Task.isCancelled else { break }
                 
                 switch event {
-                case .appAdded, .appUpdated, .appsRemoved, .batchUpdated:
-                    await self.loadApps()
-                case .appsChanged:
+                case .appAdded, .appUpdated, .appsRemoved, .batchUpdated, .appsChanged:
                     await self.loadApps()
                 }
             }
         }
     }
     
-    private func observeDirectoryChanges() {
-        directoryChangeObserver = NotificationCenter.default.addObserver(
-            forName: .backupDirectoryChanged,
-            object: nil,
-            queue: .main,
-        ) { [weak self] notification in
+    private func subscribeToPreferencesEvents() {
+        prefsEventTask?.cancel()
+        prefsEventTask = Task { [weak self] in
             guard let self else { return }
             
-            if let newPath = notification.userInfo?["newPath"] as? String {
-                self.logger.info("Backup directory changed notification received: \(newPath)")
+            for await event in PreferencesManager.shared.events {
+                guard !Task.isCancelled else { break }
                 
-                Task { @MainActor in
+                if case .directoryChanged(let path) = event {
+                    logger.info("Directory changed event received: \(path)")
                     await self.handleDirectoryChange()
                 }
             }
@@ -96,7 +90,7 @@ final class BackupManager: ObservableObject {
     }
     
     private func handleDirectoryChange() async {
-        logger.info("Handling backup directory change, rescanning backups...")
+        logger.info("Handling directory change, rescanning...")
         
         selectedBackup = nil
         incrementalBaseBackup = nil
@@ -104,7 +98,7 @@ final class BackupManager: ObservableObject {
         
         await scanBackups()
         
-        logger.info("Backup rescan completed: \(self.availableBackups.count) backups found")
+        logger.info("Rescan completed: \(self.availableBackups.count) backups found")
     }
     
     // MARK: - App Loading
@@ -133,7 +127,7 @@ final class BackupManager: ObservableObject {
             self.apps = updatedApps
         }
         
-        logger.info("Loaded \(self.apps.count) apps (including \(self.userStore.customApps.count) custom apps)")
+        logger.info("Loaded \(self.apps.count) apps (\(self.userStore.customApps.count) custom)")
     }
     
     // MARK: - Icon Management
@@ -233,15 +227,14 @@ final class BackupManager: ObservableObject {
         let baseBackup = isIncrementalMode ? incrementalBaseBackup : nil
         
         await withTaskGroup(of: Void.self) { group in
-            group.addTask { [weak self] in
-                await self?.monitorProgress(
+            group.addTask {
+                await self.monitorProgress(
                     targetProgress: ProgressConfig.targetProgress,
                     duration: ProgressConfig.duration,
                 )
             }
             
-            group.addTask { [weak self] in
-                guard let self else { return }
+            group.addTask {
                 let result = await self.backupService.performBackup(
                     apps: self.apps,
                     incrementalBase: baseBackup,
@@ -281,15 +274,14 @@ final class BackupManager: ObservableObject {
         statusMessage = NSLocalizedString("Restore_Starting", comment: "")
         
         await withTaskGroup(of: Void.self) { group in
-            group.addTask { [weak self] in
-                await self?.monitorProgress(
+            group.addTask {
+                await self.monitorProgress(
                     targetProgress: ProgressConfig.targetProgress,
                     duration: ProgressConfig.duration,
                 )
             }
             
-            group.addTask { [weak self] in
-                guard let self else { return }
+            group.addTask {
                 let result = await self.restoreService.performRestore(backup: backup)
                 
                 await MainActor.run {

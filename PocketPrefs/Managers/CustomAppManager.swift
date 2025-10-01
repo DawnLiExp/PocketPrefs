@@ -2,11 +2,10 @@
 //  CustomAppManager.swift
 //  PocketPrefs
 //
-//  Business logic for managing custom applications
+//  Business logic for managing custom applications with structured concurrency
 //
 
 import AppKit
-@preconcurrency import Combine
 import Foundation
 import os.log
 
@@ -22,56 +21,60 @@ final class CustomAppManager: ObservableObject {
     let userStore = UserConfigStore.shared
     private let fileOps = FileOperationService.shared
     
-    private var storeObserver: AnyCancellable?
+    private var eventTask: Task<Void, Never>?
     
     init() {
         loadCustomApps()
-        observeStore()
+        subscribeToStoreEvents()
     }
     
-    // AnyCancellable automatically cancels on dealloc, no explicit deinit needed
+    deinit {
+        eventTask?.cancel()
+    }
     
-    // MARK: - Store Observation
+    // MARK: - Event Subscription
     
-    private func observeStore() {
-        storeObserver = userStore.objectWillChange
-            .sink { [weak self] _ in
-                Task { @MainActor [weak self] in
-                    // Brief delay to ensure store update completes
-                    try? await Task.sleep(for: .milliseconds(10))
-                    self?.syncFromStore()
-                }
+    private func subscribeToStoreEvents() {
+        eventTask?.cancel()
+        eventTask = Task { [weak self] in
+            guard let self else { return }
+            
+            for await event in userStore.events {
+                guard !Task.isCancelled else { break }
+                
+                self.handleStoreEvent(event)
             }
+        }
     }
     
-    private func syncFromStore() {
+    private func handleStoreEvent(_ event: UserConfigEvent) {
         let newApps = userStore.customApps
-        let oldIds = Set(customApps.map(\.id))
         let newIds = Set(newApps.map(\.id))
         
-        // Detect newly added apps
-        let addedIds = newIds.subtracting(oldIds)
-        if let newAppId = addedIds.first,
-           let newApp = newApps.first(where: { $0.id == newAppId })
-        {
-            selectedApp = newApp
-            logger.info("Auto-selected newly added app: \(newApp.name)")
+        switch event {
+        case .appAdded(let app):
+            selectedApp = app
+            logger.info("Auto-selected new app: \(app.name)")
+            
+        case .appsRemoved:
+            if let selectedId = selectedApp?.id, !newIds.contains(selectedId) {
+                selectedApp = nil
+                logger.info("Cleared selection for removed app")
+            }
+            
+        case .appUpdated(let app):
+            if selectedApp?.id == app.id {
+                selectedApp = app
+            }
+            
+        case .appsChanged, .batchUpdated:
+            break
         }
         
-        // Detect removed apps
-        let removedIds = oldIds.subtracting(newIds)
-        if let selectedId = selectedApp?.id, removedIds.contains(selectedId) {
-            selectedApp = nil
-            logger.info("Cleared selection for removed app")
-        }
-        
-        // Update app list
         customApps = newApps
-        
-        // Clean up selection IDs
         selectedAppIds = selectedAppIds.intersection(newIds)
         
-        logger.info("Synced \(newApps.count) apps from store")
+        logger.debug("Synced \(newApps.count) apps from store")
     }
     
     // MARK: - App Management
@@ -79,7 +82,6 @@ final class CustomAppManager: ObservableObject {
     func loadCustomApps() {
         customApps = userStore.customApps
         
-        // Update selected app if it still exists
         if let currentSelectedId = selectedApp?.id,
            let updatedApp = customApps.first(where: { $0.id == currentSelectedId })
         {
@@ -88,7 +90,6 @@ final class CustomAppManager: ObservableObject {
             selectedApp = nil
         }
         
-        // Clean up selected IDs
         let currentAppIds = Set(customApps.map(\.id))
         selectedAppIds = selectedAppIds.intersection(currentAppIds)
         
@@ -109,7 +110,7 @@ final class CustomAppManager: ObservableObject {
     
     func addApp(_ app: AppConfig) {
         guard !userStore.bundleIdExists(app.bundleId) else {
-            logger.warning("App with bundle ID \(app.bundleId) already exists")
+            logger.warning("Bundle ID already exists: \(app.bundleId)")
             return
         }
         
