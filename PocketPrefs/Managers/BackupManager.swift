@@ -20,6 +20,10 @@ final class BackupManager: ObservableObject {
     @Published var availableBackups: [BackupInfo] = []
     @Published var selectedBackup: BackupInfo?
     
+    // Incremental backup mode
+    @Published var isIncrementalMode = false
+    @Published var incrementalBaseBackup: BackupInfo?
+    
     private let logger = Logger(subsystem: "com.pocketprefs", category: "BackupManager")
     private let iconService = IconService.shared
     private let backupService = BackupService()
@@ -44,7 +48,6 @@ final class BackupManager: ObservableObject {
             await scanBackups()
         }
         
-        // Subscribe to UserConfigStore events
         subscribeToEvents()
     }
     
@@ -125,11 +128,28 @@ final class BackupManager: ObservableObject {
             selectBackup(firstBackup)
         }
         
+        // Update incremental base backup reference
+        if let currentBase = incrementalBaseBackup,
+           !availableBackups.contains(currentBase)
+        {
+            incrementalBaseBackup = nil
+        }
+        
+        if incrementalBaseBackup == nil,
+           let firstBackup = availableBackups.first
+        {
+            incrementalBaseBackup = firstBackup
+        }
+        
         logger.info("Found \(self.availableBackups.count) backups")
     }
     
     func selectBackup(_ backup: BackupInfo) {
         selectedBackup = backup
+    }
+    
+    func selectIncrementalBase(_ backup: BackupInfo) {
+        incrementalBaseBackup = backup
     }
     
     // MARK: - Selection Management
@@ -176,6 +196,9 @@ final class BackupManager: ObservableObject {
         currentProgress = 0.0
         statusMessage = NSLocalizedString("Backup_Starting", comment: "")
         
+        // Determine backup mode
+        let baseBackup = isIncrementalMode ? incrementalBaseBackup : nil
+        
         await withTaskGroup(of: Void.self) { group in
             group.addTask { [weak self] in
                 await self?.monitorProgress(
@@ -186,7 +209,10 @@ final class BackupManager: ObservableObject {
             
             group.addTask { [weak self] in
                 guard let self else { return }
-                let result = await self.backupService.performBackup(apps: self.apps)
+                let result = await self.backupService.performBackup(
+                    apps: self.apps,
+                    incrementalBase: baseBackup,
+                )
                 
                 await MainActor.run {
                     self.currentProgress = 1.0

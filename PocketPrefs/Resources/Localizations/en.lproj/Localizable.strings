@@ -149,3 +149,9 @@
 "Common_Cancel" = "Cancel";
 "Common_Save" = "Save";
 "Common_Delete" = "Delete";
+
+/* Incremental Backup Mode */
+"Incremental_Mode" = "Delta";
+"Incremental_Mode_Help_Description" = "Select a base backup to create a new incremental backup. Configurations for selected apps will be added or updated in the new backup, while unselected apps remain unchanged.";
+"Select_Base_Backup_Label" = "Base Backup:";
+

@@ -2,7 +2,7 @@
 //  AppListView.swift
 //  PocketPrefs
 //
-//  Main view for displaying a list of applications
+//  Main view for displaying a list of applications with incremental backup support
 //
 
 import SwiftUI
@@ -15,7 +15,6 @@ struct AppListView: View {
     @State private var searchText = ""
     @Environment(\.colorScheme) var colorScheme
     
-    // Filter apps based on search text
     private var filteredApps: [AppConfig] {
         if searchText.isEmpty {
             return backupManager.apps
@@ -28,18 +27,14 @@ struct AppListView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header with search
             AppListHeader(
                 searchText: $searchText,
-                backupManager: backupManager
+                backupManager: backupManager,
             )
             
-            // Content area
-            if filteredApps.isEmpty && !searchText.isEmpty {
-                // Empty search results
+            if filteredApps.isEmpty, !searchText.isEmpty {
                 BackupSearchEmptyState(searchText: searchText)
             } else {
-                // App List - no internal separator
                 ScrollView {
                     LazyVStack(spacing: 8) {
                         ForEach(filteredApps) { app in
@@ -47,7 +42,7 @@ struct AppListView: View {
                                 app: app,
                                 isSelected: selectedApp?.id == app.id,
                                 backupManager: backupManager,
-                                currentMode: currentMode
+                                currentMode: currentMode,
                             ) {
                                 withAnimation(DesignConstants.Animation.quick) {
                                     selectedApp = app
@@ -63,21 +58,25 @@ struct AppListView: View {
     }
 }
 
-/// Header view for the application list with search box and select all toggle.
+/// Header view for the application list with search box, select all toggle, and incremental mode.
 struct AppListHeader: View {
     @Binding var searchText: String
     @ObservedObject var backupManager: BackupManager
     @Environment(\.colorScheme) var colorScheme
     @FocusState private var isSearchFocused: Bool
+    @State private var isRefreshing = false
     
-    // Calculate initial state based on actual selection
     private var allInstalledSelected: Bool {
-        let installedApps = backupManager.apps.filter { $0.isInstalled }
-        return !installedApps.isEmpty && installedApps.allSatisfy { $0.isSelected }
+        let installedApps = backupManager.apps.filter(\.isInstalled)
+        return !installedApps.isEmpty && installedApps.allSatisfy(\.isSelected)
+    }
+    
+    private var hasAvailableBackups: Bool {
+        !backupManager.availableBackups.isEmpty
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 10) {
             // Search bar
             HStack {
                 Image(systemName: "magnifyingglass")
@@ -85,8 +84,8 @@ struct AppListHeader: View {
                     .font(.system(size: 14))
                 
                 TextField(
-                    NSLocalizedString("Search_Placeholder", comment: "Search apps..."),
-                    text: $searchText
+                    NSLocalizedString("Search_Placeholder", comment: ""),
+                    text: $searchText,
                 )
                 .textFieldStyle(PlainTextFieldStyle())
                 .focused($isSearchFocused)
@@ -106,20 +105,21 @@ struct AppListHeader: View {
             .background(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                     .fill(
-                        (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.7)
-                    )
+                        (Color.App.tertiaryBackground.color(for: colorScheme)).opacity(0.7),
+                    ),
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                     .stroke(
                         Color.App.lightSeparator.color(for: colorScheme).opacity(0.7),
-                        lineWidth: 1.0
-                    )
+                        lineWidth: 1.0,
+                    ),
             )
-
             .animation(.easeInOut(duration: 0.15), value: isSearchFocused)
+            .padding(.bottom, 6)
             
-            HStack {
+            // Select all and incremental mode
+            HStack(spacing: 16) {
                 Toggle(isOn: Binding(
                     get: { allInstalledSelected },
                     set: { newValue in
@@ -128,26 +128,169 @@ struct AppListHeader: View {
                         } else {
                             backupManager.deselectAll()
                         }
-                    }
+                    },
                 )) {
                     Text(NSLocalizedString("Select_All", comment: ""))
                         .font(DesignConstants.Typography.body)
                 }
                 .toggleStyle(CustomCheckboxToggleStyle())
                 
+                IncrementalModeToggle(
+                    backupManager: backupManager,
+                    hasAvailableBackups: hasAvailableBackups,
+                )
+                
                 Spacer()
                 
-                Text(String(format: NSLocalizedString("Selected_Count", comment: ""), backupManager.apps.filter { $0.isSelected }.count, backupManager.apps.count))
-                    .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                Text(String(
+                    format: NSLocalizedString("Selected_Count", comment: ""),
+                    backupManager.apps.count(where: { $0.isSelected }),
+                    backupManager.apps.count,
+                ))
+                .font(DesignConstants.Typography.caption)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+            }
+            .padding(.bottom, backupManager.isIncrementalMode && hasAvailableBackups ? 0 : 0)
+            
+            // Incremental base backup selector (shown when incremental mode is enabled)
+            if backupManager.isIncrementalMode, hasAvailableBackups {
+                IncrementalBaseSelector(
+                    backupManager: backupManager,
+                    isRefreshing: $isRefreshing,
+                )
+                .padding(.top, 0)
             }
         }
         .padding(.horizontal, 20)
         .padding(.top, 18)
         .padding(.bottom, 11)
         .background(
-            Color.App.contentAreaBackground.color(for: colorScheme)
+            Color.App.contentAreaBackground.color(for: colorScheme),
         )
+    }
+}
+
+/// Incremental mode toggle with help popover
+struct IncrementalModeToggle: View {
+    @ObservedObject var backupManager: BackupManager
+    let hasAvailableBackups: Bool
+    @State private var showingHelp = false
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        HStack(spacing: 6) {
+            Toggle(isOn: Binding(
+                get: { backupManager.isIncrementalMode },
+                set: { newValue in
+                    if hasAvailableBackups {
+                        backupManager.isIncrementalMode = newValue
+                    }
+                },
+            )) {
+                Text(NSLocalizedString("Incremental_Mode", comment: ""))
+                    .font(DesignConstants.Typography.body)
+            }
+            .toggleStyle(CustomCheckboxToggleStyle())
+            .disabled(!hasAvailableBackups)
+            
+            Button(action: { showingHelp.toggle() }) {
+                Image(systemName: "questionmark.circle")
+                    .font(.system(size: 14))
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+            }
+            .buttonStyle(PlainButtonStyle())
+            .popover(isPresented: $showingHelp, arrowEdge: .bottom) {
+                IncrementalModeHelpPopover()
+            }
+        }
+    }
+}
+
+/// Help popover content for incremental mode
+struct IncrementalModeHelpPopover: View {
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        Text(NSLocalizedString("Incremental_Mode_Help_Description", comment: ""))
+            .font(DesignConstants.Typography.body)
+            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+            .multilineTextAlignment(.leading)
+            .padding(12)
+            .frame(width: 260, alignment: .leading)
+    }
+}
+
+/// Incremental base backup selector with refresh button
+struct IncrementalBaseSelector: View {
+    @ObservedObject var backupManager: BackupManager
+    @Binding var isRefreshing: Bool
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(NSLocalizedString("Select_Base_Backup_Label", comment: ""))
+                .font(DesignConstants.Typography.body)
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
+            
+            Menu {
+                ForEach(backupManager.availableBackups) { backup in
+                    Button {
+                        backupManager.selectIncrementalBase(backup)
+                    } label: {
+                        Text(backup.formattedName)
+                    }
+                }
+            } label: {
+                Text(backupManager.incrementalBaseBackup?.formattedName ?? "")
+                    .font(DesignConstants.Typography.body)
+                    .foregroundColor(Color.App.primary.color(for: colorScheme))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 9)
+                    .background(
+                        RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                            .fill(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.7)),
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                            .stroke(Color.App.lightSeparator.color(for: colorScheme).opacity(0.7), lineWidth: 1.0),
+                    )
+            }
+            .menuStyle(.borderlessButton)
+            .fixedSize(horizontal: false, vertical: true)
+            
+            Button(action: {
+                Task { @MainActor in
+                    await refreshBackups()
+                }
+            }) {
+                Image(systemName: "arrow.clockwise")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundColor(Color.App.primary.color(for: colorScheme))
+                    .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                    .animation(
+                        isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default,
+                        value: isRefreshing,
+                    )
+            }
+            .buttonStyle(PlainButtonStyle())
+            .frame(width: 32, height: 32)
+            .background(
+                Color.App.contentAreaBackground.color(for: colorScheme),
+            )
+            .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
+            .disabled(isRefreshing)
+        }
+    }
+    
+    @MainActor
+    private func refreshBackups() async {
+        isRefreshing = true
+        
+        try? await Task.sleep(nanoseconds: 200_000_000)
+        
+        await backupManager.scanBackups()
+        
+        isRefreshing = false
     }
 }
 
@@ -174,7 +317,7 @@ struct BackupSearchEmptyState: View {
     }
 }
 
-/// Represents a single application item in the list, displaying its icon, name, and selection status.
+/// Represents a single application item in the list.
 struct AppListItem: View {
     let app: AppConfig
     let isSelected: Bool
@@ -187,15 +330,13 @@ struct AppListItem: View {
     
     var body: some View {
         HStack(spacing: 5) {
-            // Checkbox
             Toggle("", isOn: Binding(
                 get: { app.isSelected },
-                set: { _ in backupManager.toggleSelection(for: app) }
+                set: { _ in backupManager.toggleSelection(for: app) },
             ))
             .toggleStyle(CustomCheckboxToggleStyle())
             .disabled(currentMode == .backup ? !app.isInstalled : false)
             
-            // App Icon
             Group {
                 let icon = backupManager.getIcon(for: app)
                 Image(nsImage: icon)
@@ -205,18 +346,17 @@ struct AppListItem: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
             }
             
-            // App Info
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(app.name)
                         .font(DesignConstants.Typography.headline)
                         .foregroundColor(app.isInstalled || currentMode == .restore ? Color.App.primary.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
                     
-                    if currentMode == .backup && !app.isInstalled {
+                    if currentMode == .backup, !app.isInstalled {
                         StatusBadge(
                             text: NSLocalizedString("AppList_App_Status_Not_Installed", comment: ""),
                             color: Color.App.notInstalled.color(for: colorScheme),
-                            style: .compact
+                            style: .compact,
                         )
                     }
                 }
@@ -228,7 +368,6 @@ struct AppListItem: View {
             
             Spacer()
             
-            // Chevron
             Image(systemName: "chevron.right")
                 .font(.system(size: 12))
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))

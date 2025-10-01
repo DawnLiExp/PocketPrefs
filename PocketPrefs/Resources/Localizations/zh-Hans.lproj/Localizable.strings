@@ -149,3 +149,8 @@
 "Common_Cancel" = "取消";
 "Common_Save" = "保存";
 "Common_Delete" = "删除";
+
+/* Incremental Backup Mode */
+"Incremental_Mode" = "增量模式";
+"Incremental_Mode_Help_Description" = "选择基准备份创建增量新备份。当前选中的应用配置将备份或替换基准中的对应配置，未选中的保持不变。";
+"Select_Base_Backup_Label" = "基准备份:";

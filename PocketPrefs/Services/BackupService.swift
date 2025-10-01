@@ -2,7 +2,7 @@
 //  BackupService.swift
 //  PocketPrefs
 //
-//  Backup operations service
+//  Backup operations service with incremental backup support
 //
 
 import Foundation
@@ -19,7 +19,7 @@ actor BackupService {
         static let configFileName = "app_config.json"
     }
     
-    func performBackup(apps: [AppConfig]) async -> BackupResult {
+    func performBackup(apps: [AppConfig], incrementalBase: BackupInfo? = nil) async -> BackupResult {
         let selectedApps = apps.filter { $0.isSelected && $0.isInstalled }
         
         guard !selectedApps.isEmpty else {
@@ -27,7 +27,22 @@ actor BackupService {
             return BackupResult(successCount: 0, failedApps: [], totalProcessed: 0)
         }
         
-        // Create backup directory
+        // Check if incremental mode is valid
+        let isIncrementalValid = await validateIncrementalBase(incrementalBase)
+        
+        if isIncrementalValid, let baseBackup = incrementalBase {
+            return await performIncrementalBackup(
+                selectedApps: selectedApps,
+                baseBackup: baseBackup,
+            )
+        } else {
+            return await performRegularBackup(selectedApps: selectedApps)
+        }
+    }
+    
+    // MARK: - Regular Backup
+    
+    private func performRegularBackup(selectedApps: [AppConfig]) async -> BackupResult {
         let backupDir = createBackupPath()
         
         do {
@@ -38,16 +53,133 @@ actor BackupService {
             return BackupResult(
                 successCount: 0,
                 failedApps: selectedApps.map { ($0.name, error) },
-                totalProcessed: selectedApps.count
+                totalProcessed: selectedApps.count,
             )
         }
         
-        // Backup apps concurrently
+        return await backupApps(selectedApps, to: backupDir)
+    }
+    
+    // MARK: - Incremental Backup
+    
+    private func performIncrementalBackup(
+        selectedApps: [AppConfig],
+        baseBackup: BackupInfo,
+    ) async -> BackupResult {
+        let backupDir = createBackupPath()
+        
+        do {
+            try await fileOps.createDirectory(at: backupDir)
+            logger.info("Created incremental backup directory: \(backupDir)")
+        } catch {
+            logger.error("Failed to create incremental backup directory: \(error)")
+            return BackupResult(
+                successCount: 0,
+                failedApps: selectedApps.map { ($0.name, error) },
+                totalProcessed: selectedApps.count,
+            )
+        }
+        
+        // Build selected app bundle IDs set for quick lookup
+        let selectedBundleIds = Set(selectedApps.map(\.bundleId))
+        
+        // Copy unselected apps from base backup
+        let copyResult = await copyUnselectedAppsFromBase(
+            baseBackup: baseBackup,
+            selectedBundleIds: selectedBundleIds,
+            to: backupDir,
+        )
+        
+        // Backup selected apps from current system
+        let backupResult = await backupApps(selectedApps, to: backupDir)
+        
+        // Combine results
+        let totalSuccess = copyResult.successCount + backupResult.successCount
+        let totalFailed = copyResult.failedApps + backupResult.failedApps
+        let totalProcessed = copyResult.totalProcessed + backupResult.totalProcessed
+        
+        logger.info("Incremental backup completed: \(totalSuccess) apps, \(totalFailed.count) failed")
+        
+        return BackupResult(
+            successCount: totalSuccess,
+            failedApps: totalFailed,
+            totalProcessed: totalProcessed,
+        )
+    }
+    
+    private func copyUnselectedAppsFromBase(
+        baseBackup: BackupInfo,
+        selectedBundleIds: Set<String>,
+        to destinationDir: String,
+    ) async -> BackupResult {
+        let baseApps = await scanAppsInBackup(at: baseBackup.path)
+        let unselectedApps = baseApps.filter { !selectedBundleIds.contains($0.bundleId) }
+        
+        guard !unselectedApps.isEmpty else {
+            return BackupResult(successCount: 0, failedApps: [], totalProcessed: 0)
+        }
+        
         var successCount = 0
         var failedApps: [(String, Error)] = []
         
         await withTaskGroup(of: (String, Result<Void, Error>).self) { group in
-            for app in selectedApps {
+            for app in unselectedApps {
+                group.addTask {
+                    let result = await self.copyAppDirectory(
+                        from: app.path,
+                        to: destinationDir,
+                        appName: app.name,
+                    )
+                    return (app.name, result)
+                }
+            }
+            
+            for await (appName, result) in group {
+                switch result {
+                case .success:
+                    successCount += 1
+                    logger.info("Copied from base: \(appName)")
+                case .failure(let error):
+                    failedApps.append((appName, error))
+                    logger.error("Failed to copy from base \(appName): \(error)")
+                }
+            }
+        }
+        
+        return BackupResult(
+            successCount: successCount,
+            failedApps: failedApps,
+            totalProcessed: unselectedApps.count,
+        )
+    }
+    
+    private func copyAppDirectory(
+        from sourcePath: String,
+        to destinationBase: String,
+        appName: String,
+    ) async -> Result<Void, Error> {
+        let fileManager = FileManager.default
+        let sourceURL = URL(fileURLWithPath: sourcePath)
+        let destDirName = sanitizeName(appName)
+        let destURL = URL(fileURLWithPath: destinationBase)
+            .appendingPathComponent(destDirName)
+        
+        do {
+            try fileManager.copyItem(at: sourceURL, to: destURL)
+            return .success(())
+        } catch {
+            return .failure(error)
+        }
+    }
+    
+    // MARK: - Common Backup Logic
+    
+    private func backupApps(_ apps: [AppConfig], to backupDir: String) async -> BackupResult {
+        var successCount = 0
+        var failedApps: [(String, Error)] = []
+        
+        await withTaskGroup(of: (String, Result<Void, Error>).self) { group in
+            for app in apps {
                 group.addTask {
                     let result = await self.backupSingleApp(app, to: backupDir)
                     return (app.name, result)
@@ -69,7 +201,7 @@ actor BackupService {
         return BackupResult(
             successCount: successCount,
             failedApps: failedApps,
-            totalProcessed: selectedApps.count
+            totalProcessed: apps.count,
         )
     }
     
@@ -79,13 +211,12 @@ actor BackupService {
         do {
             try await fileOps.createDirectory(at: appBackupDir)
             
-            // Backup config files concurrently
             try await withThrowingTaskGroup(of: Void.self) { group in
                 for path in app.configPaths {
                     group.addTask {
                         await self.backupConfigFile(
                             path: path,
-                            to: appBackupDir
+                            to: appBackupDir,
                         )
                     }
                 }
@@ -93,7 +224,6 @@ actor BackupService {
                 try await group.waitForAll()
             }
             
-            // Save app configuration
             try await saveAppConfig(app, to: appBackupDir)
             
             return .success(())
@@ -125,6 +255,17 @@ actor BackupService {
         try configData.write(to: configURL)
     }
     
+    // MARK: - Validation
+    
+    private func validateIncrementalBase(_ baseBackup: BackupInfo?) async -> Bool {
+        guard let baseBackup else { return false }
+        
+        let fileManager = FileManager.default
+        return fileManager.fileExists(atPath: baseBackup.path)
+    }
+    
+    // MARK: - Backup Scanning
+    
     func scanBackups() async -> [BackupInfo] {
         let fileManager = FileManager.default
         
@@ -134,11 +275,9 @@ actor BackupService {
         }
         
         do {
-            // Sort directory names descending. The new format "Backup_YYYY-MM-DD_HH-mm-ss" sorts correctly.
-            // Old formats will be sorted alphabetically after the new ones.
             let backupDirs = try fileManager.contentsOfDirectory(atPath: baseDir)
                 .filter { $0.hasPrefix(Config.backupPrefix) }
-                .sorted(by: >) // Descending sort
+                .sorted(by: >)
 
             var backups: [BackupInfo] = []
             
@@ -146,14 +285,14 @@ actor BackupService {
                 let backupPath = "\(baseDir)/\(dirName)"
                 
                 guard let date = parseDateFromBackupName(dirName) else {
-                    logger.warning("Skipping backup directory '\(dirName)' due to unparseable date format. It might be an old or invalid backup.")
+                    logger.warning("Skipping backup '\(dirName)' due to unparseable date format")
                     continue
                 }
 
                 var backup = BackupInfo(
                     path: backupPath,
                     name: dirName,
-                    date: date
+                    date: date,
                 )
                 
                 backup.apps = await scanAppsInBackup(at: backupPath)
@@ -181,7 +320,7 @@ actor BackupService {
             for appDir in appDirs {
                 if let backupApp = await loadBackupApp(
                     from: appDir,
-                    at: path
+                    at: path,
                 ) {
                     apps.append(backupApp)
                 }
@@ -206,7 +345,7 @@ actor BackupService {
             let appConfig = try JSONDecoder().decode(AppConfig.self, from: configData)
             
             let isInstalled = await fileOps.checkIfAppInstalled(
-                bundleId: appConfig.bundleId
+                bundleId: appConfig.bundleId,
             )
             
             return BackupAppInfo(
@@ -216,7 +355,7 @@ actor BackupService {
                 configPaths: appConfig.configPaths,
                 isCurrentlyInstalled: isInstalled,
                 isSelected: false,
-                category: appConfig.category
+                category: appConfig.category,
             )
         } catch {
             logger.error("Failed to read app config for \(appDir): \(error)")
@@ -224,6 +363,8 @@ actor BackupService {
         }
     }
 
+    // MARK: - Helpers
+    
     private func createBackupPath() -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = Config.backupDateFormat
