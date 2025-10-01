@@ -2,7 +2,7 @@
 //  BackupService.swift
 //  PocketPrefs
 //
-//  Backup operations service with incremental backup support
+//  Backup operations service with dynamic directory support
 //
 
 import Foundation
@@ -11,7 +11,11 @@ import os.log
 actor BackupService {
     private let logger = Logger(subsystem: "com.pocketprefs", category: "BackupService")
     private let fileOps = FileOperationService.shared
-    private let baseDir = NSHomeDirectory() + "/Documents/PocketPrefsBackups"
+    
+    // Dynamic backup directory from preferences
+    private func getBaseDirectory() async -> String {
+        await PreferencesManager.shared.getBackupDirectory()
+    }
     
     private enum Config {
         static let backupDateFormat = "yyyy-MM-dd_HH-mm-ss"
@@ -27,7 +31,6 @@ actor BackupService {
             return BackupResult(successCount: 0, failedApps: [], totalProcessed: 0)
         }
         
-        // Check if incremental mode is valid
         let isIncrementalValid = await validateIncrementalBase(incrementalBase)
         
         if isIncrementalValid, let baseBackup = incrementalBase {
@@ -43,7 +46,7 @@ actor BackupService {
     // MARK: - Regular Backup
     
     private func performRegularBackup(selectedApps: [AppConfig]) async -> BackupResult {
-        let backupDir = createBackupPath()
+        let backupDir = await createBackupPath()
         
         do {
             try await fileOps.createDirectory(at: backupDir)
@@ -66,7 +69,7 @@ actor BackupService {
         selectedApps: [AppConfig],
         baseBackup: BackupInfo,
     ) async -> BackupResult {
-        let backupDir = createBackupPath()
+        let backupDir = await createBackupPath()
         
         do {
             try await fileOps.createDirectory(at: backupDir)
@@ -80,20 +83,16 @@ actor BackupService {
             )
         }
         
-        // Build selected app bundle IDs set for quick lookup
         let selectedBundleIds = Set(selectedApps.map(\.bundleId))
         
-        // Copy unselected apps from base backup
         let copyResult = await copyUnselectedAppsFromBase(
             baseBackup: baseBackup,
             selectedBundleIds: selectedBundleIds,
             to: backupDir,
         )
         
-        // Backup selected apps from current system
         let backupResult = await backupApps(selectedApps, to: backupDir)
         
-        // Combine results
         let totalSuccess = copyResult.successCount + backupResult.successCount
         let totalFailed = copyResult.failedApps + backupResult.failedApps
         let totalProcessed = copyResult.totalProcessed + backupResult.totalProcessed
@@ -267,6 +266,7 @@ actor BackupService {
     // MARK: - Backup Scanning
     
     func scanBackups() async -> [BackupInfo] {
+        let baseDir = await getBaseDirectory()
         let fileManager = FileManager.default
         
         guard fileManager.fileExists(atPath: baseDir) else {
@@ -365,7 +365,8 @@ actor BackupService {
 
     // MARK: - Helpers
     
-    private func createBackupPath() -> String {
+    private func createBackupPath() async -> String {
+        let baseDir = await getBaseDirectory()
         let formatter = DateFormatter()
         formatter.dateFormat = Config.backupDateFormat
         formatter.locale = Locale(identifier: "en_US_POSIX")

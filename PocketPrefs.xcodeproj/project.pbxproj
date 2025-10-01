@@ -37,6 +37,8 @@
 		FCD990BC2E7EDF0500C7087A /* CustomAppManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990BB2E7EDF0300C7087A /* CustomAppManager.swift */; };
 		FCD990C02E7EDF1D00C7087A /* UserConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */; };
 		FCF4B5B12E8D3181008DA739 /* AppInfoReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF4B5B02E8D317F008DA739 /* AppInfoReader.swift */; };
+		FCF4B5B32E8D6F38008DA739 /* PreferencesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */; };
+		FCF4B5B52E8D6F4D008DA739 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF4B5B42E8D6F4B008DA739 /* PreferencesView.swift */; };
 		FCFA34992E86CE2F00BCA325 /* IconConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCFA34982E86CE2D00BCA325 /* IconConfiguration.swift */; };
 /* End PBXBuildFile section */
 
@@ -73,6 +75,8 @@
 		FCD990BB2E7EDF0300C7087A /* CustomAppManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomAppManager.swift; sourceTree = "<group>"; };
 		FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserConfigStore.swift; sourceTree = "<group>"; };
 		FCF4B5B02E8D317F008DA739 /* AppInfoReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInfoReader.swift; sourceTree = "<group>"; };
+		FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesManager.swift; sourceTree = "<group>"; };
+		FCF4B5B42E8D6F4B008DA739 /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
 		FCF9C4E92E7ADA4000013E27 /* PocketPrefs.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PocketPrefs.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FCFA34982E86CE2D00BCA325 /* IconConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconConfiguration.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -153,6 +157,7 @@
 			isa = PBXGroup;
 			children = (
 				FCAFED942E7EF4D600764A17 /* PathPickerView.swift */,
+				FCF4B5B42E8D6F4B008DA739 /* PreferencesView.swift */,
 				FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */,
 				FCD990B72E7EDEE900C7087A /* SettingsView.swift */,
 			);
@@ -186,6 +191,7 @@
 				FCD990622E7EC53600C7087A /* FileOperationService.swift */,
 				FCFA34982E86CE2D00BCA325 /* IconConfiguration.swift */,
 				FCD990632E7EC53600C7087A /* IconService.swift */,
+				FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */,
 				FCD990642E7EC53600C7087A /* RestoreService.swift */,
 				FCD990652E7EC53600C7087A /* ThemeManager.swift */,
 				FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */,
@@ -308,11 +314,13 @@
 				FCD9907B2E7EC53600C7087A /* IconService.swift in Sources */,
 				FCD9907C2E7EC53600C7087A /* BackupService.swift in Sources */,
 				FCD9907D2E7EC53600C7087A /* FileOperationService.swift in Sources */,
+				FCF4B5B32E8D6F38008DA739 /* PreferencesManager.swift in Sources */,
 				FCD9907E2E7EC53600C7087A /* RestoreService.swift in Sources */,
 				FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */,
 				FC195B692E7EB80B00258310 /* AppConfig.swift in Sources */,
 				FCF4B5B12E8D3181008DA739 /* AppInfoReader.swift in Sources */,
 				FC195B6A2E7EB80B00258310 /* AppError.swift in Sources */,
+				FCF4B5B52E8D6F4D008DA739 /* PreferencesView.swift in Sources */,
 				FC195B6C2E7EB80B00258310 /* BackupModels.swift in Sources */,
 				FCFA34992E86CE2F00BCA325 /* IconConfiguration.swift in Sources */,
 				FC195B772E7EB80B00258310 /* BackupManager.swift in Sources */,

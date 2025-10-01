@@ -163,3 +163,15 @@
 "Incremental_Mode" = "Delta";
 "Incremental_Mode_Help_Description" = "Select a base backup to create a new incremental backup. Configurations for selected apps will be added or updated in the new backup, while unselected apps remain unchanged.";
 "Select_Base_Backup_Label" = "Base Backup:";
+
+/* Settings Tabs */
+"Settings_Tab_Custom_Apps" = "Custom Apps";
+"Settings_Tab_Preferences" = "Preferences";
+
+/* Preferences Section */
+"Preferences_General" = "General";
+"Preferences_Backup_Location" = "Backup Location";
+"Preferences_Choose_Directory" = "Choose...";
+
+/* Preferences Errors */
+"Preferences_Error_Not_Directory" = "Path exists but is not a directory";

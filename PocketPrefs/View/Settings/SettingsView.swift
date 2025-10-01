@@ -2,7 +2,7 @@
 //  SettingsView.swift
 //  PocketPrefs
 //
-//  Main settings interface for managing custom applications
+//  Main settings interface with tabbed navigation
 //
 
 import SwiftUI
@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @StateObject private var customAppManager = CustomAppManager()
     @StateObject private var importExportManager = ImportExportManager()
+    @State private var selectedTab: SettingsTab = .customApps
     @State private var searchText = ""
     @State private var showingAddAppSheet = false
     @State private var newAppName = ""
@@ -17,6 +18,29 @@ struct SettingsView: View {
     @State private var validationError = ""
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
+    
+    enum SettingsTab: String, CaseIterable {
+        case customApps
+        case preferences
+        
+        var title: String {
+            switch self {
+            case .customApps:
+                return NSLocalizedString("Settings_Tab_Custom_Apps", comment: "")
+            case .preferences:
+                return NSLocalizedString("Settings_Tab_Preferences", comment: "")
+            }
+        }
+        
+        var icon: String {
+            switch self {
+            case .customApps:
+                return "app.badge.fill"
+            case .preferences:
+                return "slider.horizontal.3"
+            }
+        }
+    }
     
     var filteredApps: [AppConfig] {
         if searchText.isEmpty {
@@ -30,76 +54,28 @@ struct SettingsView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Title Bar
-            SettingsTitleBar(onClose: { dismiss() })
+            // Tab Bar
+            SettingsTabBar(selectedTab: $selectedTab, onClose: { dismiss() })
             
             Divider()
             
-            // Main Content
-            HStack(spacing: 0) {
-                // Left Panel - Apps List
-                VStack(spacing: 0) {
-                    // Toolbar
-                    SettingsToolbar(
-                        searchText: $searchText,
-                        selectedCount: customAppManager.selectedAppIds.count,
-                        onAddApp: { showingAddAppSheet = true },
-                        onDeleteSelected: deleteSelectedApps,
+            // Content
+            Group {
+                switch selectedTab {
+                case .customApps:
+                    CustomAppsContent(
                         customAppManager: customAppManager,
-                    )
-                    
-                    Divider()
-                    
-                    // Apps List
-                    if filteredApps.isEmpty {
-                        EmptyAppsListView(searchActive: !searchText.isEmpty, searchText: searchText)
-                            .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    } else {
-                        ScrollView {
-                            LazyVStack(spacing: 8) {
-                                ForEach(filteredApps) { app in
-                                    CustomAppListItem(
-                                        app: app,
-                                        isSelected: customAppManager.selectedAppIds.contains(app.id),
-                                        isDetailSelected: customAppManager.selectedApp?.id == app.id,
-                                        onToggleSelection: {
-                                            customAppManager.toggleSelection(for: app.id)
-                                        },
-                                        onSelectForDetail: {
-                                            customAppManager.selectedApp = app
-                                        },
-                                    )
-                                }
-                            }
-                            .padding(12)
-                        }
-                    }
-                    
-                    Divider()
-                    
-                    // Bottom toolbar with Import/Export buttons
-                    ImportExportToolbar(
                         importExportManager: importExportManager,
-                        customAppManager: customAppManager,
+                        filteredApps: filteredApps,
+                        searchText: $searchText,
+                        showingAddAppSheet: $showingAddAppSheet,
+                        newAppName: $newAppName,
+                        newAppBundleId: $newAppBundleId,
+                        validationError: $validationError,
                     )
-                }
-                .frame(width: 320)
-                .background(Color.App.controlBackground.color(for: colorScheme))
-                
-                Divider()
-                
-                // Right Panel - App Details
-                if let selectedApp = customAppManager.selectedApp {
-                    CustomAppDetailView(
-                        app: selectedApp,
-                        manager: customAppManager,
-                    )
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.App.background.color(for: colorScheme))
-                } else {
-                    EmptyDetailView()
-                        .frame(maxWidth: .infinity, maxHeight: .infinity)
-                        .background(Color.App.background.color(for: colorScheme))
+                    
+                case .preferences:
+                    PreferencesView()
                 }
             }
         }
@@ -152,15 +128,177 @@ struct SettingsView: View {
         newAppBundleId = ""
         validationError = ""
     }
+}
+
+// MARK: - Settings Tab Bar
+
+struct SettingsTabBar: View {
+    @Binding var selectedTab: SettingsView.SettingsTab
+    let onClose: () -> Void
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        HStack {
+            Spacer()
+            
+            // Centered Tabs
+            HStack(spacing: 24) {
+                ForEach(SettingsView.SettingsTab.allCases, id: \.self) { tab in
+                    TabButton(
+                        tab: tab,
+                        isSelected: selectedTab == tab,
+                        action: { selectedTab = tab },
+                    )
+                }
+            }
+            
+            Spacer()
+            
+            // Close Button
+            Button(action: onClose) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 20))
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+            }
+            .buttonStyle(.plain)
+            .padding(.trailing, 16)
+        }
+        .padding(.vertical, 16)
+        .background(Color.App.secondaryBackground.color(for: colorScheme))
+    }
+}
+
+struct TabButton: View {
+    let tab: SettingsView.SettingsTab
+    let isSelected: Bool
+    let action: () -> Void
+    @State private var isHovered = false
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                Image(systemName: tab.icon)
+                    .font(.system(size: 14, weight: .medium))
+                Text(tab.title)
+                    .font(DesignConstants.Typography.headline)
+            }
+            .foregroundColor(
+                isSelected
+                    ? Color.App.accent.color(for: colorScheme)
+                    : Color.App.secondary.color(for: colorScheme),
+            )
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(
+                        isSelected
+                            ? Color.App.accent.color(for: colorScheme).opacity(0.1)
+                            : (isHovered ? Color.App.hoverBackground.color(for: colorScheme) : Color.clear),
+                    ),
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            withAnimation(DesignConstants.Animation.quick) {
+                isHovered = hovering
+            }
+        }
+    }
+}
+
+// MARK: - Custom Apps Content
+
+struct CustomAppsContent: View {
+    @ObservedObject var customAppManager: CustomAppManager
+    @ObservedObject var importExportManager: ImportExportManager
+    let filteredApps: [AppConfig]
+    @Binding var searchText: String
+    @Binding var showingAddAppSheet: Bool
+    @Binding var newAppName: String
+    @Binding var newAppBundleId: String
+    @Binding var validationError: String
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        HStack(spacing: 0) {
+            // Left Panel - Apps List
+            VStack(spacing: 0) {
+                // Toolbar
+                SettingsToolbar(
+                    searchText: $searchText,
+                    selectedCount: customAppManager.selectedAppIds.count,
+                    onAddApp: { showingAddAppSheet = true },
+                    onDeleteSelected: deleteSelectedApps,
+                    customAppManager: customAppManager,
+                )
+                
+                Divider()
+                
+                // Apps List
+                if filteredApps.isEmpty {
+                    EmptyAppsListView(searchActive: !searchText.isEmpty, searchText: searchText)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 8) {
+                            ForEach(filteredApps) { app in
+                                CustomAppListItem(
+                                    app: app,
+                                    isSelected: customAppManager.selectedAppIds.contains(app.id),
+                                    isDetailSelected: customAppManager.selectedApp?.id == app.id,
+                                    onToggleSelection: {
+                                        customAppManager.toggleSelection(for: app.id)
+                                    },
+                                    onSelectForDetail: {
+                                        customAppManager.selectedApp = app
+                                    },
+                                )
+                            }
+                        }
+                        .padding(12)
+                    }
+                }
+                
+                Divider()
+                
+                // Bottom toolbar
+                ImportExportToolbar(
+                    importExportManager: importExportManager,
+                    customAppManager: customAppManager,
+                )
+            }
+            .frame(width: 320)
+            .background(Color.App.controlBackground.color(for: colorScheme))
+            
+            Divider()
+            
+            // Right Panel - App Details
+            if let selectedApp = customAppManager.selectedApp {
+                CustomAppDetailView(
+                    app: selectedApp,
+                    manager: customAppManager,
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color.App.background.color(for: colorScheme))
+            } else {
+                EmptyDetailView()
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .background(Color.App.background.color(for: colorScheme))
+            }
+        }
+    }
     
     private func deleteSelectedApps() {
         guard !customAppManager.selectedAppIds.isEmpty else { return }
         
-        // Show confirmation alert
         let alert = NSAlert()
         alert.messageText = NSLocalizedString("Settings_Delete_Confirmation_Title", comment: "")
-        alert.informativeText = String(format: NSLocalizedString("Settings_Delete_Confirmation_Message", comment: ""),
-                                       customAppManager.selectedAppIds.count)
+        alert.informativeText = String(
+            format: NSLocalizedString("Settings_Delete_Confirmation_Message", comment: ""),
+            customAppManager.selectedAppIds.count,
+        )
         alert.alertStyle = .warning
         alert.addButton(withTitle: NSLocalizedString("Common_Delete", comment: ""))
         alert.addButton(withTitle: NSLocalizedString("Common_Cancel", comment: ""))
@@ -171,7 +309,7 @@ struct SettingsView: View {
     }
 }
 
-// MARK: - Import/Export Toolbar
+// MARK: - Import/Export Toolbar (kept from original)
 
 struct ImportExportToolbar: View {
     @ObservedObject var importExportManager: ImportExportManager
@@ -190,8 +328,10 @@ struct ImportExportToolbar: View {
 
     private var exportTooltip: String {
         if !customAppManager.selectedAppIds.isEmpty {
-            return String(format: NSLocalizedString("Export_Selected_Tooltip_Count", comment: ""),
-                          customAppManager.selectedAppIds.count)
+            return String(
+                format: NSLocalizedString("Export_Selected_Tooltip_Count", comment: ""),
+                customAppManager.selectedAppIds.count,
+            )
         } else {
             return NSLocalizedString("Export_All_Tooltip", comment: "")
         }
@@ -199,7 +339,6 @@ struct ImportExportToolbar: View {
     
     var body: some View {
         HStack(spacing: 8) {
-            // Import button
             Button(action: {
                 isImporting = true
                 Task {
@@ -207,15 +346,16 @@ struct ImportExportToolbar: View {
                     isImporting = false
                 }
             }) {
-                Label(NSLocalizedString("Import_Button", comment: ""),
-                      systemImage: "square.and.arrow.down")
-                    .font(DesignConstants.Typography.caption)
+                Label(
+                    NSLocalizedString("Import_Button", comment: ""),
+                    systemImage: "square.and.arrow.down",
+                )
+                .font(DesignConstants.Typography.caption)
             }
             .buttonStyle(.bordered)
             .disabled(isImporting || isExporting)
             .help(NSLocalizedString("Import_Tooltip", comment: ""))
             
-            // Export button
             Button(action: {
                 isExporting = true
                 Task {
@@ -233,23 +373,30 @@ struct ImportExportToolbar: View {
             
             Spacer()
             
-            // Apps count indicator
             if !customAppManager.customApps.isEmpty {
                 HStack(spacing: 4) {
                     if !customAppManager.selectedAppIds.isEmpty {
-                        Text(String(format: NSLocalizedString("Selected_Count_Simple", comment: ""),
-                                    customAppManager.selectedAppIds.count))
-                            .font(DesignConstants.Typography.caption)
-                            .foregroundColor(Color.App.accent.color(for: colorScheme))
+                        Text(
+                            String(
+                                format: NSLocalizedString("Selected_Count_Simple", comment: ""),
+                                customAppManager.selectedAppIds.count,
+                            ),
+                        )
+                        .font(DesignConstants.Typography.caption)
+                        .foregroundColor(Color.App.accent.color(for: colorScheme))
                         
                         Text("•")
                             .foregroundColor(Color.App.secondary.color(for: colorScheme))
                     }
                     
-                    Text(String(format: NSLocalizedString("Settings_Apps_Count", comment: ""),
-                                customAppManager.customApps.count))
-                        .font(DesignConstants.Typography.caption)
-                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    Text(
+                        String(
+                            format: NSLocalizedString("Settings_Apps_Count", comment: ""),
+                            customAppManager.customApps.count,
+                        ),
+                    )
+                    .font(DesignConstants.Typography.caption)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
             }
         }

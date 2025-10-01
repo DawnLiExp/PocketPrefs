@@ -163,3 +163,15 @@
 "Incremental_Mode" = "增量模式";
 "Incremental_Mode_Help_Description" = "选择基准备份创建增量新备份。当前选中的应用配置将备份或替换基准中的对应配置，未选中的保持不变。";
 "Select_Base_Backup_Label" = "基准备份:";
+
+/* Settings Tabs */
+"Settings_Tab_Custom_Apps" = "自定义应用";
+"Settings_Tab_Preferences" = "偏好设置";
+
+/* Preferences Section */
+"Preferences_General" = "通用";
+"Preferences_Backup_Location" = "备份位置";
+"Preferences_Choose_Directory" = "选择...";
+
+/* Preferences Errors */
+"Preferences_Error_Not_Directory" = "路径存在但不是目录";
