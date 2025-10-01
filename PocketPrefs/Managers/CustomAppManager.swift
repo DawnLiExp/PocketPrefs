@@ -6,6 +6,7 @@
 //
 
 import AppKit
+@preconcurrency import Combine
 import Foundation
 import os.log
 
@@ -21,85 +22,56 @@ final class CustomAppManager: ObservableObject {
     let userStore = UserConfigStore.shared
     private let fileOps = FileOperationService.shared
     
-    private var eventTask: Task<Void, Never>?
+    private var storeObserver: AnyCancellable?
     
     init() {
         loadCustomApps()
-        subscribeToEvents()
+        observeStore()
     }
     
-    deinit {
-        eventTask?.cancel()
-    }
+    // AnyCancellable automatically cancels on dealloc, no explicit deinit needed
     
-    private func subscribeToEvents() {
-        eventTask?.cancel()
-        eventTask = Task { [weak self] in
-            guard let self else { return }
-            
-            for await event in userStore.events {
-                guard !Task.isCancelled else { break }
-                
-                switch event {
-                case .appAdded(let app):
-                    await self.handleAppAdded(app)
-                case .appUpdated(let app):
-                    await self.handleAppUpdated(app)
-                case .appsRemoved(let ids):
-                    await self.handleAppsRemoved(ids)
-                case .batchUpdated:
-                    await self.handleBatchUpdate()
-                case .appsChanged:
-                    // Legacy support - shouldn't occur with new design
-                    await self.handleBatchUpdate()
+    // MARK: - Store Observation
+    
+    private func observeStore() {
+        storeObserver = userStore.objectWillChange
+            .sink { [weak self] _ in
+                Task { @MainActor [weak self] in
+                    // Brief delay to ensure store update completes
+                    try? await Task.sleep(for: .milliseconds(10))
+                    self?.syncFromStore()
                 }
             }
-        }
     }
     
-    // MARK: - Event Handlers
-    
-    private func handleAppAdded(_ app: AppConfig) async {
-        // Add to local array
-        if !customApps.contains(where: { $0.id == app.id }) {
-            customApps.append(app)
-        }
-        // Select newly added app
-        selectedApp = app
-        objectWillChange.send()
-    }
-    
-    private func handleAppUpdated(_ app: AppConfig) async {
-        // Update local state immediately
-        if let index = customApps.firstIndex(where: { $0.id == app.id }) {
-            customApps[index] = app
-            if selectedApp?.id == app.id {
-                selectedApp = app
-            }
-            objectWillChange.send()
-        }
-    }
-    
-    private func handleAppsRemoved(_ ids: Set<UUID>) async {
-        // Clear selection if removed
-        if let selectedId = selectedApp?.id,
-           ids.contains(selectedId)
+    private func syncFromStore() {
+        let newApps = userStore.customApps
+        let oldIds = Set(customApps.map(\.id))
+        let newIds = Set(newApps.map(\.id))
+        
+        // Detect newly added apps
+        let addedIds = newIds.subtracting(oldIds)
+        if let newAppId = addedIds.first,
+           let newApp = newApps.first(where: { $0.id == newAppId })
         {
-            selectedApp = nil
+            selectedApp = newApp
+            logger.info("Auto-selected newly added app: \(newApp.name)")
         }
         
-        // Remove from local array
-        customApps.removeAll { ids.contains($0.id) }
+        // Detect removed apps
+        let removedIds = oldIds.subtracting(newIds)
+        if let selectedId = selectedApp?.id, removedIds.contains(selectedId) {
+            selectedApp = nil
+            logger.info("Cleared selection for removed app")
+        }
         
-        // Clean up selected IDs
-        selectedAppIds = selectedAppIds.subtracting(ids)
+        // Update app list
+        customApps = newApps
         
-        objectWillChange.send()
-    }
-    
-    private func handleBatchUpdate() async {
-        // Full reload from store
-        loadCustomApps()
+        // Clean up selection IDs
+        selectedAppIds = selectedAppIds.intersection(newIds)
+        
+        logger.info("Synced \(newApps.count) apps from store")
     }
     
     // MARK: - App Management
@@ -120,7 +92,7 @@ final class CustomAppManager: ObservableObject {
         let currentAppIds = Set(customApps.map(\.id))
         selectedAppIds = selectedAppIds.intersection(currentAppIds)
         
-        objectWillChange.send()
+        logger.info("Loaded \(self.customApps.count) custom apps")
     }
     
     func createNewApp(name: String, bundleId: String) -> AppConfig {
@@ -202,7 +174,6 @@ final class CustomAppManager: ObservableObject {
     func isValidBundleId(_ bundleId: String) -> Bool {
         guard !bundleId.isEmpty else { return false }
         
-        // Support flexible formats
         let pattern = "^[a-zA-Z][a-zA-Z0-9.-]*$"
         let regex = try? NSRegularExpression(pattern: pattern)
         let range = NSRange(location: 0, length: bundleId.utf16.count)

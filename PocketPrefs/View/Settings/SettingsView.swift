@@ -45,7 +45,7 @@ struct SettingsView: View {
                         selectedCount: customAppManager.selectedAppIds.count,
                         onAddApp: { showingAddAppSheet = true },
                         onDeleteSelected: deleteSelectedApps,
-                        customAppManager: customAppManager
+                        customAppManager: customAppManager,
                     )
                     
                     Divider()
@@ -67,7 +67,7 @@ struct SettingsView: View {
                                         },
                                         onSelectForDetail: {
                                             customAppManager.selectedApp = app
-                                        }
+                                        },
                                     )
                                 }
                             }
@@ -80,7 +80,7 @@ struct SettingsView: View {
                     // Bottom toolbar with Import/Export buttons
                     ImportExportToolbar(
                         importExportManager: importExportManager,
-                        customAppManager: customAppManager
+                        customAppManager: customAppManager,
                     )
                 }
                 .frame(width: 320)
@@ -92,7 +92,7 @@ struct SettingsView: View {
                 if let selectedApp = customAppManager.selectedApp {
                     CustomAppDetailView(
                         app: selectedApp,
-                        manager: customAppManager
+                        manager: customAppManager,
                     )
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .background(Color.App.background.color(for: colorScheme))
@@ -115,7 +115,7 @@ struct SettingsView: View {
                     showingAddAppSheet = false
                     clearNewAppFields()
                 },
-                manager: customAppManager
+                manager: customAppManager,
             )
         }
     }
@@ -138,11 +138,10 @@ struct SettingsView: View {
         
         let newApp = customAppManager.createNewApp(
             name: newAppName,
-            bundleId: newAppBundleId
+            bundleId: newAppBundleId,
         )
         
         customAppManager.addApp(newApp)
-        customAppManager.selectedApp = newApp
         
         showingAddAppSheet = false
         clearNewAppFields()
