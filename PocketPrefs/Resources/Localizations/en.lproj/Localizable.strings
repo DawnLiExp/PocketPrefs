@@ -101,6 +101,15 @@
 "Settings_Add_First_App_Hint" = "Click 'Add App' to configure a new application for backup";
 "Settings_Select_App_To_Configure" = "Select an app to configure";
 
+/* App Info Auto-fill */
+"Settings_Select_From_App" = "Select from App";
+"Settings_Select_App_Hint" = "Or select an app to auto-fill";
+"AppInfo_Error_Invalid_Bundle" = "Invalid application bundle";
+"AppInfo_Error_Plist_Not_Found" = "Info.plist not found in application";
+"AppInfo_Error_Missing_Keys" = "Required information missing in application";
+"AppInfo_Error_Read_Failed" = "Failed to read application info: %@";
+"AppInfo_Success_Message" = "Loaded info from %@";
+
 /* Search Field */
 "Search_Placeholder" = "Search...";
 "Select_All" = "Select All";
@@ -154,4 +163,3 @@
 "Incremental_Mode" = "Delta";
 "Incremental_Mode_Help_Description" = "Select a base backup to create a new incremental backup. Configurations for selected apps will be added or updated in the new backup, while unselected apps remain unchanged.";
 "Select_Base_Backup_Label" = "Base Backup:";
-

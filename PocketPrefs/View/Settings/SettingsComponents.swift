@@ -97,7 +97,7 @@ struct SettingsToolbar: View {
                         } else {
                             customAppManager.deselectAll()
                         }
-                    }
+                    },
                 )) {
                     Text(NSLocalizedString("Select_All", comment: ""))
                         .font(DesignConstants.Typography.body)
@@ -130,7 +130,7 @@ struct CustomAppListItem: View {
         HStack(spacing: 12) {
             Toggle("", isOn: Binding(
                 get: { isSelected },
-                set: { _ in onToggleSelection() }
+                set: { _ in onToggleSelection() },
             ))
             .toggleStyle(.checkbox)
             
@@ -165,13 +165,13 @@ struct CustomAppListItem: View {
             RoundedRectangle(cornerRadius: 6)
                 .fill(isDetailSelected ?
                     Color.App.accent.color(for: colorScheme).opacity(0.1) :
-                    Color.clear)
+                    Color.clear),
         )
         .overlay(
             RoundedRectangle(cornerRadius: 6)
                 .stroke(isDetailSelected ?
                     Color.App.accent.color(for: colorScheme).opacity(0.3) :
-                    Color.clear, lineWidth: 1)
+                    Color.clear, lineWidth: 1),
         )
         .contentShape(Rectangle())
         .onTapGesture(perform: onSelectForDetail)
@@ -302,9 +302,9 @@ struct PathPickerViewWrapper: View {
                 set: { newPaths in
                     localPaths = newPaths
                     savePathChanges(newPaths)
-                }
+                },
             ),
-            manager: manager
+            manager: manager,
         )
         .onAppear {
             localPaths = app.configPaths
@@ -372,7 +372,7 @@ struct EmptyDetailView: View {
     }
 }
 
-// MARK: - Add App Sheet
+// MARK: - Add App Sheet (Updated with auto-fill feature)
 
 struct AddAppSheet: View {
     @Binding var appName: String
@@ -381,6 +381,11 @@ struct AddAppSheet: View {
     let onAdd: () -> Void
     let onCancel: () -> Void
     let manager: CustomAppManager
+    
+    @State private var showingAppPicker = false
+    @State private var isLoadingAppInfo = false
+    @State private var successMessage = ""
+    @StateObject private var appInfoReader = AppInfoReaderWrapper()
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -389,6 +394,24 @@ struct AddAppSheet: View {
                 .font(DesignConstants.Typography.title)
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
             
+            // Auto-fill button
+            Button(action: { showingAppPicker = true }) {
+                HStack {
+                    Image(systemName: "folder.badge.gearshape")
+                    Text(NSLocalizedString("Settings_Select_From_App", comment: ""))
+                }
+                .font(DesignConstants.Typography.headline)
+                .frame(maxWidth: .infinity)
+            }
+            .buttonStyle(SecondaryButtonStyle())
+            .disabled(isLoadingAppInfo)
+            
+            Text(NSLocalizedString("Settings_Select_App_Hint", comment: ""))
+                .font(DesignConstants.Typography.caption)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+            
+            Divider()
+            
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(NSLocalizedString("Settings_App_Name", comment: ""))
@@ -396,6 +419,7 @@ struct AddAppSheet: View {
                     TextField(NSLocalizedString("Settings_App_Name_Placeholder", comment: ""),
                               text: $appName)
                         .textFieldStyle(.roundedBorder)
+                        .disabled(isLoadingAppInfo)
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -404,9 +428,30 @@ struct AddAppSheet: View {
                     TextField(NSLocalizedString("Settings_Bundle_ID_Placeholder", comment: ""),
                               text: $bundleId)
                         .textFieldStyle(.roundedBorder)
+                        .disabled(isLoadingAppInfo)
                     Text(NSLocalizedString("Settings_Bundle_ID_Hint", comment: ""))
                         .font(DesignConstants.Typography.caption)
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                }
+                
+                if isLoadingAppInfo {
+                    HStack {
+                        SwiftUI.ProgressView()
+                            .scaleEffect(0.7)
+                        Text("Loading application info...")
+                            .font(DesignConstants.Typography.caption)
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    }
+                }
+                
+                if !successMessage.isEmpty {
+                    HStack {
+                        Image(systemName: "checkmark.circle.fill")
+                            .foregroundColor(Color.App.success.color(for: colorScheme))
+                        Text(successMessage)
+                            .font(DesignConstants.Typography.caption)
+                            .foregroundColor(Color.App.success.color(for: colorScheme))
+                    }
                 }
                 
                 if !validationError.isEmpty {
@@ -424,15 +469,68 @@ struct AddAppSheet: View {
                 Button(NSLocalizedString("Common_Cancel", comment: ""), action: onCancel)
                     .buttonStyle(SecondaryButtonStyle())
                     .keyboardShortcut(.cancelAction)
+                    .disabled(isLoadingAppInfo)
                 
                 Button(NSLocalizedString("Settings_Add_App", comment: ""), action: onAdd)
                     .buttonStyle(PrimaryButtonStyle())
-                    .disabled(appName.isEmpty || bundleId.isEmpty)
+                    .disabled(appName.isEmpty || bundleId.isEmpty || isLoadingAppInfo)
                     .keyboardShortcut(.defaultAction)
             }
         }
         .padding(30)
         .frame(width: 450)
         .background(Color.App.secondaryBackground.color(for: colorScheme))
+        .fileImporter(
+            isPresented: $showingAppPicker,
+            allowedContentTypes: [.application],
+            allowsMultipleSelection: false,
+        ) { result in
+            Task {
+                await handleAppSelection(result)
+            }
+        }
     }
+    
+    @MainActor
+    private func handleAppSelection(_ result: Result<[URL], Error>) async {
+        successMessage = ""
+        validationError = ""
+        
+        switch result {
+        case .success(let urls):
+            guard let appURL = urls.first else { return }
+            
+            isLoadingAppInfo = true
+            
+            do {
+                let appInfo = try await appInfoReader.reader.readAppInfo(from: appURL)
+                
+                appName = appInfo.name
+                bundleId = appInfo.bundleId
+                successMessage = String(
+                    format: NSLocalizedString("AppInfo_Success_Message", comment: ""),
+                    appURL.deletingPathExtension().lastPathComponent,
+                )
+                
+                // Clear success message after delay
+                try? await Task.sleep(for: .seconds(3))
+                successMessage = ""
+                
+            } catch {
+                validationError = error.localizedDescription
+            }
+            
+            isLoadingAppInfo = false
+            
+        case .failure(let error):
+            validationError = error.localizedDescription
+        }
+    }
+}
+
+// MARK: - AppInfoReader Wrapper for SwiftUI
+
+@MainActor
+final class AppInfoReaderWrapper: ObservableObject {
+    let reader = AppInfoReader()
 }

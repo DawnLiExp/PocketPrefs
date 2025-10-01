@@ -101,6 +101,15 @@
 "Settings_Add_First_App_Hint" = "点击\"添加应用\"配置新的应用备份";
 "Settings_Select_App_To_Configure" = "选择一个应用进行配置";
 
+/* App Info Auto-fill */
+"Settings_Select_From_App" = "从应用选择";
+"Settings_Select_App_Hint" = "或选择应用自动填充";
+"AppInfo_Error_Invalid_Bundle" = "无效的应用程序包";
+"AppInfo_Error_Plist_Not_Found" = "应用中未找到 Info.plist 文件";
+"AppInfo_Error_Missing_Keys" = "应用中缺少必要信息";
+"AppInfo_Error_Read_Failed" = "读取应用信息失败: %@";
+"AppInfo_Success_Message" = "已从 %@ 加载信息";
+
 /* Search Field */
 "Search_Placeholder" = "搜索...";
 "Select_All" = "全选";
