@@ -39,6 +39,7 @@
 		FCF4B5B12E8D3181008DA739 /* AppInfoReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF4B5B02E8D317F008DA739 /* AppInfoReader.swift */; };
 		FCF4B5B32E8D6F38008DA739 /* PreferencesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */; };
 		FCF4B5B52E8D6F4D008DA739 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF4B5B42E8D6F4B008DA739 /* PreferencesView.swift */; };
+		FCF4B5B72E8D81C2008DA739 /* LanguageManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF4B5B62E8D81C0008DA739 /* LanguageManager.swift */; };
 		FCFA34992E86CE2F00BCA325 /* IconConfiguration.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCFA34982E86CE2D00BCA325 /* IconConfiguration.swift */; };
 /* End PBXBuildFile section */
 
@@ -77,6 +78,7 @@
 		FCF4B5B02E8D317F008DA739 /* AppInfoReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInfoReader.swift; sourceTree = "<group>"; };
 		FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesManager.swift; sourceTree = "<group>"; };
 		FCF4B5B42E8D6F4B008DA739 /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
+		FCF4B5B62E8D81C0008DA739 /* LanguageManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LanguageManager.swift; sourceTree = "<group>"; };
 		FCF9C4E92E7ADA4000013E27 /* PocketPrefs.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = PocketPrefs.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		FCFA34982E86CE2D00BCA325 /* IconConfiguration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconConfiguration.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -185,6 +187,7 @@
 		FCD990802E7EC54200C7087A /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				FCF4B5B62E8D81C0008DA739 /* LanguageManager.swift */,
 				FCF4B5B02E8D317F008DA739 /* AppInfoReader.swift */,
 				FCD990612E7EC53600C7087A /* BackupService.swift */,
 				FC33DF552E8716C8007C47E5 /* ConcurrencyHelpers.swift */,
@@ -301,6 +304,7 @@
 				FCD990742E7EC53600C7087A /* MainView.swift in Sources */,
 				FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */,
 				FC68CD272E866826003BBDD4 /* ImportExportManager.swift in Sources */,
+				FCF4B5B72E8D81C2008DA739 /* LanguageManager.swift in Sources */,
 				FCD990B82E7EDEEB00C7087A /* SettingsView.swift in Sources */,
 				FC33DF562E8716CA007C47E5 /* ConcurrencyHelpers.swift in Sources */,
 				FCD990752E7EC53600C7087A /* CommonComponents.swift in Sources */,

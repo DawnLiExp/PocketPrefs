@@ -78,6 +78,7 @@ struct SettingsView: View {
                     PreferencesView()
                 }
             }
+            .frame(maxHeight: .infinity)
         }
         .frame(width: 750, height: 500)
         .background(Color.App.background.color(for: colorScheme))
@@ -163,7 +164,7 @@ struct SettingsTabBar: View {
             .buttonStyle(.plain)
             .padding(.trailing, 16)
         }
-        .padding(.vertical, 16)
+        .padding(.vertical, 10)
         .background(Color.App.secondaryBackground.color(for: colorScheme))
     }
 }
@@ -198,6 +199,7 @@ struct TabButton: View {
                             : (isHovered ? Color.App.hoverBackground.color(for: colorScheme) : Color.clear),
                     ),
             )
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
         .onHover { hovering in
@@ -309,7 +311,7 @@ struct CustomAppsContent: View {
     }
 }
 
-// MARK: - Import/Export Toolbar (kept from original)
+// MARK: - Import/Export Toolbar
 
 struct ImportExportToolbar: View {
     @ObservedObject var importExportManager: ImportExportManager

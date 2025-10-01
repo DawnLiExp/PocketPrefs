@@ -175,3 +175,10 @@
 
 /* Preferences Errors */
 "Preferences_Error_Not_Directory" = "路径存在但不是目录";
+
+/* Appearance & Language Settings */
+"Settings_Appearance" = "外观设置";
+"Settings_Language" = "语言选择";
+"Language_SimplifiedChinese" = "简体中文";
+"Language_English" = "English";
+"Settings_Language_Restart_Hint" = "(需重启应用)";

@@ -2,20 +2,22 @@
 //  PreferencesView.swift
 //  PocketPrefs
 //
-//  Application preferences interface
+//  Application preferences interface with appearance and language settings
 //
 
 import SwiftUI
 
 struct PreferencesView: View {
     @StateObject private var preferencesManager = PreferencesManager.shared
+    @StateObject private var themeManager = ThemeManager.shared
+    @StateObject private var languageManager = LanguageManager.shared
     @State private var showingDirectoryPicker = false
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                // General Section
+                // General Section (top priority)
                 VStack(alignment: .leading, spacing: 16) {
                     Text(NSLocalizedString("Preferences_General", comment: ""))
                         .font(DesignConstants.Typography.headline)
@@ -27,6 +29,12 @@ struct PreferencesView: View {
                         showingDirectoryPicker: $showingDirectoryPicker,
                     )
                 }
+                
+                // Appearance Section
+                AppearanceSection(themeManager: themeManager)
+                
+                // Language Section
+                LanguageSection(languageManager: languageManager)
             }
             .padding(24)
         }
@@ -52,6 +60,92 @@ struct PreferencesView: View {
             
         case .failure(let error):
             print("Directory selection error: \(error)")
+        }
+    }
+}
+
+// MARK: - Appearance Section
+
+struct AppearanceSection: View {
+    @ObservedObject var themeManager: ThemeManager
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            Text(NSLocalizedString("Settings_Appearance", comment: ""))
+                .font(DesignConstants.Typography.headline)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .padding(.horizontal, 4)
+            
+            HStack {
+                Label(
+                    NSLocalizedString("Menu_Theme", comment: ""),
+                    systemImage: "paintpalette",
+                )
+                .font(DesignConstants.Typography.body)
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
+                
+                Spacer()
+                
+                Picker("", selection: $themeManager.currentTheme) {
+                    ForEach(Theme.allCases, id: \.self) { theme in
+                        Text(theme.displayName).tag(theme)
+                    }
+                }
+                .pickerStyle(.radioGroup)
+                .horizontalRadioGroupLayout()
+                .onChange(of: themeManager.currentTheme) { _, newTheme in
+                    themeManager.setTheme(newTheme)
+                }
+            }
+            .padding(16)
+            .sectionBackground()
+        }
+    }
+}
+
+// MARK: - Language Section
+
+struct LanguageSection: View {
+    @ObservedObject var languageManager: LanguageManager
+    @Environment(\.colorScheme) var colorScheme
+    
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 8) {
+                Text(NSLocalizedString("Settings_Language", comment: ""))
+                    .font(DesignConstants.Typography.headline)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                
+                Text(NSLocalizedString("Settings_Language_Restart_Hint", comment: ""))
+                    .font(DesignConstants.Typography.caption)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme).opacity(0.7))
+            }
+            .padding(.horizontal, 4)
+            
+            HStack {
+                Label(
+                    NSLocalizedString("Settings_Language", comment: ""),
+                    systemImage: "globe",
+                )
+                .font(DesignConstants.Typography.body)
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
+                
+                Spacer()
+                
+                Picker("", selection: $languageManager.currentLanguage) {
+                    ForEach(AppLanguage.allCases, id: \.self) { language in
+                        Text(language.displayName).tag(language)
+                    }
+                }
+                .pickerStyle(.radioGroup)
+                .horizontalRadioGroupLayout()
+                .onChange(of: languageManager.currentLanguage) { _, newLanguage in
+                    languageManager.setLanguage(newLanguage)
+                }
+            }
+            .padding(16)
+            .sectionBackground()
         }
     }
 }
@@ -113,8 +207,7 @@ struct BackupLocationSection: View {
             .buttonStyle(SecondaryButtonStyle())
         }
         .padding(16)
-        .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
-        .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
+        .sectionBackground()
     }
 }
 

@@ -175,3 +175,10 @@
 
 /* Preferences Errors */
 "Preferences_Error_Not_Directory" = "Path exists but is not a directory";
+
+/* Appearance & Language Settings */
+"Settings_Appearance" = "Appearance";
+"Settings_Language" = "Language";
+"Language_SimplifiedChinese" = "简体中文";
+"Language_English" = "English";
+"Settings_Language_Restart_Hint" = "(Restart to apply)";
