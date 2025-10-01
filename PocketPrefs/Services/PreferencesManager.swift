@@ -9,6 +9,12 @@ import Foundation
 import os.log
 import SwiftUI
 
+// MARK: - Notification Names
+
+extension Notification.Name {
+    static let backupDirectoryChanged = Notification.Name("backupDirectoryChanged")
+}
+
 @MainActor
 final class PreferencesManager: ObservableObject {
     static let shared = PreferencesManager()
@@ -29,7 +35,6 @@ final class PreferencesManager: ObservableObject {
     }
     
     private init() {
-        // Initialize backupDirectory first
         if storedBackupDirectory.isEmpty {
             storedBackupDirectory = Self.defaultBackupPath
             backupDirectory = Self.defaultBackupPath
@@ -51,7 +56,16 @@ final class PreferencesManager: ObservableObject {
         
         await validateAndCreateDirectory()
         
-        logger.info("Backup directory updated: \(expandedPath)")
+        if case .valid = directoryStatus {
+            NotificationCenter.default.post(
+                name: .backupDirectoryChanged,
+                object: nil,
+                userInfo: ["newPath": expandedPath],
+            )
+            logger.info("Backup directory updated and notification sent: \(expandedPath)")
+        } else {
+            logger.warning("Backup directory invalid, notification not sent")
+        }
     }
     
     func getBackupDirectory() -> String {

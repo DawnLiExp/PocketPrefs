@@ -5,7 +5,7 @@
 //  Main backup manager coordinating all operations
 //
 
-import Foundation
+@preconcurrency import Foundation
 import os.log
 import SwiftUI
 
@@ -16,11 +16,9 @@ final class BackupManager: ObservableObject {
     @Published var statusMessage = ""
     @Published var currentProgress: Double = 0.0
     
-    // Restore mode
     @Published var availableBackups: [BackupInfo] = []
     @Published var selectedBackup: BackupInfo?
     
-    // Incremental backup mode
     @Published var isIncrementalMode = false
     @Published var incrementalBaseBackup: BackupInfo?
     
@@ -32,8 +30,8 @@ final class BackupManager: ObservableObject {
     private let userStore = UserConfigStore.shared
     
     private var eventTask: Task<Void, Never>?
+    private nonisolated(unsafe) var directoryChangeObserver: NSObjectProtocol?
     
-    // Progress monitoring configuration
     private enum ProgressConfig {
         static let targetProgress = 0.98
         static let duration = 3.0
@@ -49,11 +47,17 @@ final class BackupManager: ObservableObject {
         }
         
         subscribeToEvents()
+        observeDirectoryChanges()
     }
     
     deinit {
         eventTask?.cancel()
+        if let observer = directoryChangeObserver {
+            NotificationCenter.default.removeObserver(observer)
+        }
     }
+    
+    // MARK: - Event Subscriptions
     
     private func subscribeToEvents() {
         eventTask?.cancel()
@@ -72,6 +76,38 @@ final class BackupManager: ObservableObject {
             }
         }
     }
+    
+    private func observeDirectoryChanges() {
+        directoryChangeObserver = NotificationCenter.default.addObserver(
+            forName: .backupDirectoryChanged,
+            object: nil,
+            queue: .main,
+        ) { [weak self] notification in
+            guard let self else { return }
+            
+            if let newPath = notification.userInfo?["newPath"] as? String {
+                self.logger.info("Backup directory changed notification received: \(newPath)")
+                
+                Task { @MainActor in
+                    await self.handleDirectoryChange()
+                }
+            }
+        }
+    }
+    
+    private func handleDirectoryChange() async {
+        logger.info("Handling backup directory change, rescanning backups...")
+        
+        selectedBackup = nil
+        incrementalBaseBackup = nil
+        availableBackups = []
+        
+        await scanBackups()
+        
+        logger.info("Backup rescan completed: \(self.availableBackups.count) backups found")
+    }
+    
+    // MARK: - App Loading
     
     func loadApps() async {
         var allApps = AppConfig.presetConfigs
@@ -115,7 +151,6 @@ final class BackupManager: ObservableObject {
     func scanBackups() async {
         availableBackups = await backupService.scanBackups()
         
-        // Update selection state
         if let currentSelected = selectedBackup,
            !availableBackups.contains(currentSelected)
         {
@@ -128,7 +163,6 @@ final class BackupManager: ObservableObject {
             selectBackup(firstBackup)
         }
         
-        // Update incremental base backup reference
         if let currentBase = incrementalBaseBackup,
            !availableBackups.contains(currentBase)
         {
@@ -196,7 +230,6 @@ final class BackupManager: ObservableObject {
         currentProgress = 0.0
         statusMessage = NSLocalizedString("Backup_Starting", comment: "")
         
-        // Determine backup mode
         let baseBackup = isIncrementalMode ? incrementalBaseBackup : nil
         
         await withTaskGroup(of: Void.self) { group in
