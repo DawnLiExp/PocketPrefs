@@ -23,7 +23,11 @@ actor BackupService {
         static let configFileName = "app_config.json"
     }
     
-    func performBackup(apps: [AppConfig], incrementalBase: BackupInfo? = nil) async -> BackupResult {
+    func performBackup(
+        apps: [AppConfig],
+        incrementalBase: BackupInfo? = nil,
+        onProgress: ProgressHandler? = nil
+    ) async -> BackupResult {
         let selectedApps = apps.filter { $0.isSelected && $0.isInstalled }
         
         guard !selectedApps.isEmpty else {
@@ -31,21 +35,30 @@ actor BackupService {
             return BackupResult(successCount: 0, failedApps: [], totalProcessed: 0)
         }
         
+        await onProgress?(.initial())
+        
         let isIncrementalValid = await validateIncrementalBase(incrementalBase)
         
         if isIncrementalValid, let baseBackup = incrementalBase {
             return await performIncrementalBackup(
                 selectedApps: selectedApps,
                 baseBackup: baseBackup,
+                onProgress: onProgress
             )
         } else {
-            return await performRegularBackup(selectedApps: selectedApps)
+            return await performRegularBackup(
+                selectedApps: selectedApps,
+                onProgress: onProgress
+            )
         }
     }
     
     // MARK: - Regular Backup
     
-    private func performRegularBackup(selectedApps: [AppConfig]) async -> BackupResult {
+    private func performRegularBackup(
+        selectedApps: [AppConfig],
+        onProgress: ProgressHandler?
+    ) async -> BackupResult {
         let backupDir = await createBackupPath()
         
         do {
@@ -60,7 +73,7 @@ actor BackupService {
             )
         }
         
-        return await backupApps(selectedApps, to: backupDir)
+        return await backupApps(selectedApps, to: backupDir, onProgress: onProgress)
     }
     
     // MARK: - Incremental Backup
@@ -68,6 +81,7 @@ actor BackupService {
     private func performIncrementalBackup(
         selectedApps: [AppConfig],
         baseBackup: BackupInfo,
+        onProgress: ProgressHandler?
     ) async -> BackupResult {
         let backupDir = await createBackupPath()
         
@@ -91,7 +105,11 @@ actor BackupService {
             to: backupDir,
         )
         
-        let backupResult = await backupApps(selectedApps, to: backupDir)
+        let backupResult = await backupApps(
+            selectedApps,
+            to: backupDir,
+            onProgress: onProgress
+        )
         
         let totalSuccess = copyResult.successCount + backupResult.successCount
         let totalFailed = copyResult.failedApps + backupResult.failedApps
@@ -173,9 +191,15 @@ actor BackupService {
     
     // MARK: - Common Backup Logic
     
-    private func backupApps(_ apps: [AppConfig], to backupDir: String) async -> BackupResult {
+    private func backupApps(
+        _ apps: [AppConfig],
+        to backupDir: String,
+        onProgress: ProgressHandler?
+    ) async -> BackupResult {
         var successCount = 0
         var failedApps: [(String, Error)] = []
+        let totalApps = apps.count
+        var completedApps = 0
         
         await withTaskGroup(of: (String, Result<Void, Error>).self) { group in
             for app in apps {
@@ -186,6 +210,8 @@ actor BackupService {
             }
             
             for await (appName, result) in group {
+                completedApps += 1
+                
                 switch result {
                 case .success:
                     successCount += 1
@@ -194,6 +220,16 @@ actor BackupService {
                     failedApps.append((appName, error))
                     logger.error("Failed to backup \(appName): \(error)")
                 }
+                
+                let progress = ProgressUpdate(
+                    completed: completedApps,
+                    total: totalApps,
+                    message: String(
+                        format: NSLocalizedString("Backup_Progress_Message", comment: ""),
+                        appName
+                    )
+                )
+                await onProgress?(progress)
             }
         }
         

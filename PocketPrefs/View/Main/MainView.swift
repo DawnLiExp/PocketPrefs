@@ -13,8 +13,6 @@ struct MainView: View {
     @State private var currentMode: AppMode = .backup
     @State private var selectedApp: AppConfig?
     @State private var showingRestorePicker = false
-    @State private var isProcessing = false
-    @State private var progress: Double = 0.0
     @Environment(\.colorScheme) var colorScheme
     
     // Layout constants optimized for glass effect visibility
@@ -105,8 +103,6 @@ struct MainView: View {
                 selectedApp: selectedApp,
                 backupManager: backupManager,
                 currentMode: currentMode,
-                isProcessing: $isProcessing,
-                progress: $progress,
                 showingRestorePicker: $showingRestorePicker
             )
             .frame(maxWidth: .infinity)

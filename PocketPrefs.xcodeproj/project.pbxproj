@@ -17,6 +17,7 @@
 		FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */; };
 		FC68CD272E866826003BBDD4 /* ImportExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC68CD262E866824003BBDD4 /* ImportExportManager.swift */; };
 		FC74CB462E85915F00F33BD4 /* CustomBackupPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */; };
+		FC93001A2E8ED59A00194E89 /* ProgressReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9300192E8ED59800194E89 /* ProgressReporting.swift */; };
 		FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED942E7EF4D600764A17 /* PathPickerView.swift */; };
 		FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */; };
 		FCD990722E7EC53600C7087A /* AppListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990672E7EC53600C7087A /* AppListView.swift */; };
@@ -55,6 +56,7 @@
 		FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCheckboxToggleStyle.swift; sourceTree = "<group>"; };
 		FC68CD262E866824003BBDD4 /* ImportExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportExportManager.swift; sourceTree = "<group>"; };
 		FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBackupPicker.swift; sourceTree = "<group>"; };
+		FC9300192E8ED59800194E89 /* ProgressReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressReporting.swift; sourceTree = "<group>"; };
 		FCAFED942E7EF4D600764A17 /* PathPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathPickerView.swift; sourceTree = "<group>"; };
 		FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
 		FCD990612E7EC53600C7087A /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
@@ -196,6 +198,7 @@
 				FCD990632E7EC53600C7087A /* IconService.swift */,
 				FCF4B5B62E8D81C0008DA739 /* LanguageManager.swift */,
 				FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */,
+				FC9300192E8ED59800194E89 /* ProgressReporting.swift */,
 				FCD990642E7EC53600C7087A /* RestoreService.swift */,
 				FCD990652E7EC53600C7087A /* ThemeManager.swift */,
 				FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */,
@@ -299,6 +302,7 @@
 			isa = PBXSourcesBuildPhase;
 			files = (
 				FCD990722E7EC53600C7087A /* AppListView.swift in Sources */,
+				FC93001A2E8ED59A00194E89 /* ProgressReporting.swift in Sources */,
 				FCD990732E7EC53600C7087A /* ColorExtensions.swift in Sources */,
 				FC74CB462E85915F00F33BD4 /* CustomBackupPicker.swift in Sources */,
 				FCD990742E7EC53600C7087A /* MainView.swift in Sources */,

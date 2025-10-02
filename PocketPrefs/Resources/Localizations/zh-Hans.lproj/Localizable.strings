@@ -19,6 +19,7 @@
 "Restore_Empty_State_Create_Backup_Prompt" = "请切换到备份模式创建首份备份";
 "Select_Backup_Label" = "选择备份:";
 "No_Backups_Found" = "暂无备份文件";
+"Restore_Progress_Message" = "正在恢复 %@...";
 
 /* Detail View */
 "Detail_Restore_Empty_State_No_Apps_Selected" = "没有选择任何应用配置";
@@ -61,6 +62,7 @@
 "Backup_Success_Message" = "✅ 备份完成！成功备份了 %d 个应用配置";
 "Backup_Partial_Success_Message" = "⚠️ 备份完成。成功: %d 个，失败: %@";
 "Backup_No_Apps_Processed" = "没有备份任何应用配置";
+"Backup_Progress_Message" = "正在备份 %@...";
 
 /* Settings Main */
 "Settings_Title" = "设置 - 自定义应用";

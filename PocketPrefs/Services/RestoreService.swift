@@ -16,7 +16,10 @@ actor RestoreService {
         static let maxConcurrentOperations = 4
     }
     
-    func performRestore(backup: BackupInfo) async -> RestoreResult {
+    func performRestore(
+        backup: BackupInfo,
+        onProgress: ProgressHandler? = nil
+    ) async -> RestoreResult {
         let selectedApps = backup.apps.filter { $0.isSelected }
         
         guard !selectedApps.isEmpty else {
@@ -24,8 +27,12 @@ actor RestoreService {
             return RestoreResult(successCount: 0, failedApps: [], totalProcessed: 0)
         }
         
+        await onProgress?(.initial())
+        
         var successCount = 0
         var failedApps: [(String, Error)] = []
+        let totalApps = selectedApps.count
+        var completedApps = 0
         
         // Restore apps with controlled concurrency
         await withTaskGroup(of: (String, Result<Void, Error>).self) { group in
@@ -40,6 +47,8 @@ actor RestoreService {
                 
                 // Wait for batch completion
                 for await (appName, result) in group {
+                    completedApps += 1
+                    
                     switch result {
                     case .success:
                         successCount += 1
@@ -48,6 +57,16 @@ actor RestoreService {
                         failedApps.append((appName, error))
                         logger.error("Failed to restore \(appName): \(error)")
                     }
+                    
+                    let progress = ProgressUpdate(
+                        completed: completedApps,
+                        total: totalApps,
+                        message: String(
+                            format: NSLocalizedString("Restore_Progress_Message", comment: ""),
+                            appName
+                        )
+                    )
+                    await onProgress?(progress)
                 }
             }
         }

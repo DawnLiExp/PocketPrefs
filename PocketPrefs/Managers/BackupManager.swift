@@ -36,14 +36,6 @@ final class BackupManager: ObservableObject {
     private var loadAppsTask: Task<Void, Never>?
     private var scanBackupsTask: Task<Void, Never>?
     
-    private enum ProgressConfig {
-        static let targetProgress = 0.98
-        static let duration = 3.0
-        static let steps = 40
-        static let completionPause = 0.5
-        static let finalPause = 0.3
-    }
-    
     private enum DebounceConfig {
         static let storeEventDelay = 0.3
         static let iconEventDelay = 0.5
@@ -295,39 +287,39 @@ final class BackupManager: ObservableObject {
     }
     
     private func performBackupAsync() async {
+        let startTime = Date()
         isProcessing = true
         currentProgress = 0.0
         statusMessage = NSLocalizedString("Backup_Starting", comment: "")
         
         let baseBackup = isIncrementalMode ? incrementalBaseBackup : nil
         
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask {
-                await self.monitorProgress(
-                    targetProgress: ProgressConfig.targetProgress,
-                    duration: ProgressConfig.duration,
-                )
-            }
-            
-            group.addTask {
-                let result = await self.backupService.performBackup(
-                    apps: self.apps,
-                    incrementalBase: baseBackup,
-                )
-                
-                await MainActor.run {
-                    self.currentProgress = 1.0
-                    self.statusMessage = result.statusMessage
+        let result = await backupService.performBackup(
+            apps: apps,
+            incrementalBase: baseBackup,
+            onProgress: { @MainActor update in
+                self.currentProgress = update.fraction
+                if let message = update.message {
+                    self.statusMessage = message
                 }
-                
-                try? await Task.sleep(for: .seconds(ProgressConfig.completionPause))
-                await self.scanBackups()
             }
-            
-            await group.waitForAll()
+        )
+        
+        // Ensure minimum operation duration for better UX (avoid "instant" completion)
+        let elapsed = Date().timeIntervalSince(startTime)
+        let minDuration = 0.8
+        if elapsed < minDuration {
+            try? await Task.sleep(for: .seconds(minDuration - elapsed))
         }
         
-        try? await Task.sleep(for: .seconds(ProgressConfig.finalPause))
+        currentProgress = 1.0
+        statusMessage = result.statusMessage
+        
+        // Pause at 100% for visual confirmation
+        try? await Task.sleep(for: .seconds(0.4))
+        await scanBackups()
+        
+        try? await Task.sleep(for: .seconds(0.2))
         isProcessing = false
         currentProgress = 0.0
     }
@@ -344,53 +336,38 @@ final class BackupManager: ObservableObject {
     }
     
     private func performRestoreAsync(backup: BackupInfo) async {
+        let startTime = Date()
         isProcessing = true
         currentProgress = 0.0
         statusMessage = NSLocalizedString("Restore_Starting", comment: "")
         
-        await withTaskGroup(of: Void.self) { group in
-            group.addTask {
-                await self.monitorProgress(
-                    targetProgress: ProgressConfig.targetProgress,
-                    duration: ProgressConfig.duration,
-                )
-            }
-            
-            group.addTask {
-                let result = await self.restoreService.performRestore(backup: backup)
-                
-                await MainActor.run {
-                    self.currentProgress = 1.0
-                    self.statusMessage = result.statusMessage
+        let result = await restoreService.performRestore(
+            backup: backup,
+            onProgress: { @MainActor update in
+                self.currentProgress = update.fraction
+                if let message = update.message {
+                    self.statusMessage = message
                 }
-                
-                try? await Task.sleep(for: .seconds(ProgressConfig.completionPause))
-                await self.loadApps()
             }
-            
-            await group.waitForAll()
+        )
+        
+        // Ensure minimum operation duration for better UX
+        let elapsed = Date().timeIntervalSince(startTime)
+        let minDuration = 0.8
+        if elapsed < minDuration {
+            try? await Task.sleep(for: .seconds(minDuration - elapsed))
         }
         
-        try? await Task.sleep(for: .seconds(ProgressConfig.finalPause))
+        currentProgress = 1.0
+        statusMessage = result.statusMessage
+        
+        // Pause at 100% for visual confirmation
+        try? await Task.sleep(for: .seconds(0.4))
+        await loadApps()
+        
+        try? await Task.sleep(for: .seconds(0.2))
         isProcessing = false
         currentProgress = 0.0
-    }
-    
-    // MARK: - Progress Monitoring
-    
-    private func monitorProgress(targetProgress: Double, duration: TimeInterval) async {
-        let steps = ProgressConfig.steps
-        let stepDuration = duration / Double(steps)
-        let progressIncrement = targetProgress / Double(steps)
-        
-        for step in 0 ..< steps {
-            guard !Task.isCancelled else { break }
-            
-            let newProgress = Double(step + 1) * progressIncrement
-            currentProgress = min(newProgress, targetProgress)
-            
-            try? await Task.sleep(for: .seconds(stepDuration))
-        }
     }
     
     func scanAppsInBackup(at path: String) async -> [BackupAppInfo] {

@@ -14,37 +14,28 @@ struct DetailContainerView: View {
     let selectedApp: AppConfig?
     @ObservedObject var backupManager: BackupManager
     let currentMode: MainView.AppMode
-    @Binding var isProcessing: Bool
-    @Binding var progress: Double
     @Binding var showingRestorePicker: Bool
     
     var body: some View {
-        if isProcessing {
-            ProgressView(progress: progress)
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        if backupManager.isProcessing {
+            ProgressView(
+                progress: backupManager.currentProgress,
+                statusMessage: backupManager.statusMessage
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if currentMode == .backup {
             if let app = selectedApp {
                 AppDetailView(
                     app: app,
                     backupManager: backupManager,
                     currentMode: currentMode,
-                    isProcessing: $isProcessing,
-                    progress: $progress,
-                    showingRestorePicker: $showingRestorePicker,
+                    showingRestorePicker: $showingRestorePicker
                 )
             } else {
-                BackupPlaceholderView(
-                    backupManager: backupManager,
-                    isProcessing: $isProcessing,
-                    progress: $progress,
-                )
+                BackupPlaceholderView(backupManager: backupManager)
             }
         } else {
-            RestorePlaceholderView(
-                backupManager: backupManager,
-                isProcessing: $isProcessing,
-                progress: $progress,
-            )
+            RestorePlaceholderView(backupManager: backupManager)
         }
     }
 }
@@ -55,8 +46,6 @@ struct AppDetailView: View {
     let app: AppConfig
     @ObservedObject var backupManager: BackupManager
     let currentMode: MainView.AppMode
-    @Binding var isProcessing: Bool
-    @Binding var progress: Double
     @Binding var showingRestorePicker: Bool
     @Environment(\.colorScheme) var colorScheme
     
@@ -100,25 +89,7 @@ struct AppDetailView: View {
     }
     
     private func performBackup() {
-        withAnimation(DesignConstants.Animation.standard) {
-            isProcessing = true
-            progress = 0.0
-        }
-        
-        Task { @MainActor in
-            while progress < 0.98 {
-                try? await Task.sleep(for: .milliseconds(30))
-                progress += 0.0294
-            }
-            
-            backupManager.performBackup()
-            
-            progress = 1.0
-            try? await Task.sleep(for: .seconds(0.5))
-            
-            isProcessing = false
-            progress = 0.0
-        }
+        backupManager.performBackup()
     }
 }
 
@@ -245,8 +216,6 @@ struct ConfigPathItem: View {
 
 struct BackupPlaceholderView: View {
     @ObservedObject var backupManager: BackupManager
-    @Binding var isProcessing: Bool
-    @Binding var progress: Double
     @Environment(\.colorScheme) var colorScheme
     
     private var hasValidSelection: Bool {
@@ -288,25 +257,7 @@ struct BackupPlaceholderView: View {
     }
     
     private func performQuickBackup() {
-        withAnimation(DesignConstants.Animation.standard) {
-            isProcessing = true
-            progress = 0.0
-        }
-        
-        Task { @MainActor in
-            while progress < 0.98 {
-                try? await Task.sleep(for: .milliseconds(30))
-                progress += 0.0294
-            }
-            
-            backupManager.performBackup()
-            
-            progress = 1.0
-            try? await Task.sleep(for: .seconds(0.5))
-            
-            isProcessing = false
-            progress = 0.0
-        }
+        backupManager.performBackup()
     }
 }
 
@@ -314,8 +265,6 @@ struct BackupPlaceholderView: View {
 
 struct RestorePlaceholderView: View {
     @ObservedObject var backupManager: BackupManager
-    @Binding var isProcessing: Bool
-    @Binding var progress: Double
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -323,9 +272,7 @@ struct RestorePlaceholderView: View {
             if let backup = backupManager.selectedBackup {
                 RestoreDetailContent(
                     backupManager: backupManager,
-                    backup: backup,
-                    isProcessing: $isProcessing,
-                    progress: $progress,
+                    backup: backup
                 )
             } else {
                 RestoreEmptyDetail()
@@ -340,8 +287,6 @@ struct RestorePlaceholderView: View {
 struct RestoreDetailContent: View {
     @ObservedObject var backupManager: BackupManager
     let backup: BackupInfo
-    @Binding var isProcessing: Bool
-    @Binding var progress: Double
     @Environment(\.colorScheme) var colorScheme
     
     private var selectedAppsCount: Int {
@@ -480,25 +425,7 @@ struct RestoreDetailContent: View {
     }
     
     private func performRestore() {
-        withAnimation(DesignConstants.Animation.standard) {
-            isProcessing = true
-            progress = 0.0
-        }
-        
-        Task { @MainActor in
-            while progress < 0.98 {
-                try? await Task.sleep(for: .milliseconds(30))
-                progress += 0.0294
-            }
-            
-            backupManager.performRestore()
-            
-            progress = 1.0
-            try? await Task.sleep(for: .seconds(0.5))
-            
-            isProcessing = false
-            progress = 0.0
-        }
+        backupManager.performRestore()
     }
 }
 

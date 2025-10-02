@@ -19,6 +19,7 @@
 "Restore_Empty_State_Create_Backup_Prompt" = "Switch to Backup mode to create your first backup";
 "Select_Backup_Label" = "Select Backup:";
 "No_Backups_Found" = "No backups available";
+"Restore_Progress_Message" = "Restoring %@...";
 
 /* Detail View  */
 "Detail_Restore_Empty_State_No_Apps_Selected" = "No app configurations selected";
@@ -61,6 +62,7 @@
 "Backup_Success_Message" = "✅ Backup complete! Successfully backed up %d app configurations";
 "Backup_Partial_Success_Message" = "⚠️ Backup complete. Success: %d, Failed: %@";
 "Backup_No_Apps_Processed" = "No app configurations were backed up";
+"Backup_Progress_Message" = "Backing up %@...";
 
 /* Settings Main */
 "Settings_Title" = "Settings - Custom Applications";

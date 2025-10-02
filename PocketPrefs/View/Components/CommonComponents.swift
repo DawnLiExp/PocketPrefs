@@ -11,29 +11,23 @@ import SwiftUI
 
 struct ProgressView: View {
     let progress: Double
+    let statusMessage: String?
     @Environment(\.colorScheme) var colorScheme
-    @State private var rotation: Double = 0
-    @State private var pulseScale: Double = 1.0
 
     var body: some View {
         VStack(spacing: 32) {
             CircularProgressView(progress: progress)
                 .frame(width: 140, height: 140)
 
-            VStack(spacing: 12) {
-                Text(NSLocalizedString("Common_Processing", comment: ""))
-                    .font(DesignConstants.Typography.headline)
-                    .foregroundColor(Color.App.primary.color(for: colorScheme))
-
-                Text("\(Int(progress * 100))%")
-                    .font(DesignConstants.Typography.largeTitle)
-                    .foregroundColor(Color.App.accent.color(for: colorScheme))
-                    .scaleEffect(pulseScale)
-                    .animation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true), value: pulseScale)
-                    .onAppear {
-                        pulseScale = 1.05
-                    }
-            }
+            // Status message only (percentage now in ring center)
+            Text(statusMessage ?? NSLocalizedString("Common_Processing", comment: ""))
+                .font(DesignConstants.Typography.headline)
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .id(statusMessage)
+                .transition(.opacity.combined(with: .scale(scale: 0.95)))
+                .animation(.easeInOut(duration: 0.25), value: statusMessage)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.ultraThinMaterial.opacity(0.8))
@@ -59,7 +53,7 @@ struct CircularProgressView: View {
                     lineWidth: 8
                 )
 
-            // Progress Arc with Gradient
+            // Progress Arc with Gradient - smooth animation
             Circle()
                 .trim(from: 0, to: progress)
                 .stroke(
@@ -77,7 +71,7 @@ struct CircularProgressView: View {
                     )
                 )
                 .rotationEffect(.degrees(-90))
-                .animation(.easeInOut(duration: 0.6), value: progress)
+                .animation(.easeOut(duration: 0.5), value: progress)
 
             // Decorative Ring
             Circle()
@@ -99,18 +93,11 @@ struct CircularProgressView: View {
                     decorativeRotation = 360
                 }
 
-            // Center Icon with Rotation
-            Image(systemName: "arrow.triangle.2.circlepath")
-                .font(.system(size: 36, weight: .light))
+            // Center percentage number
+            Text("\(Int(progress * 100))%")
+                .font(.system(size: 30, weight: .semibold, design: .rounded))
                 .foregroundColor(Color.App.accent.color(for: colorScheme))
-                .rotationEffect(.degrees(progress * 360))
-                .animation(.easeInOut(duration: 0.8), value: progress)
-                .shadow(
-                    color: Color.App.accent.color(for: colorScheme).opacity(0.3),
-                    radius: 4,
-                    x: 0,
-                    y: 2
-                )
+                .animation(.easeOut(duration: 0.3), value: progress)
         }
     }
 }
