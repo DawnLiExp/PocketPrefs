@@ -189,14 +189,20 @@ final class BackupManager: ObservableObject {
     }
     
     func selectAll() {
-        for index in apps.indices where apps[index].isInstalled {
-            apps[index].isSelected = true
+        apps = apps.map { app in
+            var updated = app
+            if updated.isInstalled {
+                updated.isSelected = true
+            }
+            return updated
         }
     }
     
     func deselectAll() {
-        for index in apps.indices {
-            apps[index].isSelected = false
+        apps = apps.map { app in
+            var updated = app
+            updated.isSelected = false
+            return updated
         }
     }
     

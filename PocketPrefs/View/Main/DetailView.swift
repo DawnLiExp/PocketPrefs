@@ -30,20 +30,20 @@ struct DetailContainerView: View {
                     currentMode: currentMode,
                     isProcessing: $isProcessing,
                     progress: $progress,
-                    showingRestorePicker: $showingRestorePicker
+                    showingRestorePicker: $showingRestorePicker,
                 )
             } else {
                 BackupPlaceholderView(
                     backupManager: backupManager,
                     isProcessing: $isProcessing,
-                    progress: $progress
+                    progress: $progress,
                 )
             }
         } else {
             RestorePlaceholderView(
                 backupManager: backupManager,
                 isProcessing: $isProcessing,
-                progress: $progress
+                progress: $progress,
             )
         }
     }
@@ -69,7 +69,7 @@ struct AppDetailView: View {
             // Header
             AppDetailHeader(
                 app: app,
-                currentMode: currentMode
+                currentMode: currentMode,
             )
             
             // Config Paths List
@@ -90,7 +90,7 @@ struct AppDetailView: View {
                 Button(action: performBackup) {
                     Label(
                         NSLocalizedString("Detail_Action_Backup_Selected", comment: ""),
-                        systemImage: "arrow.up.circle.fill"
+                        systemImage: "arrow.up.circle.fill",
                     )
                 }
                 .buttonStyle(PrimaryButtonStyle())
@@ -154,12 +154,12 @@ struct AppDetailHeader: View {
                     if app.isInstalled {
                         StatusBadge(
                             text: NSLocalizedString("Detail_App_Status_Installed", comment: ""),
-                            color: Color.App.success.color(for: colorScheme)
+                            color: Color.App.success.color(for: colorScheme),
                         )
                     } else {
                         StatusBadge(
                             text: NSLocalizedString("Detail_App_Status_Not_Installed", comment: ""),
-                            color: Color.App.warning.color(for: colorScheme)
+                            color: Color.App.warning.color(for: colorScheme),
                         )
                     }
                 }
@@ -208,7 +208,7 @@ struct ConfigPathItem: View {
                     .foregroundColor(
                         isHovered
                             ? Color.App.primary.color(for: colorScheme)
-                            : Color.App.secondary.color(for: colorScheme)
+                            : Color.App.secondary.color(for: colorScheme),
                     )
             }
             .buttonStyle(.plain)
@@ -233,7 +233,7 @@ struct ConfigPathItem: View {
         if FileManager.default.fileExists(atPath: expandedPath) {
             NSWorkspace.shared.selectFile(
                 expandedPath,
-                inFileViewerRootedAtPath: url.deletingLastPathComponent().path
+                inFileViewerRootedAtPath: url.deletingLastPathComponent().path,
             )
         } else {
             let parentURL = url.deletingLastPathComponent()
@@ -247,33 +247,41 @@ struct ConfigPathItem: View {
         let expandedPath = NSString(string: path).expandingTildeInPath
         let url = URL(fileURLWithPath: expandedPath)
         
-        await MainActor.run {
-            do {
-                let resourceValues = try url.resourceValues(
-                    forKeys: [.totalFileSizeKey, .fileSizeKey, .isDirectoryKey]
-                )
-                
-                let size: Int64
-                if resourceValues.isDirectory == true {
-                    size = directorySize(at: url)
-                } else {
-                    size = Int64(resourceValues.totalFileSize ?? resourceValues.fileSize ?? 0)
-                }
-                
-                self.fileSize = formatFileSize(size)
-            } catch {
-                self.fileSize = "Not Found"
+        // Execute file I/O in background (nonisolated context)
+        let result = await Task.detached(priority: .userInitiated) {
+            ConfigPathItem.computeFileSize(at: url)
+        }.value
+        
+        // Update UI on main thread
+        fileSize = result
+    }
+    
+    // Nonisolated static methods for background execution
+    private nonisolated static func computeFileSize(at url: URL) -> String {
+        do {
+            let resourceValues = try url.resourceValues(
+                forKeys: [.totalFileSizeKey, .fileSizeKey, .isDirectoryKey],
+            )
+            
+            let size: Int64 = if resourceValues.isDirectory == true {
+                directorySize(at: url)
+            } else {
+                Int64(resourceValues.totalFileSize ?? resourceValues.fileSize ?? 0)
             }
+            
+            return formatFileSize(size)
+        } catch {
+            return "Not Found"
         }
     }
     
-    private func directorySize(at url: URL) -> Int64 {
+    private nonisolated static func directorySize(at url: URL) -> Int64 {
         var totalSize: Int64 = 0
         
         guard let enumerator = FileManager.default.enumerator(
             at: url,
             includingPropertiesForKeys: [.totalFileSizeKey, .fileSizeKey],
-            options: [.skipsHiddenFiles, .skipsPackageDescendants]
+            options: [.skipsHiddenFiles, .skipsPackageDescendants],
         ) else {
             return 0
         }
@@ -281,7 +289,7 @@ struct ConfigPathItem: View {
         for case let fileURL as URL in enumerator {
             do {
                 let resourceValues = try fileURL.resourceValues(
-                    forKeys: [.totalFileSizeKey, .fileSizeKey]
+                    forKeys: [.totalFileSizeKey, .fileSizeKey],
                 )
                 let fileSize = Int64(resourceValues.totalFileSize ?? resourceValues.fileSize ?? 0)
                 totalSize += fileSize
@@ -293,7 +301,7 @@ struct ConfigPathItem: View {
         return totalSize
     }
     
-    private func formatFileSize(_ size: Int64) -> String {
+    private nonisolated static func formatFileSize(_ size: Int64) -> String {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
         formatter.includesUnit = true
@@ -386,7 +394,7 @@ struct RestorePlaceholderView: View {
                     backupManager: backupManager,
                     backup: backup,
                     isProcessing: $isProcessing,
-                    progress: $progress
+                    progress: $progress,
                 )
             } else {
                 RestoreEmptyDetail()
@@ -406,13 +414,13 @@ struct RestoreDetailContent: View {
     @Environment(\.colorScheme) var colorScheme
     
     private var selectedAppsCount: Int {
-        backupManager.selectedBackup?.apps.filter { $0.isSelected }.count ?? 0
+        backupManager.selectedBackup?.apps.count(where: { $0.isSelected }) ?? 0
     }
     
     private var uninstalledSelectedCount: Int {
-        backupManager.selectedBackup?.apps.filter {
+        backupManager.selectedBackup?.apps.count(where: {
             !$0.isCurrentlyInstalled && $0.isSelected
-        }.count ?? 0
+        }) ?? 0
     }
     
     private var hasSelectedApps: Bool {
@@ -434,7 +442,7 @@ struct RestoreDetailContent: View {
                         
                         Text(String(
                             format: NSLocalizedString("Detail_Restore_Backup_App_Count", comment: ""),
-                            backup.apps.count
+                            backup.apps.count,
                         ))
                         .font(DesignConstants.Typography.caption)
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
@@ -447,29 +455,29 @@ struct RestoreDetailContent: View {
                     Label(
                         String(
                             format: NSLocalizedString("Detail_Restore_Selected_Apps_Count", comment: ""),
-                            selectedAppsCount
+                            selectedAppsCount,
                         ),
-                        systemImage: "checkmark.circle.fill"
+                        systemImage: "checkmark.circle.fill",
                     )
                     .font(DesignConstants.Typography.body)
                     .foregroundColor(
                         selectedAppsCount > 0
                             ? Color.App.success.color(for: colorScheme)
-                            : Color.App.secondary.color(for: colorScheme)
+                            : Color.App.secondary.color(for: colorScheme),
                     )
                     
                     Label(
                         String(
                             format: NSLocalizedString("Detail_Restore_Uninstalled_Apps_Count", comment: ""),
-                            uninstalledSelectedCount
+                            uninstalledSelectedCount,
                         ),
-                        systemImage: "exclamationmark.triangle.fill"
+                        systemImage: "exclamationmark.triangle.fill",
                     )
                     .font(DesignConstants.Typography.body)
                     .foregroundColor(
                         uninstalledSelectedCount > 0
                             ? Color.App.warning.color(for: colorScheme)
-                            : Color.App.secondary.color(for: colorScheme)
+                            : Color.App.secondary.color(for: colorScheme),
                     )
                 }
             }
@@ -484,7 +492,7 @@ struct RestoreDetailContent: View {
                             .font(DesignConstants.Typography.headline)
                             .padding(.bottom, 8)
                         
-                        ForEach(backupManager.selectedBackup?.apps.filter { $0.isSelected } ?? []) { app in
+                        ForEach(backupManager.selectedBackup?.apps.filter(\.isSelected) ?? []) { app in
                             HStack {
                                 Image(systemName: app.isCurrentlyInstalled
                                     ? "checkmark.circle"
@@ -492,7 +500,7 @@ struct RestoreDetailContent: View {
                                     .foregroundColor(
                                         app.isCurrentlyInstalled
                                             ? Color.App.success.color(for: colorScheme)
-                                            : Color.App.warning.color(for: colorScheme)
+                                            : Color.App.warning.color(for: colorScheme),
                                     )
                                 
                                 Text(app.name)
@@ -534,7 +542,7 @@ struct RestoreDetailContent: View {
                 Button(action: performRestore) {
                     Label(
                         NSLocalizedString("Detail_Restore_Action_Restore_Selected", comment: ""),
-                        systemImage: "arrow.down.circle.fill"
+                        systemImage: "arrow.down.circle.fill",
                     )
                 }
                 .buttonStyle(PrimaryButtonStyle())
