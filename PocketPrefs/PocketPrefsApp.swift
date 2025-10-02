@@ -2,7 +2,7 @@
 //  PocketPrefsApp.swift
 //  PocketPrefs
 //
-//  App entry point with structured concurrency and glass effects
+//  App entry with early language configuration
 //
 
 import os.log
@@ -35,7 +35,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.styleMask.insert(.fullSizeContentView)
         window.toolbarStyle = .unified
         window.isOpaque = false
-        
         window.hasShadow = true
         window.invalidateShadow()
         
@@ -105,13 +104,10 @@ class EnhancedWindowBackgroundNSView: NSView {
     
     func updateBackground(colorScheme: ColorScheme) async {
         updateTask?.cancel()
-        
         self.colorScheme = colorScheme
         
         updateTask = Task { @MainActor in
-            guard !Task.isCancelled,
-                  let window = self.window else { return }
-            
+            guard !Task.isCancelled, let window = self.window else { return }
             await self.applyBackgroundColor(to: window)
         }
         
@@ -130,7 +126,6 @@ class EnhancedWindowBackgroundNSView: NSView {
         }
         
         window.backgroundColor = backgroundColor
-        
         await configureWindowEffects(window)
     }
     
@@ -174,6 +169,16 @@ struct PocketPrefsApp: App {
     @StateObject private var themeManager = ThemeManager.shared
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @Environment(\.colorScheme) var colorScheme
+    
+    init() {
+        // Apply stored language preference early
+        if let stored = UserDefaults.standard.string(forKey: "PocketPrefsLanguage"),
+           !stored.isEmpty
+        {
+            UserDefaults.standard.set([stored], forKey: "AppleLanguages")
+            UserDefaults.standard.synchronize()
+        }
+    }
 
     var body: some Scene {
         WindowGroup {
@@ -215,12 +220,6 @@ struct PocketPrefsApp: App {
     @MainActor
     private func initializeApp() async {
         logger.info("PocketPrefs initializing")
-        await configureGlobalEffects()
-    }
-    
-    @MainActor
-    private func configureGlobalEffects() async {
-        // Global visual effects configuration
     }
     
     @MainActor

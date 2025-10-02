@@ -102,6 +102,7 @@
 				FC195B7E2E7EC4BE00258310 /* Models */,
 				FCD990802E7EC54200C7087A /* Services */,
 				FCD990812E7EC55700C7087A /* View */,
+				FCD990712E7EC53600C7087A /* PocketPrefsApp.swift */,
 			);
 			path = PocketPrefs;
 			sourceTree = "<group>";
@@ -187,13 +188,13 @@
 		FCD990802E7EC54200C7087A /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				FCF4B5B62E8D81C0008DA739 /* LanguageManager.swift */,
 				FCF4B5B02E8D317F008DA739 /* AppInfoReader.swift */,
 				FCD990612E7EC53600C7087A /* BackupService.swift */,
 				FC33DF552E8716C8007C47E5 /* ConcurrencyHelpers.swift */,
 				FCD990622E7EC53600C7087A /* FileOperationService.swift */,
 				FCFA34982E86CE2D00BCA325 /* IconConfiguration.swift */,
 				FCD990632E7EC53600C7087A /* IconService.swift */,
+				FCF4B5B62E8D81C0008DA739 /* LanguageManager.swift */,
 				FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */,
 				FCD990642E7EC53600C7087A /* RestoreService.swift */,
 				FCD990652E7EC53600C7087A /* ThemeManager.swift */,
@@ -209,7 +210,6 @@
 				FC68CD242E865E41003BBDD4 /* Components */,
 				FC68CD252E865E4E003BBDD4 /* Extensions */,
 				FC68CD232E865E30003BBDD4 /* Settings */,
-				FCD990712E7EC53600C7087A /* PocketPrefsApp.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";

@@ -182,3 +182,9 @@
 "Language_SimplifiedChinese" = "简体中文";
 "Language_English" = "English";
 "Settings_Language_Restart_Hint" = "(需重启应用)";
+
+/* Language Restart */
+"Language_Restart_Title" = "需要重启";
+"Language_Restart_Message" = "应用需要重启才能应用语言更改。";
+"Language_Restart_Now" = "立即重启";
+"Language_Restart_Later" = "稍后";

@@ -17,6 +17,8 @@ enum AppError: LocalizedError {
     case backupNotFound(path: String)
     case restoreFailed(app: String, reason: String)
     case iconLoadFailed(bundleId: String)
+    case applicationRestartFailed(Error)
+    case preferencesSaveFailed(Error)
 
     var errorDescription: String? {
         switch self {
@@ -38,6 +40,10 @@ enum AppError: LocalizedError {
             return "Failed to restore \(app): \(reason)"
         case .iconLoadFailed(let bundleId):
             return "Failed to load icon for: \(bundleId)"
+        case .applicationRestartFailed(let error):
+            return "Failed to restart application: \(error.localizedDescription)"
+        case .preferencesSaveFailed(let error):
+            return "Failed to save preferences: \(error.localizedDescription)"
         }
     }
 }

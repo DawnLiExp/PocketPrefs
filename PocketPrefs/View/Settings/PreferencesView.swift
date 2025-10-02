@@ -2,7 +2,7 @@
 //  PreferencesView.swift
 //  PocketPrefs
 //
-//  Application preferences interface with appearance and language settings
+//  Application preferences with structured concurrency
 //
 
 import SwiftUI
@@ -10,14 +10,18 @@ import SwiftUI
 struct PreferencesView: View {
     @StateObject private var preferencesManager = PreferencesManager.shared
     @StateObject private var themeManager = ThemeManager.shared
-    @StateObject private var languageManager = LanguageManager.shared
+    @ObservedObject private var languageManager = LanguageManager.shared
     @State private var showingDirectoryPicker = false
+    @State private var showingRestartAlert = false
+    @State private var pendingLanguage: AppLanguage?
+    @State private var languageChangeError: AppError?
+    @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                // General Section (top priority)
+                // General Section
                 VStack(alignment: .leading, spacing: 16) {
                     Text(NSLocalizedString("Preferences_General", comment: ""))
                         .font(DesignConstants.Typography.headline)
@@ -30,11 +34,12 @@ struct PreferencesView: View {
                     )
                 }
                 
-                // Appearance Section
                 AppearanceSection(themeManager: themeManager)
                 
-                // Language Section
-                LanguageSection(languageManager: languageManager)
+                LanguageSection(
+                    languageManager: languageManager,
+                    onLanguageChange: handleLanguageChange,
+                )
             }
             .padding(24)
         }
@@ -48,6 +53,64 @@ struct PreferencesView: View {
             Task {
                 await handleDirectorySelection(result)
             }
+        }
+        .alert(
+            NSLocalizedString("Language_Restart_Title", comment: ""),
+            isPresented: $showingRestartAlert,
+        ) {
+            Button(NSLocalizedString("Language_Restart_Now", comment: "")) {
+                Task {
+                    await restartForLanguageChange()
+                }
+            }
+            Button(NSLocalizedString("Language_Restart_Later", comment: ""), role: .cancel) {
+                saveLanguageWithoutRestart()
+            }
+        } message: {
+            Text(NSLocalizedString("Language_Restart_Message", comment: ""))
+        }
+        .alert(
+            "Error",
+            isPresented: .constant(languageChangeError != nil),
+            presenting: languageChangeError,
+        ) { _ in
+            Button("OK") {
+                languageChangeError = nil
+            }
+        } message: { error in
+            Text(error.localizedDescription)
+        }
+    }
+    
+    private func handleLanguageChange(_ newLanguage: AppLanguage) {
+        pendingLanguage = newLanguage
+        showingRestartAlert = true
+    }
+    
+    private func restartForLanguageChange() async {
+        guard let language = pendingLanguage else { return }
+        
+        dismiss()
+        
+        do {
+            try await Task.sleep(for: .milliseconds(300))
+            try await languageManager.setLanguage(language)
+        } catch let error as AppError {
+            languageChangeError = error
+        } catch {
+            languageChangeError = .applicationRestartFailed(error)
+        }
+    }
+    
+    private func saveLanguageWithoutRestart() {
+        guard let language = pendingLanguage else { return }
+        
+        do {
+            try languageManager.saveLanguagePreference(language)
+        } catch let error as AppError {
+            languageChangeError = error
+        } catch {
+            languageChangeError = .preferencesSaveFailed(error)
         }
     }
     
@@ -108,7 +171,15 @@ struct AppearanceSection: View {
 
 struct LanguageSection: View {
     @ObservedObject var languageManager: LanguageManager
+    let onLanguageChange: (AppLanguage) -> Void
+    @State private var selectedLanguage: AppLanguage
     @Environment(\.colorScheme) var colorScheme
+    
+    init(languageManager: LanguageManager, onLanguageChange: @escaping (AppLanguage) -> Void) {
+        self.languageManager = languageManager
+        self.onLanguageChange = onLanguageChange
+        _selectedLanguage = State(initialValue: languageManager.currentLanguage)
+    }
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -133,15 +204,17 @@ struct LanguageSection: View {
                 
                 Spacer()
                 
-                Picker("", selection: $languageManager.currentLanguage) {
+                Picker("", selection: $selectedLanguage) {
                     ForEach(AppLanguage.allCases, id: \.self) { language in
                         Text(language.displayName).tag(language)
                     }
                 }
                 .pickerStyle(.radioGroup)
                 .horizontalRadioGroupLayout()
-                .onChange(of: languageManager.currentLanguage) { _, newLanguage in
-                    languageManager.setLanguage(newLanguage)
+                .onChange(of: selectedLanguage) { oldValue, newValue in
+                    if oldValue != newValue {
+                        onLanguageChange(newValue)
+                    }
                 }
             }
             .padding(16)
@@ -170,7 +243,6 @@ struct BackupLocationSection: View {
                 Spacer()
             }
             
-            // Path display with status
             HStack(spacing: 12) {
                 StatusIndicator(status: preferencesManager.directoryStatus)
                 
@@ -185,7 +257,6 @@ struct BackupLocationSection: View {
             .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.5))
             .clipShape(RoundedRectangle(cornerRadius: 6))
             
-            // Status message
             if case .invalid(let reason) = preferencesManager.directoryStatus {
                 HStack(spacing: 8) {
                     Image(systemName: "exclamationmark.triangle.fill")
@@ -196,7 +267,6 @@ struct BackupLocationSection: View {
                 }
             }
             
-            // Choose button
             Button(action: { showingDirectoryPicker = true }) {
                 Label(
                     NSLocalizedString("Preferences_Choose_Directory", comment: ""),

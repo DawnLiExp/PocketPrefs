@@ -182,3 +182,9 @@
 "Language_SimplifiedChinese" = "简体中文";
 "Language_English" = "English";
 "Settings_Language_Restart_Hint" = "(Restart to apply)";
+
+/* Language Restart */
+"Language_Restart_Title" = "Restart Required";
+"Language_Restart_Message" = "The application needs to restart for the language change to take effect.";
+"Language_Restart_Now" = "Restart Now";
+"Language_Restart_Later" = "Later";
