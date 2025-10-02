@@ -66,13 +66,11 @@ struct AppDetailView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Header
             AppDetailHeader(
                 app: app,
                 currentMode: currentMode,
             )
             
-            // Config Paths List
             ScrollView {
                 VStack(spacing: 8) {
                     ForEach(app.configPaths, id: \.self) { path in
@@ -108,7 +106,6 @@ struct AppDetailView: View {
         }
         
         Task { @MainActor in
-            // Progress monitoring
             while progress < 0.98 {
                 try? await Task.sleep(for: .milliseconds(30))
                 progress += 0.0294
@@ -222,7 +219,7 @@ struct ConfigPathItem: View {
             }
         }
         .task {
-            await calculateFileSize()
+            fileSize = await FileOperationService.shared.calculateFileSize(at: path)
         }
     }
     
@@ -241,72 +238,6 @@ struct ConfigPathItem: View {
                 NSWorkspace.shared.open(parentURL)
             }
         }
-    }
-    
-    private func calculateFileSize() async {
-        let expandedPath = NSString(string: path).expandingTildeInPath
-        let url = URL(fileURLWithPath: expandedPath)
-        
-        // Execute file I/O in background (nonisolated context)
-        let result = await Task.detached(priority: .userInitiated) {
-            ConfigPathItem.computeFileSize(at: url)
-        }.value
-        
-        // Update UI on main thread
-        fileSize = result
-    }
-    
-    // Nonisolated static methods for background execution
-    private nonisolated static func computeFileSize(at url: URL) -> String {
-        do {
-            let resourceValues = try url.resourceValues(
-                forKeys: [.totalFileSizeKey, .fileSizeKey, .isDirectoryKey],
-            )
-            
-            let size: Int64 = if resourceValues.isDirectory == true {
-                directorySize(at: url)
-            } else {
-                Int64(resourceValues.totalFileSize ?? resourceValues.fileSize ?? 0)
-            }
-            
-            return formatFileSize(size)
-        } catch {
-            return "Not Found"
-        }
-    }
-    
-    private nonisolated static func directorySize(at url: URL) -> Int64 {
-        var totalSize: Int64 = 0
-        
-        guard let enumerator = FileManager.default.enumerator(
-            at: url,
-            includingPropertiesForKeys: [.totalFileSizeKey, .fileSizeKey],
-            options: [.skipsHiddenFiles, .skipsPackageDescendants],
-        ) else {
-            return 0
-        }
-        
-        for case let fileURL as URL in enumerator {
-            do {
-                let resourceValues = try fileURL.resourceValues(
-                    forKeys: [.totalFileSizeKey, .fileSizeKey],
-                )
-                let fileSize = Int64(resourceValues.totalFileSize ?? resourceValues.fileSize ?? 0)
-                totalSize += fileSize
-            } catch {
-                continue
-            }
-        }
-        
-        return totalSize
-    }
-    
-    private nonisolated static func formatFileSize(_ size: Int64) -> String {
-        let formatter = ByteCountFormatter()
-        formatter.countStyle = .file
-        formatter.includesUnit = true
-        formatter.isAdaptive = true
-        return formatter.string(fromByteCount: size)
     }
 }
 
@@ -429,7 +360,6 @@ struct RestoreDetailContent: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Backup info header
             VStack(alignment: .leading, spacing: 16) {
                 HStack {
                     Image(systemName: "archivebox.fill")
@@ -484,7 +414,6 @@ struct RestoreDetailContent: View {
             .padding(20)
             .background(Color.App.contentAreaBackground.color(for: colorScheme))
             
-            // Selected apps list
             if hasSelectedApps {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
@@ -520,7 +449,6 @@ struct RestoreDetailContent: View {
                     .padding(16)
                 }
             } else {
-                // Empty state
                 VStack(spacing: 16) {
                     Image(systemName: "info.circle")
                         .font(.system(size: 48))
@@ -535,7 +463,6 @@ struct RestoreDetailContent: View {
             
             Spacer()
             
-            // Action bar
             HStack {
                 Spacer()
                 
@@ -564,7 +491,6 @@ struct RestoreDetailContent: View {
                 progress += 0.0294
             }
             
-            // Call performRestore without parameters
             backupManager.performRestore()
             
             progress = 1.0

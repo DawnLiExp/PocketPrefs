@@ -46,7 +46,7 @@ actor FileOperationService {
             try fileManager.createDirectory(
                 atPath: destDir,
                 withIntermediateDirectories: true,
-                attributes: nil
+                attributes: nil,
             )
         }
         
@@ -82,11 +82,70 @@ actor FileOperationService {
         try fileManager.createDirectory(
             atPath: expandedPath,
             withIntermediateDirectories: true,
-            attributes: nil
+            attributes: nil,
         )
     }
     
     func fileExists(at path: String) -> Bool {
         FileManager.default.fileExists(atPath: path)
+    }
+    
+    // MARK: - File Size Calculation
+    
+    func calculateFileSize(at path: String) async -> String {
+        let expandedPath = NSString(string: path).expandingTildeInPath
+        let url = URL(fileURLWithPath: expandedPath)
+        
+        do {
+            let resourceValues = try url.resourceValues(
+                forKeys: [.totalFileSizeKey, .fileSizeKey, .isDirectoryKey],
+            )
+            
+            let size: Int64 = if resourceValues.isDirectory == true {
+                await calculateDirectorySize(at: url)
+            } else {
+                Int64(resourceValues.totalFileSize ?? resourceValues.fileSize ?? 0)
+            }
+            
+            return formatFileSize(size)
+        } catch {
+            return "Not Found"
+        }
+    }
+    
+    private func calculateDirectorySize(at url: URL) async -> Int64 {
+        // Collect URLs synchronously to avoid async enumerator issues
+        guard let enumerator = FileManager.default.enumerator(
+            at: url,
+            includingPropertiesForKeys: [.totalFileSizeKey, .fileSizeKey],
+            options: [.skipsHiddenFiles, .skipsPackageDescendants],
+        ) else {
+            return 0
+        }
+        
+        let fileURLs = enumerator.compactMap { $0 as? URL }
+        
+        var totalSize: Int64 = 0
+        for fileURL in fileURLs {
+            do {
+                let resourceValues = try fileURL.resourceValues(
+                    forKeys: [.totalFileSizeKey, .fileSizeKey],
+                )
+                let fileSize = Int64(resourceValues.totalFileSize ?? resourceValues.fileSize ?? 0)
+                totalSize += fileSize
+            } catch {
+                continue
+            }
+        }
+        
+        return totalSize
+    }
+    
+    private func formatFileSize(_ size: Int64) -> String {
+        let formatter = ByteCountFormatter()
+        formatter.countStyle = .file
+        formatter.includesUnit = true
+        formatter.isAdaptive = true
+        return formatter.string(fromByteCount: size)
     }
 }
