@@ -21,12 +21,11 @@ struct RestoreListView: View {
         VStack(spacing: 0) {
             RestoreListHeader(
                 backupManager: backupManager,
-
                 searchText: $searchText,
                 isRefreshing: $isRefreshing,
             )
             .padding(.bottom, 6)
-            // No internal separator
+            
             RestoreListContent(
                 backupManager: backupManager,
                 selectedBackupApp: $selectedBackupApp,
@@ -43,15 +42,9 @@ struct RestoreListHeader: View {
     @Binding var searchText: String
     @Binding var isRefreshing: Bool
     @Environment(\.colorScheme) var colorScheme
-    
-    // Calculate all selected state for restore apps
-    private var allRestoreAppsSelected: Bool {
-        guard let backup = backupManager.selectedBackup else { return false }
-        let filteredApps = backup.apps.filter {
-            searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText)
-        }
-        return !filteredApps.isEmpty && filteredApps.allSatisfy(\.isSelected)
-    }
+    @State private var cachedAllSelected = false
+    @State private var cachedSelectedCount = 0
+    @State private var cachedTotalCount = 0
     
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -84,7 +77,7 @@ struct RestoreListHeader: View {
                 // Select all toggle and selection count
                 HStack {
                     Toggle(isOn: Binding(
-                        get: { allRestoreAppsSelected },
+                        get: { cachedAllSelected },
                         set: { newValue in
                             guard let backup = backupManager.selectedBackup else { return }
                             let filteredApps = backup.apps.filter {
@@ -106,18 +99,9 @@ struct RestoreListHeader: View {
                     Spacer()
                     
                     // Selection status
-                    if let backup = backupManager.selectedBackup {
-                        let filteredCount = backup.apps
-                            .filter { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) }
-                            .count(where: { $0.isSelected })
-                            
-                        let totalFilteredCount = backup.apps
-                            .count(where: { searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText) })
-                            
-                        Text(String(format: NSLocalizedString("Selected_Count", comment: ""), filteredCount, totalFilteredCount))
-                            .font(DesignConstants.Typography.caption)
-                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                    }
+                    Text(String(format: NSLocalizedString("Selected_Count", comment: ""), cachedSelectedCount, cachedTotalCount))
+                        .font(DesignConstants.Typography.caption)
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
             }
         }
@@ -127,16 +111,40 @@ struct RestoreListHeader: View {
         .background(
             Color.App.contentAreaBackground.color(for: colorScheme),
         )
+        .onAppear {
+            updateCachedState()
+        }
+        .onReceive(backupManager.objectWillChange) { _ in
+            updateCachedState()
+        }
+        .onChange(of: searchText) { _, _ in
+            updateCachedState()
+        }
+    }
+    
+    private func updateCachedState() {
+        guard let backup = backupManager.selectedBackup else {
+            cachedAllSelected = false
+            cachedSelectedCount = 0
+            cachedTotalCount = 0
+            return
+        }
+        
+        let filteredApps = backup.apps.filter {
+            searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText)
+        }
+        
+        cachedTotalCount = filteredApps.count
+        cachedSelectedCount = filteredApps.count(where: { $0.isSelected })
+        cachedAllSelected = !filteredApps.isEmpty && filteredApps.allSatisfy(\.isSelected)
     }
     
     @MainActor
     private func refreshBackups() async {
         isRefreshing = true
         
-        // Add slight delay for visual feedback
         try? await Task.sleep(nanoseconds: 200_000_000)
         
-        // Refresh backup list
         await backupManager.scanBackups()
         
         isRefreshing = false
@@ -229,48 +237,68 @@ struct RestoreListContent: View {
     @Binding var selectedBackupApp: BackupAppInfo?
     let searchText: String
     @Environment(\.colorScheme) var colorScheme
+    @State private var filteredApps: [BackupAppInfo] = []
+    @State private var searchDebounceTask: Task<Void, Never>?
     
-    // Filter apps based on search text
-    private var filteredApps: [BackupAppInfo] {
-        guard let backup = backupManager.selectedBackup else { return [] }
-        
-        if searchText.isEmpty {
-            return backup.apps
-        } else {
-            return backup.apps.filter { app in
-                app.name.localizedCaseInsensitiveContains(searchText) ||
-                    app.bundleId.localizedCaseInsensitiveContains(searchText)
+    private static let searchDebounceDelay: Duration = .milliseconds(300)
+    
+    var body: some View {
+        Group {
+            if backupManager.selectedBackup != nil, !backupManager.availableBackups.isEmpty {
+                if filteredApps.isEmpty, !searchText.isEmpty {
+                    SearchEmptyState(searchText: searchText)
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 8) {
+                            ForEach(filteredApps, id: \.id) { app in
+                                RestoreAppItem(
+                                    app: app,
+                                    isSelected: selectedBackupApp?.id == app.id,
+                                    backupManager: backupManager,
+                                ) {
+                                    withAnimation(DesignConstants.Animation.quick) {
+                                        selectedBackupApp = app
+                                    }
+                                }
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+                    }
+                }
+            } else {
+                RestoreEmptyState()
+            }
+        }
+        .onAppear {
+            updateFilteredApps()
+        }
+        .onReceive(backupManager.objectWillChange) { _ in
+            updateFilteredApps()
+        }
+        .onChange(of: searchText) { _, _ in
+            searchDebounceTask?.cancel()
+            searchDebounceTask = Task {
+                try? await Task.sleep(for: Self.searchDebounceDelay)
+                guard !Task.isCancelled else { return }
+                updateFilteredApps()
             }
         }
     }
     
-    var body: some View {
-        if backupManager.selectedBackup != nil, !backupManager.availableBackups.isEmpty {
-            if filteredApps.isEmpty, !searchText.isEmpty {
-                // Empty search results
-                SearchEmptyState(searchText: searchText)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 8) {
-                        // Use backup ID as part of ForEach to ensure proper updates
-                        ForEach(filteredApps, id: \.id) { app in
-                            RestoreAppItem(
-                                app: app,
-                                isSelected: selectedBackupApp?.id == app.id,
-                                backupManager: backupManager,
-                            ) {
-                                withAnimation(DesignConstants.Animation.quick) {
-                                    selectedBackupApp = app
-                                }
-                            }
-                        }
-                    }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
-                }
-            }
+    private func updateFilteredApps() {
+        guard let backup = backupManager.selectedBackup else {
+            filteredApps = []
+            return
+        }
+        
+        if searchText.isEmpty {
+            filteredApps = backup.apps
         } else {
-            RestoreEmptyState()
+            filteredApps = backup.apps.filter { app in
+                app.name.localizedCaseInsensitiveContains(searchText) ||
+                    app.bundleId.localizedCaseInsensitiveContains(searchText)
+            }
         }
     }
 }
@@ -329,11 +357,16 @@ struct RestoreAppItem: View {
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
     
+    private var isChecked: Bool {
+        guard let backup = backupManager.selectedBackup else { return false }
+        return backup.apps.first(where: { $0.id == app.id })?.isSelected ?? false
+    }
+    
     var body: some View {
         HStack(spacing: 5) {
             // Checkbox
             Toggle("", isOn: Binding(
-                get: { app.isSelected },
+                get: { isChecked },
                 set: { _ in backupManager.toggleRestoreSelection(for: app) },
             ))
             .toggleStyle(CustomCheckboxToggleStyle())

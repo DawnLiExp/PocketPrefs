@@ -13,17 +13,11 @@ struct AppListView: View {
     @Binding var selectedApp: AppConfig?
     let currentMode: MainView.AppMode
     @State private var searchText = ""
+    @State private var filteredApps: [AppConfig] = []
+    @State private var searchDebounceTask: Task<Void, Never>?
     @Environment(\.colorScheme) var colorScheme
     
-    private var filteredApps: [AppConfig] {
-        if searchText.isEmpty {
-            return backupManager.apps
-        }
-        return backupManager.apps.filter { app in
-            app.name.localizedCaseInsensitiveContains(searchText) ||
-                app.bundleId.localizedCaseInsensitiveContains(searchText)
-        }
-    }
+    private static let searchDebounceDelay: Duration = .milliseconds(300)
     
     var body: some View {
         VStack(spacing: 0) {
@@ -56,6 +50,32 @@ struct AppListView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear {
+            filteredApps = backupManager.apps
+        }
+        .onReceive(backupManager.objectWillChange) { _ in
+            // Sync cache when any published property changes
+            updateFilteredApps(source: backupManager.apps, searchTerm: searchText)
+        }
+        .onChange(of: searchText) { _, newSearchText in
+            searchDebounceTask?.cancel()
+            searchDebounceTask = Task {
+                try? await Task.sleep(for: Self.searchDebounceDelay)
+                guard !Task.isCancelled else { return }
+                updateFilteredApps(source: backupManager.apps, searchTerm: newSearchText)
+            }
+        }
+    }
+    
+    private func updateFilteredApps(source: [AppConfig], searchTerm: String) {
+        if searchTerm.isEmpty {
+            filteredApps = source
+        } else {
+            filteredApps = source.filter { app in
+                app.name.localizedCaseInsensitiveContains(searchTerm) ||
+                    app.bundleId.localizedCaseInsensitiveContains(searchTerm)
+            }
+        }
     }
 }
 
@@ -66,11 +86,8 @@ struct AppListHeader: View {
     @Environment(\.colorScheme) var colorScheme
     @FocusState private var isSearchFocused: Bool
     @State private var isRefreshing = false
-    
-    private var allInstalledSelected: Bool {
-        let installedApps = backupManager.apps.filter(\.isInstalled)
-        return !installedApps.isEmpty && installedApps.allSatisfy(\.isSelected)
-    }
+    @State private var cachedAllSelected = false
+    @State private var installedCount = 0
     
     private var hasAvailableBackups: Bool {
         !backupManager.availableBackups.isEmpty
@@ -122,7 +139,7 @@ struct AppListHeader: View {
             // Select all and incremental mode
             HStack(spacing: 16) {
                 Toggle(isOn: Binding(
-                    get: { allInstalledSelected },
+                    get: { cachedAllSelected },
                     set: { newValue in
                         if newValue {
                             backupManager.selectAll()
@@ -168,6 +185,18 @@ struct AppListHeader: View {
         .background(
             Color.App.contentAreaBackground.color(for: colorScheme),
         )
+        .onAppear {
+            updateCachedState()
+        }
+        .onReceive(backupManager.objectWillChange) { _ in
+            updateCachedState()
+        }
+    }
+    
+    private func updateCachedState() {
+        let installedApps = backupManager.apps.filter(\.isInstalled)
+        installedCount = installedApps.count
+        cachedAllSelected = !installedApps.isEmpty && installedApps.allSatisfy(\.isSelected)
     }
 }
 
@@ -329,10 +358,14 @@ struct AppListItem: View {
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
     
+    private var isChecked: Bool {
+        backupManager.apps.first(where: { $0.id == app.id })?.isSelected ?? false
+    }
+    
     var body: some View {
         HStack(spacing: 5) {
             Toggle("", isOn: Binding(
-                get: { app.isSelected },
+                get: { isChecked },
                 set: { _ in backupManager.toggleSelection(for: app) },
             ))
             .toggleStyle(CustomCheckboxToggleStyle())
