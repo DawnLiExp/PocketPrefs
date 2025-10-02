@@ -33,12 +33,20 @@ final class BackupManager: ObservableObject {
     private var prefsEventTask: Task<Void, Never>?
     private var iconEventTask: Task<Void, Never>?
     
+    private var loadAppsTask: Task<Void, Never>?
+    private var scanBackupsTask: Task<Void, Never>?
+    
     private enum ProgressConfig {
         static let targetProgress = 0.98
         static let duration = 3.0
         static let steps = 40
         static let completionPause = 0.5
         static let finalPause = 0.3
+    }
+    
+    private enum DebounceConfig {
+        static let storeEventDelay = 0.3
+        static let iconEventDelay = 0.5
     }
     
     init() {
@@ -56,6 +64,8 @@ final class BackupManager: ObservableObject {
         storeEventTask?.cancel()
         prefsEventTask?.cancel()
         iconEventTask?.cancel()
+        loadAppsTask?.cancel()
+        scanBackupsTask?.cancel()
     }
     
     // MARK: - Event Subscriptions
@@ -65,12 +75,23 @@ final class BackupManager: ObservableObject {
         storeEventTask = Task { [weak self] in
             guard let self else { return }
             
+            var pendingReload = false
+            
             for await event in userStore.events {
                 guard !Task.isCancelled else { break }
                 
                 switch event {
                 case .appAdded, .appUpdated, .appsRemoved, .batchUpdated, .appsChanged:
-                    await self.loadApps()
+                    if !pendingReload {
+                        pendingReload = true
+                        
+                        try? await Task.sleep(for: .seconds(DebounceConfig.storeEventDelay))
+                        
+                        guard !Task.isCancelled else { break }
+                        
+                        await self.loadApps()
+                        pendingReload = false
+                    }
                 }
             }
         }
@@ -97,11 +118,22 @@ final class BackupManager: ObservableObject {
         iconEventTask = Task { [weak self] in
             guard let self else { return }
             
+            var loadedIcons: Set<String> = []
+            
             for await bundleId in iconService.events {
                 guard !Task.isCancelled else { break }
                 
-                logger.debug("Icon loaded for: \(bundleId)")
-                self.objectWillChange.send()
+                loadedIcons.insert(bundleId)
+                
+                try? await Task.sleep(for: .seconds(DebounceConfig.iconEventDelay))
+                
+                guard !Task.isCancelled else { break }
+                
+                if !loadedIcons.isEmpty {
+                    logger.debug("Batch icon update: \(loadedIcons.count) icons loaded")
+                    loadedIcons.removeAll()
+                    self.objectWillChange.send()
+                }
             }
         }
     }
@@ -121,30 +153,40 @@ final class BackupManager: ObservableObject {
     // MARK: - App Loading
     
     func loadApps() async {
-        var allApps = AppConfig.presetConfigs
-        allApps.append(contentsOf: userStore.customApps)
+        loadAppsTask?.cancel()
         
-        await withTaskGroup(of: (UUID, Bool).self) { group in
-            for app in allApps {
-                group.addTask { [weak self] in
-                    guard let self else { return (app.id, false) }
-                    let isInstalled = await self.fileOps.checkIfAppInstalled(bundleId: app.bundleId)
-                    return (app.id, isInstalled)
+        loadAppsTask = Task {
+            var allApps = AppConfig.presetConfigs
+            allApps.append(contentsOf: userStore.customApps)
+            
+            await withTaskGroup(of: (UUID, Bool).self) { group in
+                for app in allApps {
+                    group.addTask { [weak self] in
+                        guard let self else { return (app.id, false) }
+                        let isInstalled = await self.fileOps.checkIfAppInstalled(bundleId: app.bundleId)
+                        return (app.id, isInstalled)
+                    }
                 }
+                
+                var updatedApps = allApps
+                for await (appId, isInstalled) in group {
+                    guard !Task.isCancelled else { break }
+                    
+                    if let index = updatedApps.firstIndex(where: { $0.id == appId }) {
+                        updatedApps[index].isInstalled = isInstalled
+                        updatedApps[index].isSelected = false
+                    }
+                }
+                
+                guard !Task.isCancelled else { return }
+                
+                self.apps = updatedApps
             }
             
-            var updatedApps = allApps
-            for await (appId, isInstalled) in group {
-                if let index = updatedApps.firstIndex(where: { $0.id == appId }) {
-                    updatedApps[index].isInstalled = isInstalled
-                    updatedApps[index].isSelected = false
-                }
-            }
-            
-            self.apps = updatedApps
+            logger.info("Loaded \(self.apps.count) apps (\(self.userStore.customApps.count) custom)")
         }
         
-        logger.info("Loaded \(self.apps.count) apps (\(self.userStore.customApps.count) custom)")
+        await loadAppsTask?.value
     }
     
     // MARK: - Icon Management
@@ -160,33 +202,43 @@ final class BackupManager: ObservableObject {
     // MARK: - Backup Operations
     
     func scanBackups() async {
-        availableBackups = await backupService.scanBackups()
+        scanBackupsTask?.cancel()
         
-        if let currentSelected = selectedBackup,
-           !availableBackups.contains(currentSelected)
-        {
-            selectedBackup = nil
+        scanBackupsTask = Task {
+            let backups = await backupService.scanBackups()
+            
+            guard !Task.isCancelled else { return }
+            
+            availableBackups = backups
+            
+            if let currentSelected = selectedBackup,
+               !availableBackups.contains(currentSelected)
+            {
+                selectedBackup = nil
+            }
+            
+            if selectedBackup == nil,
+               let firstBackup = availableBackups.first
+            {
+                selectBackup(firstBackup)
+            }
+            
+            if let currentBase = incrementalBaseBackup,
+               !availableBackups.contains(currentBase)
+            {
+                incrementalBaseBackup = nil
+            }
+            
+            if incrementalBaseBackup == nil,
+               let firstBackup = availableBackups.first
+            {
+                incrementalBaseBackup = firstBackup
+            }
+            
+            logger.info("Found \(self.availableBackups.count) backups")
         }
         
-        if selectedBackup == nil,
-           let firstBackup = availableBackups.first
-        {
-            selectBackup(firstBackup)
-        }
-        
-        if let currentBase = incrementalBaseBackup,
-           !availableBackups.contains(currentBase)
-        {
-            incrementalBaseBackup = nil
-        }
-        
-        if incrementalBaseBackup == nil,
-           let firstBackup = availableBackups.first
-        {
-            incrementalBaseBackup = firstBackup
-        }
-        
-        logger.info("Found \(self.availableBackups.count) backups")
+        await scanBackupsTask?.value
     }
     
     func selectBackup(_ backup: BackupInfo) {
