@@ -172,6 +172,7 @@
 "Preferences_General" = "General";
 "Preferences_Backup_Location" = "Backup Location";
 "Preferences_Choose_Directory" = "Choose...";
+"Show_In_Finder" = "Show in Finder";
 
 /* Preferences Errors */
 "Preferences_Error_Not_Directory" = "Path exists but is not a directory";

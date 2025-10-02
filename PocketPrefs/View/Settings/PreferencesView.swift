@@ -5,6 +5,7 @@
 //  Application preferences with structured concurrency
 //
 
+import AppKit
 import SwiftUI
 
 struct PreferencesView: View {
@@ -252,6 +253,14 @@ struct BackupLocationSection: View {
                     .lineLimit(1)
                     .truncationMode(.middle)
                     .frame(maxWidth: .infinity, alignment: .leading)
+                
+                Button(action: openInFinder) {
+                    Image(systemName: "magnifyingglass.circle")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                }
+                .buttonStyle(.plain)
+                .help(NSLocalizedString("Show_In_Finder", comment: ""))
             }
             .padding(12)
             .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.5))
@@ -278,6 +287,12 @@ struct BackupLocationSection: View {
         }
         .padding(16)
         .sectionBackground()
+    }
+    
+    private func openInFinder() {
+        let path = preferencesManager.getBackupDirectory()
+        guard FileManager.default.fileExists(atPath: path) else { return }
+        NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path)
     }
 }
 

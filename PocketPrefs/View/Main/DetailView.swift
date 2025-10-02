@@ -212,7 +212,7 @@ struct ConfigPathItem: View {
                     )
             }
             .buttonStyle(.plain)
-            .help("Show in Finder")
+            .help(NSLocalizedString("Show_In_Finder", comment: ""))
         }
         .padding(12)
         .cardEffect(isSelected: false)
