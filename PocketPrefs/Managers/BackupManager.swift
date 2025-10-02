@@ -31,6 +31,7 @@ final class BackupManager: ObservableObject {
     
     private var storeEventTask: Task<Void, Never>?
     private var prefsEventTask: Task<Void, Never>?
+    private var iconEventTask: Task<Void, Never>?
     
     private enum ProgressConfig {
         static let targetProgress = 0.98
@@ -48,11 +49,13 @@ final class BackupManager: ObservableObject {
         
         subscribeToStoreEvents()
         subscribeToPreferencesEvents()
+        subscribeToIconEvents()
     }
     
     deinit {
         storeEventTask?.cancel()
         prefsEventTask?.cancel()
+        iconEventTask?.cancel()
     }
     
     // MARK: - Event Subscriptions
@@ -85,6 +88,20 @@ final class BackupManager: ObservableObject {
                     logger.info("Directory changed event received: \(path)")
                     await self.handleDirectoryChange()
                 }
+            }
+        }
+    }
+    
+    private func subscribeToIconEvents() {
+        iconEventTask?.cancel()
+        iconEventTask = Task { [weak self] in
+            guard let self else { return }
+            
+            for await bundleId in iconService.events {
+                guard !Task.isCancelled else { break }
+                
+                logger.debug("Icon loaded for: \(bundleId)")
+                self.objectWillChange.send()
             }
         }
     }
