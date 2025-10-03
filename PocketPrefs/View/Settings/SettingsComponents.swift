@@ -2,7 +2,7 @@
 //  SettingsComponents.swift
 //  PocketPrefs
 //
-//  Reusable components for the Settings view
+//  Optimized reusable components with efficient rendering
 //
 
 import SwiftUI
@@ -93,7 +93,9 @@ struct SettingsToolbar: View {
                     get: { !customAppManager.customApps.isEmpty && customAppManager.selectedAppIds.count == customAppManager.customApps.count },
                     set: { newValue in
                         if newValue {
-                            customAppManager.selectAll()
+                            Task {
+                                await customAppManager.selectAll()
+                            }
                         } else {
                             customAppManager.deselectAll()
                         }
@@ -115,7 +117,7 @@ struct SettingsToolbar: View {
     }
 }
 
-// MARK: - Custom App List Item
+// MARK: - Custom App List Item (Optimized)
 
 struct CustomAppListItem: View {
     let app: AppConfig
@@ -176,9 +178,7 @@ struct CustomAppListItem: View {
         .contentShape(Rectangle())
         .onTapGesture(perform: onSelectForDetail)
         .onHover { hovering in
-            withAnimation(DesignConstants.Animation.quick) {
-                isHovered = hovering
-            }
+            isHovered = hovering
         }
     }
 }
@@ -189,15 +189,8 @@ struct CustomAppDetailView: View {
     let app: AppConfig
     @ObservedObject var manager: CustomAppManager
     @State private var editingName = false
-    @State private var editingBundleId = false
     @State private var tempName = ""
-    @State private var tempBundleId = ""
     @Environment(\.colorScheme) var colorScheme
-    
-    // Use computed property instead of @State to ensure sync
-    private var currentPaths: [String] {
-        app.configPaths
-    }
     
     var body: some View {
         ScrollView {
@@ -266,7 +259,7 @@ struct CustomAppDetailView: View {
             }
             .padding(20)
         }
-        .id(app.id) // Force view refresh when app changes
+        .id(app.id)
     }
     
     private func startNameEdit() {
@@ -288,7 +281,7 @@ struct CustomAppDetailView: View {
     }
 }
 
-// MARK: - Path Picker Wrapper for Better State Management
+// MARK: - Path Picker Wrapper
 
 struct PathPickerViewWrapper: View {
     let app: AppConfig
@@ -310,12 +303,11 @@ struct PathPickerViewWrapper: View {
             localPaths = app.configPaths
         }
         .onChange(of: app.configPaths) { _, newPaths in
-            // Sync local state with app paths when they change externally
             if localPaths != newPaths {
                 localPaths = newPaths
             }
         }
-        .id(app.id) // Force recreate when app ID changes
+        .id(app.id)
     }
     
     private func savePathChanges(_ newPaths: [String]) {
@@ -372,7 +364,7 @@ struct EmptyDetailView: View {
     }
 }
 
-// MARK: - Add App Sheet (Updated with auto-fill feature)
+// MARK: - Add App Sheet
 
 struct AddAppSheet: View {
     @Binding var appName: String
@@ -528,7 +520,7 @@ struct AddAppSheet: View {
     }
 }
 
-// MARK: - AppInfoReader Wrapper for SwiftUI
+// MARK: - AppInfoReader Wrapper
 
 @MainActor
 final class AppInfoReaderWrapper: ObservableObject {

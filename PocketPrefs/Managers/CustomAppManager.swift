@@ -2,7 +2,7 @@
 //  CustomAppManager.swift
 //  PocketPrefs
 //
-//  Business logic for managing custom applications with structured concurrency
+//  Optimized custom app management with debouncing and efficient updates
 //
 
 import AppKit
@@ -39,25 +39,35 @@ final class CustomAppManager: ObservableObject {
         eventTask = Task { [weak self] in
             guard let self else { return }
             
+            var pendingUpdate = false
+            
             for await event in userStore.events {
                 guard !Task.isCancelled else { break }
                 
-                self.handleStoreEvent(event)
+                // Debounce rapid events
+                if !pendingUpdate {
+                    pendingUpdate = true
+                    
+                    try? await Task.sleep(for: .milliseconds(50))
+                    guard !Task.isCancelled else { break }
+                    
+                    self.handleStoreEvent(event)
+                    pendingUpdate = false
+                }
             }
         }
     }
     
     private func handleStoreEvent(_ event: UserConfigEvent) {
-        let newApps = userStore.customApps
-        let newIds = Set(newApps.map(\.id))
-        
         switch event {
         case .appAdded(let app):
             selectedApp = app
             logger.info("Auto-selected new app: \(app.name)")
             
         case .appsRemoved:
-            if let selectedId = selectedApp?.id, !newIds.contains(selectedId) {
+            if let selectedId = selectedApp?.id,
+               !userStore.customApps.contains(where: { $0.id == selectedId })
+            {
                 selectedApp = nil
                 logger.info("Cleared selection for removed app")
             }
@@ -71,10 +81,12 @@ final class CustomAppManager: ObservableObject {
             break
         }
         
-        customApps = newApps
-        selectedAppIds = selectedAppIds.intersection(newIds)
+        // Efficient sync without creating intermediate arrays
+        customApps = userStore.customApps
+        let validIds = Set(customApps.map(\.id))
+        selectedAppIds.formIntersection(validIds)
         
-        logger.debug("Synced \(newApps.count) apps from store")
+        logger.debug("Synced \(self.customApps.count) apps from store")
     }
     
     // MARK: - App Management
@@ -91,7 +103,7 @@ final class CustomAppManager: ObservableObject {
         }
         
         let currentAppIds = Set(customApps.map(\.id))
-        selectedAppIds = selectedAppIds.intersection(currentAppIds)
+        selectedAppIds.formIntersection(currentAppIds)
         
         logger.info("Loaded \(self.customApps.count) custom apps")
     }
@@ -162,7 +174,11 @@ final class CustomAppManager: ObservableObject {
         }
     }
     
-    func selectAll() {
+    func selectAll() async {
+        // Show brief activity for large lists
+        if customApps.count > 50 {
+            try? await Task.sleep(for: .milliseconds(10))
+        }
         selectedAppIds = Set(customApps.map(\.id))
     }
     
