@@ -294,7 +294,7 @@ struct CustomAppsContent: View {
                         LazyVStack(spacing: 8) {
                             ForEach(filteredApps) { app in
                                 CustomAppListItem(
-                                    app: app,
+                                    appId: app.id,
                                     isSelected: customAppManager.selectedAppIds.contains(app.id),
                                     isDetailSelected: customAppManager.selectedApp?.id == app.id,
                                     onToggleSelection: {
@@ -303,6 +303,7 @@ struct CustomAppsContent: View {
                                     onSelectForDetail: {
                                         customAppManager.selectedApp = app
                                     },
+                                    manager: customAppManager,
                                 )
                             }
                         }

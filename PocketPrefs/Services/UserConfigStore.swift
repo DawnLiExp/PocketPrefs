@@ -98,7 +98,6 @@ final class UserConfigStore: ObservableObject {
         customApps.append(newApp)
         save()
         
-        // Trigger UI update
         objectWillChange.send()
         
         continuation?.yield(.appAdded(newApp))
@@ -111,10 +110,13 @@ final class UserConfigStore: ObservableObject {
             return
         }
         
-        customApps[index] = app
+        // Rebuild array to ensure @Published triggers with new reference
+        customApps = customApps.enumerated().map { offset, existingApp in
+            offset == index ? app : existingApp
+        }
+        
         save()
         
-        // Trigger UI update
         objectWillChange.send()
         
         continuation?.yield(.appUpdated(app))
@@ -129,7 +131,6 @@ final class UserConfigStore: ObservableObject {
         let removed = countBefore - customApps.count
         save()
         
-        // Trigger UI update
         objectWillChange.send()
         
         continuation?.yield(.appsRemoved(appIds))
@@ -145,7 +146,6 @@ final class UserConfigStore: ObservableObject {
         }
         save()
         
-        // Trigger UI update
         objectWillChange.send()
         
         continuation?.yield(.batchUpdated(customApps))

@@ -42,11 +42,8 @@ final class CustomAppManager: ObservableObject {
             for await event in userStore.events {
                 guard !Task.isCancelled else { break }
                 
-                // Process event immediately without debouncing
-                // The synchronization will be handled by the next event loop
                 await self.handleStoreEvent(event)
                 
-                // Small delay to batch rapid successive events
                 try? await Task.sleep(for: .milliseconds(10))
             }
         }
@@ -55,13 +52,11 @@ final class CustomAppManager: ObservableObject {
     private func handleStoreEvent(_ event: UserConfigEvent) async {
         switch event {
         case .appAdded(let app):
-            // Sync from store to ensure consistency
             syncFromStore()
             selectedApp = app
             logger.info("Event: App added - \(app.name)")
             
         case .appsRemoved(let removedIds):
-            // Clear selection if deleted
             if let selectedId = selectedApp?.id, removedIds.contains(selectedId) {
                 selectedApp = nil
                 logger.info("Event: Cleared selection for removed app")
@@ -70,7 +65,6 @@ final class CustomAppManager: ObservableObject {
             logger.info("Event: Apps removed - \(removedIds.count)")
             
         case .appUpdated(let app):
-            // Update selection if currently selected
             if selectedApp?.id == app.id {
                 selectedApp = app
             }
@@ -82,14 +76,14 @@ final class CustomAppManager: ObservableObject {
             logger.info("Event: Batch update")
         }
         
-        // Force UI refresh
         objectWillChange.send()
     }
     
     // MARK: - State Synchronization
     
     private func syncFromStore() {
-        customApps = userStore.customApps
+        // Force new array instance to ensure @Published triggers
+        customApps = Array(userStore.customApps)
         
         // Validate selections
         let validIds = Set(customApps.map(\.id))
@@ -116,13 +110,8 @@ final class CustomAppManager: ObservableObject {
     
     func manualRefresh() {
         logger.info("Manual refresh triggered")
-        
-        // Force immediate sync
         syncFromStore()
-        
-        // Force UI update
         objectWillChange.send()
-        
         logger.info("Manual refresh completed: \(self.customApps.count) apps")
     }
     
@@ -145,24 +134,21 @@ final class CustomAppManager: ObservableObject {
         }
         
         userStore.addApp(app)
-        
-        // Immediate sync to ensure UI updates instantly
         syncFromStore()
+        objectWillChange.send()
     }
     
     func updateApp(_ app: AppConfig) {
         userStore.updateApp(app)
-        
-        // Immediate sync to ensure UI updates instantly
         syncFromStore()
+        objectWillChange.send()
     }
     
     func removeSelectedApps() {
         userStore.removeApps(selectedAppIds)
         selectedAppIds.removeAll()
-        
-        // Immediate sync to ensure UI updates instantly
         syncFromStore()
+        objectWillChange.send()
     }
     
     // MARK: - Path Management

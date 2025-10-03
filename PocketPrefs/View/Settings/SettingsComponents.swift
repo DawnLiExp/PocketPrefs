@@ -156,68 +156,73 @@ struct SettingsToolbar: View {
 // MARK: - Custom App List Item
 
 struct CustomAppListItem: View {
-    let app: AppConfig
+    let appId: UUID
     let isSelected: Bool
     let isDetailSelected: Bool
     let onToggleSelection: () -> Void
     let onSelectForDetail: () -> Void
+    @ObservedObject var manager: CustomAppManager
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
     
+    private var app: AppConfig? {
+        manager.customApps.first(where: { $0.id == appId })
+    }
+    
     var body: some View {
-        HStack(spacing: 12) {
-            Toggle("", isOn: Binding(
-                get: { isSelected },
-                set: { _ in onToggleSelection() },
-            ))
-            .toggleStyle(.checkbox)
-            
-            VStack(alignment: .leading, spacing: 4) {
-                Text(app.name)
-                    .font(DesignConstants.Typography.headline)
-                    .foregroundColor(Color.App.primary.color(for: colorScheme))
+        if let app {
+            HStack(spacing: 12) {
+                Toggle("", isOn: Binding(
+                    get: { isSelected },
+                    set: { _ in onToggleSelection() },
+                ))
+                .toggleStyle(.checkbox)
                 
-                Text(app.bundleId)
-                    .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                
-                if !app.configPaths.isEmpty {
-                    Text(String(format: NSLocalizedString("Settings_Paths_Count", comment: ""),
-                                app.configPaths.count))
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(app.name)
+                        .font(DesignConstants.Typography.headline)
+                        .foregroundColor(Color.App.primary.color(for: colorScheme))
+                    
+                    Text(app.bundleId)
                         .font(DesignConstants.Typography.caption)
-                        .foregroundColor(Color.App.accent.color(for: colorScheme))
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    
+                    if !app.configPaths.isEmpty {
+                        Text(String(format: NSLocalizedString("Settings_Paths_Count", comment: ""),
+                                    app.configPaths.count))
+                            .font(DesignConstants.Typography.caption)
+                            .foregroundColor(Color.App.accent.color(for: colorScheme))
+                    }
+                }
+                
+                Spacer()
+                
+                if isHovered || isDetailSelected {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                        .opacity(isDetailSelected ? 1 : 0.5)
                 }
             }
-            
-            Spacer()
-            
-            if isHovered || isDetailSelected {
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12))
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                    .opacity(isDetailSelected ? 1 : 0.5)
+            .padding(12)
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(isDetailSelected ?
+                        Color.App.accent.color(for: colorScheme).opacity(0.1) :
+                        Color.clear),
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(isDetailSelected ?
+                        Color.App.accent.color(for: colorScheme).opacity(0.3) :
+                        Color.clear, lineWidth: 1),
+            )
+            .contentShape(Rectangle())
+            .onTapGesture(perform: onSelectForDetail)
+            .onHover { hovering in
+                isHovered = hovering
             }
         }
-        .padding(12)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(isDetailSelected ?
-                    Color.App.accent.color(for: colorScheme).opacity(0.1) :
-                    Color.clear),
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 6)
-                .stroke(isDetailSelected ?
-                    Color.App.accent.color(for: colorScheme).opacity(0.3) :
-                    Color.clear, lineWidth: 1),
-        )
-        .contentShape(Rectangle())
-        .onTapGesture(perform: onSelectForDetail)
-        .onHover { hovering in
-            isHovered = hovering
-        }
-        // Force refresh when app changes
-        .id("\(app.id)-\(app.configPaths.count)")
     }
 }
 
@@ -230,7 +235,6 @@ struct CustomAppDetailView: View {
     @State private var tempName = ""
     @Environment(\.colorScheme) var colorScheme
     
-    // Always get fresh app data from manager
     private var currentApp: AppConfig? {
         manager.customApps.first(where: { $0.id == app.id })
     }
@@ -296,7 +300,7 @@ struct CustomAppDetailView: View {
                     .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
                     
                     // Configuration Paths Section
-                    PathPickerViewWrapper(app: currentApp, manager: manager)
+                    PathPickerViewWrapper(appId: currentApp.id, manager: manager)
                         .padding()
                         .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
                         .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
@@ -329,21 +333,29 @@ struct CustomAppDetailView: View {
 // MARK: - Path Picker Wrapper
 
 struct PathPickerViewWrapper: View {
-    let app: AppConfig
+    let appId: UUID
     @ObservedObject var manager: CustomAppManager
     
+    private var currentApp: AppConfig? {
+        manager.customApps.first(where: { $0.id == appId })
+    }
+    
     var body: some View {
-        PathPickerView(
-            paths: Binding(
-                get: { app.configPaths },
-                set: { newPaths in
-                    var updatedApp = app
-                    updatedApp.configPaths = newPaths
-                    manager.updateApp(updatedApp)
-                },
-            ),
-            manager: manager,
-        )
+        if currentApp != nil {
+            PathPickerView(
+                paths: Binding(
+                    get: {
+                        manager.customApps.first(where: { $0.id == appId })?.configPaths ?? []
+                    },
+                    set: { newPaths in
+                        guard var updatedApp = manager.customApps.first(where: { $0.id == appId }) else { return }
+                        updatedApp.configPaths = newPaths
+                        manager.updateApp(updatedApp)
+                    },
+                ),
+                manager: manager,
+            )
+        }
     }
 }
 

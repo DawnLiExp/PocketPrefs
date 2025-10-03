@@ -20,7 +20,7 @@ enum AppCategory: String, Codable, CaseIterable, Sendable {
     case graphicsDesign = "Graphics & Design"
     case photography = "Photography"
     case reference = "Reference"
-    case custom = "Custom" // For user-added apps in future
+    case custom = "Custom"
 
     var icon: String {
         switch self {
@@ -66,7 +66,12 @@ struct AppConfig: Identifiable, Codable, Sendable, Equatable {
     }
 
     static func == (lhs: AppConfig, rhs: AppConfig) -> Bool {
-        lhs.id == rhs.id
+        lhs.id == rhs.id &&
+            lhs.name == rhs.name &&
+            lhs.bundleId == rhs.bundleId &&
+            lhs.configPaths == rhs.configPaths &&
+            lhs.category == rhs.category &&
+            lhs.isUserAdded == rhs.isUserAdded
     }
 }
 
