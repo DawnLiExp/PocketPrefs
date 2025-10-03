@@ -46,8 +46,9 @@ final class UserConfigStore: ObservableObject {
         
         self.storageURL = appDir.appendingPathComponent("custom_apps.json")
         
+        // Use unbounded buffer to ensure no events are dropped
         let (stream, continuation) = AsyncStream<UserConfigEvent>.makeStream(
-            bufferingPolicy: .bufferingNewest(1),
+            bufferingPolicy: .unbounded,
         )
         self.events = stream
         self.continuation = continuation
@@ -82,7 +83,7 @@ final class UserConfigStore: ObservableObject {
             encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
             let data = try encoder.encode(customApps)
             try data.write(to: storageURL)
-            logger.info("Saved \(self.customApps.count) custom apps")
+            logger.debug("Saved \(self.customApps.count) custom apps")
         } catch {
             logger.error("Failed to save: \(error)")
         }
@@ -97,25 +98,42 @@ final class UserConfigStore: ObservableObject {
         customApps.append(newApp)
         save()
         
+        // Trigger UI update
+        objectWillChange.send()
+        
         continuation?.yield(.appAdded(newApp))
+        logger.info("Added app: \(newApp.name)")
     }
     
     func updateApp(_ app: AppConfig) {
-        guard let index = customApps.firstIndex(where: { $0.id == app.id }) else { return }
+        guard let index = customApps.firstIndex(where: { $0.id == app.id }) else {
+            logger.warning("App not found for update: \(app.id)")
+            return
+        }
         
         customApps[index] = app
         save()
         
+        // Trigger UI update
+        objectWillChange.send()
+        
         continuation?.yield(.appUpdated(app))
+        logger.info("Updated app: \(app.name)")
     }
     
     func removeApps(_ appIds: Set<UUID>) {
         guard !appIds.isEmpty else { return }
         
+        let countBefore = customApps.count
         customApps.removeAll { appIds.contains($0.id) }
+        let removed = countBefore - customApps.count
         save()
         
+        // Trigger UI update
+        objectWillChange.send()
+        
         continuation?.yield(.appsRemoved(appIds))
+        logger.info("Removed \(removed) apps")
     }
     
     func batchUpdate(_ apps: [AppConfig]) {
@@ -127,12 +145,16 @@ final class UserConfigStore: ObservableObject {
         }
         save()
         
+        // Trigger UI update
+        objectWillChange.send()
+        
         continuation?.yield(.batchUpdated(customApps))
+        logger.info("Batch updated \(self.customApps.count) apps")
     }
     
     // MARK: - Queries
     
     func bundleIdExists(_ bundleId: String) -> Bool {
-        customApps.contains { $0.bundleId == bundleId }
+        self.customApps.contains { $0.bundleId == bundleId }
     }
 }

@@ -2,7 +2,7 @@
 //  CustomAppManager.swift
 //  PocketPrefs
 //
-//  Optimized custom app management with debouncing and efficient updates
+//  Custom app management with reliable event processing
 //
 
 import AppKit
@@ -39,101 +39,86 @@ final class CustomAppManager: ObservableObject {
         eventTask = Task { [weak self] in
             guard let self else { return }
             
-            var pendingUpdate = false
-            
             for await event in userStore.events {
                 guard !Task.isCancelled else { break }
                 
-                // Debounce rapid events
-                if !pendingUpdate {
-                    pendingUpdate = true
-                    
-                    try? await Task.sleep(for: .milliseconds(50))
-                    guard !Task.isCancelled else { break }
-                    
-                    self.handleStoreEvent(event)
-                    pendingUpdate = false
-                }
+                // Process event immediately without debouncing
+                // The synchronization will be handled by the next event loop
+                await self.handleStoreEvent(event)
+                
+                // Small delay to batch rapid successive events
+                try? await Task.sleep(for: .milliseconds(10))
             }
         }
     }
     
-    private func handleStoreEvent(_ event: UserConfigEvent) {
+    private func handleStoreEvent(_ event: UserConfigEvent) async {
         switch event {
         case .appAdded(let app):
+            // Sync from store to ensure consistency
+            syncFromStore()
             selectedApp = app
-            logger.info("Auto-selected new app: \(app.name)")
+            logger.info("Event: App added - \(app.name)")
             
-        case .appsRemoved:
-            if let selectedId = selectedApp?.id,
-               !userStore.customApps.contains(where: { $0.id == selectedId })
-            {
+        case .appsRemoved(let removedIds):
+            // Clear selection if deleted
+            if let selectedId = selectedApp?.id, removedIds.contains(selectedId) {
                 selectedApp = nil
-                logger.info("Cleared selection for removed app")
+                logger.info("Event: Cleared selection for removed app")
             }
+            syncFromStore()
+            logger.info("Event: Apps removed - \(removedIds.count)")
             
         case .appUpdated(let app):
+            // Update selection if currently selected
             if selectedApp?.id == app.id {
                 selectedApp = app
             }
+            syncFromStore()
+            logger.info("Event: App updated - \(app.name)")
             
-        case .appsChanged, .batchUpdated:
-            break
+        case .batchUpdated, .appsChanged:
+            syncFromStore()
+            logger.info("Event: Batch update")
         }
         
-        // Efficient sync without creating intermediate arrays
+        // Force UI refresh
+        objectWillChange.send()
+    }
+    
+    // MARK: - State Synchronization
+    
+    private func syncFromStore() {
         customApps = userStore.customApps
+        
+        // Validate selections
         let validIds = Set(customApps.map(\.id))
         selectedAppIds.formIntersection(validIds)
         
-        logger.debug("Synced \(self.customApps.count) apps from store")
+        // Validate selected app
+        if let currentSelectedId = selectedApp?.id {
+            if let updatedApp = customApps.first(where: { $0.id == currentSelectedId }) {
+                selectedApp = updatedApp
+            } else {
+                selectedApp = nil
+            }
+        }
+        
+        logger.debug("Synced: \(self.customApps.count) apps")
     }
     
     // MARK: - App Management
     
     func loadCustomApps() {
-        customApps = userStore.customApps
-        
-        if let currentSelectedId = selectedApp?.id,
-           let updatedApp = customApps.first(where: { $0.id == currentSelectedId })
-        {
-            selectedApp = updatedApp
-        } else {
-            selectedApp = nil
-        }
-        
-        let currentAppIds = Set(customApps.map(\.id))
-        selectedAppIds.formIntersection(currentAppIds)
-        
+        syncFromStore()
         logger.info("Loaded \(self.customApps.count) custom apps")
     }
     
     func manualRefresh() {
         logger.info("Manual refresh triggered")
         
-        // Cancel pending event processing to clear debounce state
-        eventTask?.cancel()
-        
-        // Restart event subscription with clean state
-        subscribeToStoreEvents()
-        
-        // Force reload from store
-        customApps = userStore.customApps
-        
-        // Validate selections
-        let currentAppIds = Set(customApps.map(\.id))
-        selectedAppIds.formIntersection(currentAppIds)
-        
-        // Update selected app if it still exists
-        if let currentSelectedId = selectedApp?.id,
-           let updatedApp = customApps.first(where: { $0.id == currentSelectedId })
-        {
-            selectedApp = updatedApp
-        } else if let currentSelectedId = selectedApp?.id,
-                  !currentAppIds.contains(currentSelectedId)
-        {
-            selectedApp = nil
-        }
+        // Force immediate sync
+        syncFromStore()
         
         // Force UI update
         objectWillChange.send()
@@ -160,15 +145,24 @@ final class CustomAppManager: ObservableObject {
         }
         
         userStore.addApp(app)
+        
+        // Immediate sync to ensure UI updates instantly
+        syncFromStore()
     }
     
     func updateApp(_ app: AppConfig) {
         userStore.updateApp(app)
+        
+        // Immediate sync to ensure UI updates instantly
+        syncFromStore()
     }
     
     func removeSelectedApps() {
         userStore.removeApps(selectedAppIds)
         selectedAppIds.removeAll()
+        
+        // Immediate sync to ensure UI updates instantly
+        syncFromStore()
     }
     
     // MARK: - Path Management
@@ -208,7 +202,6 @@ final class CustomAppManager: ObservableObject {
     }
     
     func selectAll() async {
-        // Show brief activity for large lists
         if customApps.count > 50 {
             try? await Task.sleep(for: .milliseconds(10))
         }

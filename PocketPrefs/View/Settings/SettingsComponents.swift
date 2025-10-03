@@ -2,7 +2,7 @@
 //  SettingsComponents.swift
 //  PocketPrefs
 //
-//  Optimized reusable components with efficient rendering
+//  Reusable UI components with reliable state updates
 //
 
 import SwiftUI
@@ -153,7 +153,7 @@ struct SettingsToolbar: View {
     }
 }
 
-// MARK: - Custom App List Item (Optimized)
+// MARK: - Custom App List Item
 
 struct CustomAppListItem: View {
     let app: AppConfig
@@ -216,6 +216,8 @@ struct CustomAppListItem: View {
         .onHover { hovering in
             isHovered = hovering
         }
+        // Force refresh when app changes
+        .id("\(app.id)-\(app.configPaths.count)")
     }
 }
 
@@ -228,84 +230,91 @@ struct CustomAppDetailView: View {
     @State private var tempName = ""
     @Environment(\.colorScheme) var colorScheme
     
+    // Always get fresh app data from manager
+    private var currentApp: AppConfig? {
+        manager.customApps.first(where: { $0.id == app.id })
+    }
+    
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // App Info Section
-                VStack(alignment: .leading, spacing: 16) {
-                    Text(NSLocalizedString("Settings_App_Information", comment: ""))
-                        .font(DesignConstants.Typography.title)
-                        .foregroundColor(Color.App.primary.color(for: colorScheme))
-                    
-                    // App Name
-                    HStack {
-                        Text(NSLocalizedString("Settings_App_Name", comment: ""))
-                            .font(DesignConstants.Typography.headline)
-                            .frame(width: 100, alignment: .leading)
+            if let currentApp {
+                VStack(alignment: .leading, spacing: 20) {
+                    // App Info Section
+                    VStack(alignment: .leading, spacing: 16) {
+                        Text(NSLocalizedString("Settings_App_Information", comment: ""))
+                            .font(DesignConstants.Typography.title)
+                            .foregroundColor(Color.App.primary.color(for: colorScheme))
                         
-                        if editingName {
-                            HStack {
-                                TextField("", text: $tempName)
-                                    .textFieldStyle(.roundedBorder)
-                                
-                                Button(action: saveName) {
-                                    Image(systemName: "checkmark.circle.fill")
-                                        .foregroundColor(Color.App.success.color(for: colorScheme))
-                                }
-                                .buttonStyle(.plain)
-                                
-                                Button(action: cancelNameEdit) {
-                                    Image(systemName: "xmark.circle.fill")
-                                        .foregroundColor(Color.App.error.color(for: colorScheme))
-                                }
-                                .buttonStyle(.plain)
-                            }
-                        } else {
-                            Text(app.name)
-                                .font(DesignConstants.Typography.body)
+                        // App Name
+                        HStack {
+                            Text(NSLocalizedString("Settings_App_Name", comment: ""))
+                                .font(DesignConstants.Typography.headline)
+                                .frame(width: 100, alignment: .leading)
                             
-                            Button(action: startNameEdit) {
-                                Image(systemName: "pencil.circle")
-                                    .foregroundColor(Color.App.accent.color(for: colorScheme))
+                            if editingName {
+                                HStack {
+                                    TextField("", text: $tempName)
+                                        .textFieldStyle(.roundedBorder)
+                                    
+                                    Button(action: { saveName(currentApp) }) {
+                                        Image(systemName: "checkmark.circle.fill")
+                                            .foregroundColor(Color.App.success.color(for: colorScheme))
+                                    }
+                                    .buttonStyle(.plain)
+                                    
+                                    Button(action: cancelNameEdit) {
+                                        Image(systemName: "xmark.circle.fill")
+                                            .foregroundColor(Color.App.error.color(for: colorScheme))
+                                    }
+                                    .buttonStyle(.plain)
+                                }
+                            } else {
+                                Text(currentApp.name)
+                                    .font(DesignConstants.Typography.body)
+                                
+                                Button(action: { startNameEdit(currentApp) }) {
+                                    Image(systemName: "pencil.circle")
+                                        .foregroundColor(Color.App.accent.color(for: colorScheme))
+                                }
+                                .buttonStyle(.plain)
                             }
-                            .buttonStyle(.plain)
+                        }
+                        
+                        // Bundle ID
+                        HStack {
+                            Text(NSLocalizedString("Settings_Bundle_ID", comment: ""))
+                                .font(DesignConstants.Typography.headline)
+                                .frame(width: 100, alignment: .leading)
+                            
+                            Text(currentApp.bundleId)
+                                .font(.system(.body, design: .monospaced))
+                                .foregroundColor(Color.App.secondary.color(for: colorScheme))
                         }
                     }
-                    
-                    // Bundle ID
-                    HStack {
-                        Text(NSLocalizedString("Settings_Bundle_ID", comment: ""))
-                            .font(DesignConstants.Typography.headline)
-                            .frame(width: 100, alignment: .leading)
-                        
-                        Text(app.bundleId)
-                            .font(.system(.body, design: .monospaced))
-                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                    }
-                }
-                .padding()
-                .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
-                .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
-                
-                // Configuration Paths Section
-                PathPickerViewWrapper(app: app, manager: manager)
                     .padding()
                     .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
                     .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
+                    
+                    // Configuration Paths Section
+                    PathPickerViewWrapper(app: currentApp, manager: manager)
+                        .padding()
+                        .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
+                        .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
+                }
+                .padding(20)
             }
-            .padding(20)
         }
         .id(app.id)
     }
     
-    private func startNameEdit() {
-        tempName = app.name
+    private func startNameEdit(_ currentApp: AppConfig) {
+        tempName = currentApp.name
         editingName = true
     }
     
-    private func saveName() {
+    private func saveName(_ currentApp: AppConfig) {
         guard !tempName.isEmpty else { return }
-        var updatedApp = app
+        var updatedApp = currentApp
         updatedApp.name = tempName
         manager.updateApp(updatedApp)
         editingName = false
@@ -322,34 +331,19 @@ struct CustomAppDetailView: View {
 struct PathPickerViewWrapper: View {
     let app: AppConfig
     @ObservedObject var manager: CustomAppManager
-    @State private var localPaths: [String] = []
     
     var body: some View {
         PathPickerView(
             paths: Binding(
-                get: { localPaths },
+                get: { app.configPaths },
                 set: { newPaths in
-                    localPaths = newPaths
-                    savePathChanges(newPaths)
+                    var updatedApp = app
+                    updatedApp.configPaths = newPaths
+                    manager.updateApp(updatedApp)
                 },
             ),
             manager: manager,
         )
-        .onAppear {
-            localPaths = app.configPaths
-        }
-        .onChange(of: app.configPaths) { _, newPaths in
-            if localPaths != newPaths {
-                localPaths = newPaths
-            }
-        }
-        .id(app.id)
-    }
-    
-    private func savePathChanges(_ newPaths: [String]) {
-        var updatedApp = app
-        updatedApp.configPaths = newPaths
-        manager.updateApp(updatedApp)
     }
 }
 
@@ -540,7 +534,6 @@ struct AddAppSheet: View {
                     appURL.deletingPathExtension().lastPathComponent,
                 )
                 
-                // Clear success message after delay
                 try? await Task.sleep(for: .seconds(3))
                 successMessage = ""
                 

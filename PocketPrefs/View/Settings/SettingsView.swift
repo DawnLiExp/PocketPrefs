@@ -2,7 +2,7 @@
 //  SettingsView.swift
 //  PocketPrefs
 //
-//  Optimized settings interface with debounced search and efficient filtering
+//  Settings interface with immediate state synchronization
 //
 
 import SwiftUI
@@ -171,7 +171,6 @@ final class SearchDebouncer: ObservableObject {
         if searchText.isEmpty {
             filteredApps = apps
         } else {
-            // Reapply current filter
             updateSearch(searchText, in: apps)
         }
     }
@@ -317,6 +316,7 @@ struct CustomAppsContent: View {
                 ImportExportToolbar(
                     importExportManager: importExportManager,
                     customAppManager: customAppManager,
+                    onImportComplete: onRefresh,
                 )
             }
             .frame(width: 320)
@@ -364,6 +364,7 @@ struct CustomAppsContent: View {
 struct ImportExportToolbar: View {
     @ObservedObject var importExportManager: ImportExportManager
     @ObservedObject var customAppManager: CustomAppManager
+    let onImportComplete: () -> Void
     @State private var isExporting = false
     @State private var isImporting = false
     @Environment(\.colorScheme) var colorScheme
@@ -393,6 +394,10 @@ struct ImportExportToolbar: View {
                 isImporting = true
                 Task {
                     await importExportManager.importCustomApps()
+                    
+                    // Immediate sync after import completes
+                    onImportComplete()
+                    
                     isImporting = false
                 }
             }) {
