@@ -2,7 +2,7 @@
 //  SettingsView.swift
 //  PocketPrefs
 //
-//  Main settings interface with tabbed navigation
+//  Optimized settings interface with debounced search and efficient filtering
 //
 
 import SwiftUI
@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @StateObject private var customAppManager = CustomAppManager()
     @StateObject private var importExportManager = ImportExportManager()
+    @StateObject private var searchDebouncer = SearchDebouncer()
     @State private var selectedTab: SettingsTab = .customApps
     @State private var searchText = ""
     @State private var showingAddAppSheet = false
@@ -42,16 +43,6 @@ struct SettingsView: View {
         }
     }
     
-    var filteredApps: [AppConfig] {
-        if searchText.isEmpty {
-            return customAppManager.customApps
-        }
-        return customAppManager.customApps.filter {
-            $0.name.localizedCaseInsensitiveContains(searchText) ||
-                $0.bundleId.localizedCaseInsensitiveContains(searchText)
-        }
-    }
-    
     var body: some View {
         VStack(spacing: 0) {
             // Tab Bar
@@ -66,7 +57,7 @@ struct SettingsView: View {
                     CustomAppsContent(
                         customAppManager: customAppManager,
                         importExportManager: importExportManager,
-                        filteredApps: filteredApps,
+                        filteredApps: searchDebouncer.filteredApps,
                         searchText: $searchText,
                         showingAddAppSheet: $showingAddAppSheet,
                         newAppName: $newAppName,
@@ -94,6 +85,15 @@ struct SettingsView: View {
                 },
                 manager: customAppManager,
             )
+        }
+        .onChange(of: searchText) { _, newValue in
+            searchDebouncer.updateSearch(newValue, in: customAppManager.customApps)
+        }
+        .onChange(of: customAppManager.customApps) { _, newApps in
+            searchDebouncer.updateApps(newApps, searchText: searchText)
+        }
+        .onAppear {
+            searchDebouncer.updateApps(customAppManager.customApps, searchText: searchText)
         }
     }
     
@@ -128,6 +128,46 @@ struct SettingsView: View {
         newAppName = ""
         newAppBundleId = ""
         validationError = ""
+    }
+}
+
+// MARK: - Search Debouncer
+
+@MainActor
+final class SearchDebouncer: ObservableObject {
+    @Published private(set) var filteredApps: [AppConfig] = []
+    
+    private var searchTask: Task<Void, Never>?
+    private let debounceDelay: Duration = .milliseconds(300)
+    
+    func updateSearch(_ searchText: String, in apps: [AppConfig]) {
+        searchTask?.cancel()
+        
+        if searchText.isEmpty {
+            filteredApps = apps
+            return
+        }
+        
+        searchTask = Task {
+            try? await Task.sleep(for: debounceDelay)
+            
+            guard !Task.isCancelled else { return }
+            
+            let lowercased = searchText.lowercased()
+            filteredApps = apps.filter { app in
+                app.name.lowercased().contains(lowercased) ||
+                    app.bundleId.lowercased().contains(lowercased)
+            }
+        }
+    }
+    
+    func updateApps(_ apps: [AppConfig], searchText: String) {
+        if searchText.isEmpty {
+            filteredApps = apps
+        } else {
+            // Reapply current filter
+            updateSearch(searchText, in: apps)
+        }
     }
 }
 

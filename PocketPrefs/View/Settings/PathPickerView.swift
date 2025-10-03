@@ -2,7 +2,7 @@
 //  PathPickerView.swift
 //  PocketPrefs
 //
-//  Path selection and management component
+//  Optimized path selection with cached validation
 //
 
 import SwiftUI
@@ -15,6 +15,7 @@ struct PathPickerView: View {
     @State private var editingPathIndex: Int?
     @State private var editingPathText = ""
     @State private var pathSelectionType: PathSelectionType = .directory
+    @StateObject private var pathValidator = PathValidator()
     @Environment(\.colorScheme) var colorScheme
     
     enum PathSelectionType {
@@ -72,14 +73,16 @@ struct PathPickerView: View {
                     .frame(height: 100)
             } else {
                 ScrollView {
-                    VStack(spacing: 8) {
+                    LazyVStack(spacing: 8) {
                         ForEach(Array(paths.enumerated()), id: \.offset) { index, path in
                             PathItemView(
                                 path: path,
-                                index: index,
-                                manager: manager,
+                                validation: pathValidator.validate(path),
                                 onEdit: { startEditing(index: index, path: path) },
-                                onRemove: { paths.remove(at: index) }
+                                onRemove: {
+                                    paths.remove(at: index)
+                                    pathValidator.invalidate(path)
+                                },
                             )
                         }
                     }
@@ -89,13 +92,12 @@ struct PathPickerView: View {
                 .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
             }
         }
-        // Fixed: Use single fileImporter with dynamic content types based on selection type
         .fileImporter(
             isPresented: $showingPicker,
             allowedContentTypes: pathSelectionType == .directory
                 ? [.folder]
                 : [.data, .text, .json, .xml, .propertyList, .plainText, .sourceCode, .item],
-            allowsMultipleSelection: false
+            allowsMultipleSelection: false,
         ) { result in
             handleFileSelection(result)
         }
@@ -105,19 +107,24 @@ struct PathPickerView: View {
                 onSave: {
                     if let index = editingPathIndex {
                         if index == -1 {
-                            // New manual path
                             if !editingPathText.isEmpty, !paths.contains(editingPathText) {
                                 paths.append(editingPathText)
                             }
                         } else {
-                            // Edit existing path
+                            pathValidator.invalidate(paths[index])
                             paths[index] = editingPathText
                         }
                     }
                     editingPathIndex = nil
                 },
-                onCancel: { editingPathIndex = nil }
+                onCancel: { editingPathIndex = nil },
             )
+        }
+        .onChange(of: paths) { _, newPaths in
+            pathValidator.validateBatch(newPaths)
+        }
+        .onAppear {
+            pathValidator.validateBatch(paths)
         }
     }
     
@@ -146,8 +153,58 @@ struct PathPickerView: View {
     }
     
     private func addManualPath() {
-        editingPathIndex = -1 // Special value for new path
+        editingPathIndex = -1
         editingPathText = ""
+    }
+}
+
+// MARK: - Path Validator
+
+@MainActor
+final class PathValidator: ObservableObject {
+    private var cache: [String: PathValidation] = [:]
+    
+    struct PathValidation {
+        let exists: Bool
+        let type: PathType
+    }
+    
+    enum PathType {
+        case file, directory, unknown
+        
+        var icon: String {
+            switch self {
+            case .file: "doc.fill"
+            case .directory: "folder.fill"
+            case .unknown: "questionmark.circle"
+            }
+        }
+    }
+    
+    func validate(_ path: String) -> PathValidation {
+        if let cached = cache[path] {
+            return cached
+        }
+        
+        let expandedPath = NSString(string: path).expandingTildeInPath
+        var isDirectory: ObjCBool = false
+        let exists = FileManager.default.fileExists(atPath: expandedPath, isDirectory: &isDirectory)
+        
+        let type: PathType = exists ? (isDirectory.boolValue ? .directory : .file) : .unknown
+        let validation = PathValidation(exists: exists, type: type)
+        
+        cache[path] = validation
+        return validation
+    }
+    
+    func validateBatch(_ paths: [String]) {
+        for path in paths where cache[path] == nil {
+            _ = validate(path)
+        }
+    }
+    
+    func invalidate(_ path: String) {
+        cache.removeValue(forKey: path)
     }
 }
 
@@ -155,31 +212,22 @@ struct PathPickerView: View {
 
 struct PathItemView: View {
     let path: String
-    let index: Int
-    let manager: CustomAppManager
+    let validation: PathValidator.PathValidation
     let onEdit: () -> Void
     let onRemove: () -> Void
     
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
     
-    var pathType: CustomAppManager.PathType {
-        manager.getPathType(path)
-    }
-    
-    var pathExists: Bool {
-        manager.pathExists(path)
-    }
-    
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: pathType.icon)
+            Image(systemName: validation.type.icon)
                 .font(.system(size: 14))
-                .foregroundColor(pathExists ? Color.App.accent.color(for: colorScheme) : Color.App.warning.color(for: colorScheme))
+                .foregroundColor(validation.exists ? Color.App.accent.color(for: colorScheme) : Color.App.warning.color(for: colorScheme))
             
             Text(path)
                 .font(DesignConstants.Typography.body)
-                .foregroundColor(pathExists ? Color.App.primary.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
+                .foregroundColor(validation.exists ? Color.App.primary.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
                 .lineLimit(1)
                 .truncationMode(.middle)
             
@@ -201,10 +249,9 @@ struct PathItemView: View {
                     }
                     .buttonStyle(.plain)
                 }
-                .transition(.scale.combined(with: .opacity))
             }
             
-            if !pathExists {
+            if !validation.exists {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 12))
                     .foregroundColor(Color.App.warning.color(for: colorScheme))
@@ -215,12 +262,10 @@ struct PathItemView: View {
         .padding(.vertical, 8)
         .background(
             RoundedRectangle(cornerRadius: 4)
-                .fill(Color.App.secondaryBackground.color(for: colorScheme).opacity(0.5))
+                .fill(Color.App.secondaryBackground.color(for: colorScheme).opacity(0.5)),
         )
         .onHover { hovering in
-            withAnimation(DesignConstants.Animation.quick) {
-                isHovered = hovering
-            }
+            isHovered = hovering
         }
     }
 }
@@ -281,7 +326,7 @@ struct PathEditSheet: View {
     }
 }
 
-// Extension to make Int conform to Identifiable for sheet binding
+// Extension for sheet binding
 extension Int: @retroactive Identifiable {
     public var id: Int { self }
 }
