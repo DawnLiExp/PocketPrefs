@@ -114,7 +114,7 @@ struct RestoreListHeader: View {
         .onAppear {
             updateCachedState()
         }
-        .onReceive(backupManager.objectWillChange) { _ in
+        .onChange(of: backupManager.selectedBackup?.id) { _, _ in
             updateCachedState()
         }
         .onChange(of: searchText) { _, _ in
@@ -273,7 +273,8 @@ struct RestoreListContent: View {
         .onAppear {
             updateFilteredApps()
         }
-        .onReceive(backupManager.objectWillChange) { _ in
+        .onChange(of: backupManager.selectedBackup?.id) { _, _ in
+            searchDebounceTask?.cancel()
             updateFilteredApps()
         }
         .onChange(of: searchText) { _, _ in

@@ -293,7 +293,6 @@ final class BackupManager: ObservableObject {
         
         availableBackups[backupIndex].apps[appIndex].isSelected.toggle()
         selectedBackup = availableBackups[backupIndex]
-        objectWillChange.send()
     }
     
     // MARK: - Backup & Restore
