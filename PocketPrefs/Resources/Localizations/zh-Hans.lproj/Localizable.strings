@@ -191,3 +191,13 @@
 "Language_Restart_Message" = "应用需要重启才能应用语言更改。";
 "Language_Restart_Now" = "立即重启";
 "Language_Restart_Later" = "稍后";
+
+/* Manual Refresh Feature */
+"Settings_Refresh_Tooltip" = "刷新应用列表";
+"Settings_Refresh_Help_Title" = "何时需要刷新";
+"Settings_Refresh_Help_Add" = "添加新应用后";
+"Settings_Refresh_Help_Edit" = "编辑应用配置后";
+"Settings_Refresh_Help_Import" = "导入配置后";
+"Settings_Refresh_Help_Delete" = "删除应用后";
+"Settings_Refresh_Help_Footer" = "点击刷新按钮将更改同步到主界面";
+"Main_Refresh_Tooltip" = "从设置同步应用列表";

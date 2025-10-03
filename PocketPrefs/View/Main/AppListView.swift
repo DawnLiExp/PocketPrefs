@@ -117,6 +117,30 @@ struct AppListHeader: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
+                
+                Spacer()
+                
+                // Manual refresh button
+                Button(action: {
+                    Task {
+                        isRefreshing = true
+                        await backupManager.manualRefresh()
+                        try? await Task.sleep(for: .milliseconds(300))
+                        isRefreshing = false
+                    }
+                }) {
+                    Image(systemName: "arrow.clockwise")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(Color.App.accent.color(for: colorScheme))
+                        .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                        .animation(
+                            isRefreshing ? .linear(duration: 0.6).repeatForever(autoreverses: false) : .default,
+                            value: isRefreshing,
+                        )
+                }
+                .buttonStyle(PlainButtonStyle())
+                .disabled(isRefreshing)
+                .help(NSLocalizedString("Main_Refresh_Tooltip", comment: "Refresh app list from settings"))
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 9)

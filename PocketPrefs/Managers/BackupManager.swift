@@ -182,6 +182,23 @@ final class BackupManager: ObservableObject {
         await loadAppsTask?.value
     }
     
+    func manualRefresh() async {
+        logger.info("Manual refresh triggered in BackupManager")
+        
+        // Cancel pending event-triggered reloads to clear debounce state
+        storeEventTask?.cancel()
+        loadAppsTask?.cancel()
+        
+        // Restart event subscription with clean state
+        subscribeToStoreEvents()
+        
+        // Load latest data immediately
+        await loadApps()
+        objectWillChange.send()
+        
+        logger.info("Manual refresh completed")
+    }
+    
     // MARK: - Icon Management
     
     func getIcon(for app: AppConfig) -> NSImage {

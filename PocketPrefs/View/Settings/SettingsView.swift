@@ -63,6 +63,7 @@ struct SettingsView: View {
                         newAppName: $newAppName,
                         newAppBundleId: $newAppBundleId,
                         validationError: $validationError,
+                        onRefresh: performManualRefresh,
                     )
                     
                 case .preferences:
@@ -95,6 +96,11 @@ struct SettingsView: View {
         .onAppear {
             searchDebouncer.updateApps(customAppManager.customApps, searchText: searchText)
         }
+    }
+    
+    private func performManualRefresh() {
+        customAppManager.manualRefresh()
+        searchDebouncer.updateApps(customAppManager.customApps, searchText: searchText)
     }
     
     private func addNewApp() {
@@ -261,6 +267,7 @@ struct CustomAppsContent: View {
     @Binding var newAppName: String
     @Binding var newAppBundleId: String
     @Binding var validationError: String
+    let onRefresh: () -> Void
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -273,6 +280,7 @@ struct CustomAppsContent: View {
                     selectedCount: customAppManager.selectedAppIds.count,
                     onAddApp: { showingAddAppSheet = true },
                     onDeleteSelected: deleteSelectedApps,
+                    onRefresh: onRefresh,
                     customAppManager: customAppManager,
                 )
                 

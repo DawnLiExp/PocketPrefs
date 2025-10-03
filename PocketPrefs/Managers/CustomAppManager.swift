@@ -108,6 +108,39 @@ final class CustomAppManager: ObservableObject {
         logger.info("Loaded \(self.customApps.count) custom apps")
     }
     
+    func manualRefresh() {
+        logger.info("Manual refresh triggered")
+        
+        // Cancel pending event processing to clear debounce state
+        eventTask?.cancel()
+        
+        // Restart event subscription with clean state
+        subscribeToStoreEvents()
+        
+        // Force reload from store
+        customApps = userStore.customApps
+        
+        // Validate selections
+        let currentAppIds = Set(customApps.map(\.id))
+        selectedAppIds.formIntersection(currentAppIds)
+        
+        // Update selected app if it still exists
+        if let currentSelectedId = selectedApp?.id,
+           let updatedApp = customApps.first(where: { $0.id == currentSelectedId })
+        {
+            selectedApp = updatedApp
+        } else if let currentSelectedId = selectedApp?.id,
+                  !currentAppIds.contains(currentSelectedId)
+        {
+            selectedApp = nil
+        }
+        
+        // Force UI update
+        objectWillChange.send()
+        
+        logger.info("Manual refresh completed: \(self.customApps.count) apps")
+    }
+    
     func createNewApp(name: String, bundleId: String) -> AppConfig {
         AppConfig(
             name: name,
