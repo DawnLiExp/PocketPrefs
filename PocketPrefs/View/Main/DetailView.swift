@@ -20,7 +20,7 @@ struct DetailContainerView: View {
         if backupManager.isProcessing {
             ProgressView(
                 progress: backupManager.currentProgress,
-                statusMessage: backupManager.statusMessage
+                messageHistory: backupManager.statusMessageHistory,
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if currentMode == .backup {
@@ -29,7 +29,7 @@ struct DetailContainerView: View {
                     app: app,
                     backupManager: backupManager,
                     currentMode: currentMode,
-                    showingRestorePicker: $showingRestorePicker
+                    showingRestorePicker: $showingRestorePicker,
                 )
             } else {
                 BackupPlaceholderView(backupManager: backupManager)
@@ -272,7 +272,7 @@ struct RestorePlaceholderView: View {
             if let backup = backupManager.selectedBackup {
                 RestoreDetailContent(
                     backupManager: backupManager,
-                    backup: backup
+                    backup: backup,
                 )
             } else {
                 RestoreEmptyDetail()

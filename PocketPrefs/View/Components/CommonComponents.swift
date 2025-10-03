@@ -11,23 +11,34 @@ import SwiftUI
 
 struct ProgressView: View {
     let progress: Double
-    let statusMessage: String?
+    let messageHistory: [String]
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         VStack(spacing: 32) {
             CircularProgressView(progress: progress)
-                .frame(width: 140, height: 140)
+                .frame(width: 160, height: 160)
 
-            // Status message only (percentage now in ring center)
-            Text(statusMessage ?? NSLocalizedString("Common_Processing", comment: ""))
-                .font(DesignConstants.Typography.headline)
-                .foregroundColor(Color.App.primary.color(for: colorScheme))
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-                .id(statusMessage)
-                .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                .animation(.easeInOut(duration: 0.25), value: statusMessage)
+            // Scrolling message history (max 3 lines)
+            VStack(spacing: 8) {
+                ForEach(messageHistory.indices, id: \.self) { index in
+                    Text(messageHistory[index])
+                        .font(DesignConstants.Typography.body)
+                        .foregroundColor(
+                            index == messageHistory.count - 1
+                                ? Color.App.primary.color(for: colorScheme)
+                                : Color.App.secondary.color(for: colorScheme).opacity(0.7)
+                        )
+                        .multilineTextAlignment(.center)
+                        .lineLimit(1)
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .bottom).combined(with: .opacity),
+                            removal: .move(edge: .top).combined(with: .opacity)
+                        ))
+                }
+            }
+            .frame(height: 80)
+            .animation(.easeInOut(duration: 0.3), value: messageHistory)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.ultraThinMaterial.opacity(0.8))
@@ -50,7 +61,7 @@ struct CircularProgressView: View {
             Circle()
                 .stroke(
                     Color.App.progressTrack.color(for: colorScheme),
-                    lineWidth: 8
+                    lineWidth: 6
                 )
 
             // Progress Arc with Gradient - smooth animation
@@ -66,12 +77,12 @@ struct CircularProgressView: View {
                         endPoint: .bottomTrailing
                     ),
                     style: StrokeStyle(
-                        lineWidth: 8,
+                        lineWidth: 6,
                         lineCap: .round
                     )
                 )
                 .rotationEffect(.degrees(-90))
-                .animation(.easeOut(duration: 0.5), value: progress)
+                .animation(.easeOut(duration: 0.7), value: progress)
 
             // Decorative Ring
             Circle()
@@ -86,7 +97,7 @@ struct CircularProgressView: View {
                     ),
                     lineWidth: 2
                 )
-                .frame(width: 120, height: 120)
+                .frame(width: 140, height: 140)
                 .rotationEffect(.degrees(decorativeRotation))
                 .animation(.linear(duration: 3).repeatForever(autoreverses: false), value: decorativeRotation)
                 .onAppear {
@@ -95,7 +106,7 @@ struct CircularProgressView: View {
 
             // Center percentage number
             Text("\(Int(progress * 100))%")
-                .font(.system(size: 30, weight: .semibold, design: .rounded))
+                .font(.system(size: 38, weight: .light, design: .rounded))
                 .foregroundColor(Color.App.accent.color(for: colorScheme))
                 .animation(.easeOut(duration: 0.3), value: progress)
         }

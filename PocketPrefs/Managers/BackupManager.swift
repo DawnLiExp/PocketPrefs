@@ -15,6 +15,7 @@ final class BackupManager: ObservableObject {
     @Published var isProcessing = false
     @Published var statusMessage = ""
     @Published var currentProgress: Double = 0.0
+    @Published var statusMessageHistory: [String] = [] // For scrolling display
     
     @Published var availableBackups: [BackupInfo] = []
     @Published var selectedBackup: BackupInfo?
@@ -291,6 +292,7 @@ final class BackupManager: ObservableObject {
         isProcessing = true
         currentProgress = 0.0
         statusMessage = NSLocalizedString("Backup_Starting", comment: "")
+        statusMessageHistory = [statusMessage]
         
         let baseBackup = isIncrementalMode ? incrementalBaseBackup : nil
         
@@ -301,27 +303,30 @@ final class BackupManager: ObservableObject {
                 self.currentProgress = update.fraction
                 if let message = update.message {
                     self.statusMessage = message
+                    self.addToMessageHistory(message)
                 }
-            }
+            },
         )
         
         // Ensure minimum operation duration for better UX (avoid "instant" completion)
         let elapsed = Date().timeIntervalSince(startTime)
-        let minDuration = 0.8
+        let minDuration = 1.3
         if elapsed < minDuration {
             try? await Task.sleep(for: .seconds(minDuration - elapsed))
         }
         
         currentProgress = 1.0
         statusMessage = result.statusMessage
+        addToMessageHistory(result.statusMessage)
         
         // Pause at 100% for visual confirmation
-        try? await Task.sleep(for: .seconds(0.4))
+        try? await Task.sleep(for: .seconds(0.5))
         await scanBackups()
         
         try? await Task.sleep(for: .seconds(0.2))
         isProcessing = false
         currentProgress = 0.0
+        statusMessageHistory = []
     }
     
     func performRestore() {
@@ -340,6 +345,7 @@ final class BackupManager: ObservableObject {
         isProcessing = true
         currentProgress = 0.0
         statusMessage = NSLocalizedString("Restore_Starting", comment: "")
+        statusMessageHistory = [statusMessage]
         
         let result = await restoreService.performRestore(
             backup: backup,
@@ -347,30 +353,42 @@ final class BackupManager: ObservableObject {
                 self.currentProgress = update.fraction
                 if let message = update.message {
                     self.statusMessage = message
+                    self.addToMessageHistory(message)
                 }
-            }
+            },
         )
         
         // Ensure minimum operation duration for better UX
         let elapsed = Date().timeIntervalSince(startTime)
-        let minDuration = 0.8
+        let minDuration = 1.3
         if elapsed < minDuration {
             try? await Task.sleep(for: .seconds(minDuration - elapsed))
         }
         
         currentProgress = 1.0
         statusMessage = result.statusMessage
+        addToMessageHistory(result.statusMessage)
         
         // Pause at 100% for visual confirmation
-        try? await Task.sleep(for: .seconds(0.4))
+        try? await Task.sleep(for: .seconds(0.5))
         await loadApps()
         
         try? await Task.sleep(for: .seconds(0.2))
         isProcessing = false
         currentProgress = 0.0
+        statusMessageHistory = []
     }
     
     func scanAppsInBackup(at path: String) async -> [BackupAppInfo] {
         await backupService.scanAppsInBackup(at: path)
+    }
+    
+    // MARK: - Message History Management
+    
+    private func addToMessageHistory(_ message: String) {
+        statusMessageHistory.append(message)
+        if statusMessageHistory.count > 3 {
+            statusMessageHistory.removeFirst()
+        }
     }
 }
