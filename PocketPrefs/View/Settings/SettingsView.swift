@@ -96,6 +96,9 @@ struct SettingsView: View {
         .onAppear {
             searchDebouncer.updateApps(customAppManager.customApps, searchText: searchText)
         }
+        .onDisappear {
+            SettingsEventPublisher.shared.publishDidClose()
+        }
     }
     
     private func performManualRefresh() {

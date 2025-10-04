@@ -2,7 +2,7 @@
 //  UserConfigStore.swift
 //  PocketPrefs
 //
-//  Persistent storage for user-added custom applications with AsyncStream events
+//  Persistent storage for user-added custom applications
 //
 
 import Foundation
@@ -15,7 +15,6 @@ enum UserConfigEvent: Sendable {
     case appUpdated(AppConfig)
     case appsRemoved(Set<UUID>)
     case batchUpdated([AppConfig])
-    case appsChanged([AppConfig])
 }
 
 // MARK: - User Config Store
@@ -28,9 +27,7 @@ final class UserConfigStore: ObservableObject {
     
     private let logger = Logger(subsystem: "com.pocketprefs", category: "UserConfigStore")
     private let storageURL: URL
-    
-    private var continuation: AsyncStream<UserConfigEvent>.Continuation?
-    let events: AsyncStream<UserConfigEvent>
+    private var continuations: [UUID: AsyncStream<UserConfigEvent>.Continuation] = [:]
     
     private init() {
         let appSupport = FileManager.default.urls(
@@ -44,27 +41,45 @@ final class UserConfigStore: ObservableObject {
             withIntermediateDirectories: true,
         )
         
-        self.storageURL = appDir.appendingPathComponent("custom_apps.json")
-        
-        // Use unbounded buffer to ensure no events are dropped
-        let (stream, continuation) = AsyncStream<UserConfigEvent>.makeStream(
-            bufferingPolicy: .unbounded,
-        )
-        self.events = stream
-        self.continuation = continuation
-        
+        storageURL = appDir.appendingPathComponent("custom_apps.json")
         loadCustomApps()
     }
     
     deinit {
-        continuation?.finish()
+        continuations.values.forEach { $0.finish() }
+    }
+    
+    // MARK: - Event Broadcasting
+    
+    func subscribe() -> AsyncStream<UserConfigEvent> {
+        let id = UUID()
+        let (stream, continuation) = AsyncStream<UserConfigEvent>.makeStream(
+            bufferingPolicy: .unbounded,
+        )
+        
+        continuation.onTermination = { [weak self] _ in
+            Task { @MainActor [weak self] in
+                self?.continuations.removeValue(forKey: id)
+                self?.logger.debug("Event subscriber unregistered: \(id)")
+            }
+        }
+        
+        continuations[id] = continuation
+        logger.debug("Event subscriber registered: \(id)")
+        
+        return stream
+    }
+    
+    private func broadcast(_ event: UserConfigEvent) {
+        logger.debug("Broadcasting event to \(self.continuations.count) subscribers")
+        continuations.values.forEach { $0.yield(event) }
     }
     
     // MARK: - Storage Operations
     
     private func loadCustomApps() {
         guard FileManager.default.fileExists(atPath: storageURL.path) else {
-            logger.info("No custom apps file, starting fresh")
+            logger.info("No custom apps file found")
             return
         }
         
@@ -73,7 +88,7 @@ final class UserConfigStore: ObservableObject {
             customApps = try JSONDecoder().decode([AppConfig].self, from: data)
             logger.info("Loaded \(self.customApps.count) custom apps")
         } catch {
-            logger.error("Failed to load: \(error)")
+            logger.error("Failed to load custom apps: \(error.localizedDescription)")
         }
     }
     
@@ -85,7 +100,7 @@ final class UserConfigStore: ObservableObject {
             try data.write(to: storageURL)
             logger.debug("Saved \(self.customApps.count) custom apps")
         } catch {
-            logger.error("Failed to save: \(error)")
+            logger.error("Failed to save custom apps: \(error.localizedDescription)")
         }
     }
     
@@ -97,10 +112,7 @@ final class UserConfigStore: ObservableObject {
         newApp.category = .custom
         customApps.append(newApp)
         save()
-        
-        objectWillChange.send()
-        
-        continuation?.yield(.appAdded(newApp))
+        broadcast(.appAdded(newApp))
         logger.info("Added app: \(newApp.name)")
     }
     
@@ -110,16 +122,9 @@ final class UserConfigStore: ObservableObject {
             return
         }
         
-        // Rebuild array to ensure @Published triggers with new reference
-        customApps = customApps.enumerated().map { offset, existingApp in
-            offset == index ? app : existingApp
-        }
-        
+        customApps[index] = app
         save()
-        
-        objectWillChange.send()
-        
-        continuation?.yield(.appUpdated(app))
+        broadcast(.appUpdated(app))
         logger.info("Updated app: \(app.name)")
     }
     
@@ -129,11 +134,9 @@ final class UserConfigStore: ObservableObject {
         let countBefore = customApps.count
         customApps.removeAll { appIds.contains($0.id) }
         let removed = countBefore - customApps.count
+        
         save()
-        
-        objectWillChange.send()
-        
-        continuation?.yield(.appsRemoved(appIds))
+        broadcast(.appsRemoved(appIds))
         logger.info("Removed \(removed) apps")
     }
     
@@ -145,16 +148,13 @@ final class UserConfigStore: ObservableObject {
             return modifiedApp
         }
         save()
-        
-        objectWillChange.send()
-        
-        continuation?.yield(.batchUpdated(customApps))
+        broadcast(.batchUpdated(customApps))
         logger.info("Batch updated \(self.customApps.count) apps")
     }
     
     // MARK: - Queries
     
     func bundleIdExists(_ bundleId: String) -> Bool {
-        self.customApps.contains { $0.bundleId == bundleId }
+        customApps.contains { $0.bundleId == bundleId }
     }
 }

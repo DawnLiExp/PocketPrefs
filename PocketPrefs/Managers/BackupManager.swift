@@ -2,7 +2,7 @@
 //  BackupManager.swift
 //  PocketPrefs
 //
-//  Main backup manager with structured concurrency and AsyncStream events
+//  Main backup manager with structured concurrency
 //
 
 import Foundation
@@ -15,11 +15,9 @@ final class BackupManager: ObservableObject {
     @Published var isProcessing = false
     @Published var statusMessage = ""
     @Published var currentProgress: Double = 0.0
-    @Published var statusMessageHistory: [String] = [] // For scrolling display
-    
+    @Published var statusMessageHistory: [String] = []
     @Published var availableBackups: [BackupInfo] = []
     @Published var selectedBackup: BackupInfo?
-    
     @Published var isIncrementalMode = false
     @Published var incrementalBaseBackup: BackupInfo?
     
@@ -30,17 +28,12 @@ final class BackupManager: ObservableObject {
     private let fileOps = FileOperationService.shared
     private let userStore = UserConfigStore.shared
     
-    private var storeEventTask: Task<Void, Never>?
     private var prefsEventTask: Task<Void, Never>?
     private var iconEventTask: Task<Void, Never>?
-    
+    private var userConfigEventTask: Task<Void, Never>?
     private var loadAppsTask: Task<Void, Never>?
     private var scanBackupsTask: Task<Void, Never>?
-    
-    private enum DebounceConfig {
-        static let storeEventDelay = 0.3
-        static let iconEventDelay = 0.5
-    }
+    private var settingsEventTask: Task<Void, Never>?
     
     init() {
         Task {
@@ -48,46 +41,68 @@ final class BackupManager: ObservableObject {
             await scanBackups()
         }
         
-        subscribeToStoreEvents()
         subscribeToPreferencesEvents()
         subscribeToIconEvents()
+        subscribeToUserConfigEvents()
+        subscribeToSettingsEvents()
     }
     
     deinit {
-        storeEventTask?.cancel()
         prefsEventTask?.cancel()
         iconEventTask?.cancel()
+        userConfigEventTask?.cancel()
         loadAppsTask?.cancel()
         scanBackupsTask?.cancel()
+        settingsEventTask?.cancel()
     }
     
     // MARK: - Event Subscriptions
     
-    private func subscribeToStoreEvents() {
-        storeEventTask?.cancel()
-        storeEventTask = Task { [weak self] in
+    private func subscribeToUserConfigEvents() {
+        userConfigEventTask?.cancel()
+        userConfigEventTask = Task { [weak self] in
             guard let self else { return }
+            let eventStream = userStore.subscribe()
             
-            var pendingReload = false
-            
-            for await event in userStore.events {
+            for await event in eventStream {
                 guard !Task.isCancelled else { break }
                 
                 switch event {
-                case .appAdded, .appUpdated, .appsRemoved, .batchUpdated, .appsChanged:
-                    if !pendingReload {
-                        pendingReload = true
-                        
-                        try? await Task.sleep(for: .seconds(DebounceConfig.storeEventDelay))
-                        
-                        guard !Task.isCancelled else { break }
-                        
-                        await self.loadApps()
-                        pendingReload = false
-                    }
+                case .appAdded(let app):
+                    logger.info("User config event: app added - \(app.name)")
+                case .appUpdated(let app):
+                    logger.info("User config event: app updated - \(app.name)")
+                case .appsRemoved(let ids):
+                    logger.info("User config event: apps removed - \(ids.count) apps")
+                case .batchUpdated(let apps):
+                    logger.info("User config event: batch update - \(apps.count) apps")
+                }
+                
+                await self.loadApps()
+            }
+        }
+    }
+    
+    private func subscribeToSettingsEvents() {
+        settingsEventTask?.cancel()
+        settingsEventTask = Task { [weak self] in
+            guard let self else { return }
+            let eventStream = SettingsEventPublisher.shared.subscribe()
+            
+            for await event in eventStream {
+                guard !Task.isCancelled else { break }
+                
+                if case .didClose = event {
+                    await self.handleSettingsClose()
                 }
             }
         }
+    }
+    
+    private func handleSettingsClose() async {
+        logger.info("Settings closed event received")
+        await loadApps()
+        logger.info("Settings close sync completed")
     }
     
     private func subscribeToPreferencesEvents() {
@@ -99,7 +114,7 @@ final class BackupManager: ObservableObject {
                 guard !Task.isCancelled else { break }
                 
                 if case .directoryChanged(let path) = event {
-                    logger.info("Directory changed event received: \(path)")
+                    logger.info("Backup directory changed: \(path)")
                     await self.handleDirectoryChange()
                 }
             }
@@ -110,16 +125,13 @@ final class BackupManager: ObservableObject {
         iconEventTask?.cancel()
         iconEventTask = Task { [weak self] in
             guard let self else { return }
-            
             var loadedIcons: Set<String> = []
             
             for await bundleId in iconService.events {
                 guard !Task.isCancelled else { break }
-                
                 loadedIcons.insert(bundleId)
                 
-                try? await Task.sleep(for: .seconds(DebounceConfig.iconEventDelay))
-                
+                try? await Task.sleep(for: .seconds(0.5))
                 guard !Task.isCancelled else { break }
                 
                 if !loadedIcons.isEmpty {
@@ -132,14 +144,13 @@ final class BackupManager: ObservableObject {
     }
     
     private func handleDirectoryChange() async {
-        logger.info("Handling directory change, rescanning...")
+        logger.info("Handling backup directory change")
         
         selectedBackup = nil
         incrementalBaseBackup = nil
         availableBackups = []
         
         await scanBackups()
-        
         logger.info("Rescan completed: \(self.availableBackups.count) backups found")
     }
     
@@ -172,7 +183,6 @@ final class BackupManager: ObservableObject {
                 }
                 
                 guard !Task.isCancelled else { return }
-                
                 self.apps = updatedApps
             }
             
@@ -183,19 +193,8 @@ final class BackupManager: ObservableObject {
     }
     
     func manualRefresh() async {
-        logger.info("Manual refresh triggered in BackupManager")
-        
-        // Cancel pending event-triggered reloads to clear debounce state
-        storeEventTask?.cancel()
-        loadAppsTask?.cancel()
-        
-        // Restart event subscription with clean state
-        subscribeToStoreEvents()
-        
-        // Load latest data immediately
+        logger.info("Manual refresh triggered")
         await loadApps()
-        objectWillChange.send()
-        
         logger.info("Manual refresh completed")
     }
     
@@ -216,7 +215,6 @@ final class BackupManager: ObservableObject {
         
         scanBackupsTask = Task {
             let backups = await backupService.scanBackups()
-            
             guard !Task.isCancelled else { return }
             
             availableBackups = backups
@@ -227,9 +225,7 @@ final class BackupManager: ObservableObject {
                 selectedBackup = nil
             }
             
-            if selectedBackup == nil,
-               let firstBackup = availableBackups.first
-            {
+            if selectedBackup == nil, let firstBackup = availableBackups.first {
                 selectBackup(firstBackup)
             }
             
@@ -239,9 +235,7 @@ final class BackupManager: ObservableObject {
                 incrementalBaseBackup = nil
             }
             
-            if incrementalBaseBackup == nil,
-               let firstBackup = availableBackups.first
-            {
+            if incrementalBaseBackup == nil, let firstBackup = availableBackups.first {
                 incrementalBaseBackup = firstBackup
             }
             
@@ -324,7 +318,6 @@ final class BackupManager: ObservableObject {
             },
         )
         
-        // Ensure minimum operation duration for better UX (avoid "instant" completion)
         let elapsed = Date().timeIntervalSince(startTime)
         let minDuration = 1.3
         if elapsed < minDuration {
@@ -335,7 +328,6 @@ final class BackupManager: ObservableObject {
         statusMessage = result.statusMessage
         addToMessageHistory(result.statusMessage)
         
-        // Pause at 100% for visual confirmation
         try? await Task.sleep(for: .seconds(0.5))
         await scanBackups()
         
@@ -374,7 +366,6 @@ final class BackupManager: ObservableObject {
             },
         )
         
-        // Ensure minimum operation duration for better UX
         let elapsed = Date().timeIntervalSince(startTime)
         let minDuration = 1.3
         if elapsed < minDuration {
@@ -385,7 +376,6 @@ final class BackupManager: ObservableObject {
         statusMessage = result.statusMessage
         addToMessageHistory(result.statusMessage)
         
-        // Pause at 100% for visual confirmation
         try? await Task.sleep(for: .seconds(0.5))
         await loadApps()
         
@@ -399,7 +389,7 @@ final class BackupManager: ObservableObject {
         await backupService.scanAppsInBackup(at: path)
     }
     
-    // MARK: - Message History Management
+    // MARK: - Message History
     
     private func addToMessageHistory(_ message: String) {
         statusMessageHistory.append(message)

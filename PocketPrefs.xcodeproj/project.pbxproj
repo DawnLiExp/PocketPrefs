@@ -17,6 +17,7 @@
 		FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */; };
 		FC68CD272E866826003BBDD4 /* ImportExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC68CD262E866824003BBDD4 /* ImportExportManager.swift */; };
 		FC74CB462E85915F00F33BD4 /* CustomBackupPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */; };
+		FC8D8DCA2E90F06100AB8773 /* SettingsEventPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */; };
 		FC93001A2E8ED59A00194E89 /* ProgressReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9300192E8ED59800194E89 /* ProgressReporting.swift */; };
 		FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED942E7EF4D600764A17 /* PathPickerView.swift */; };
 		FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */; };
@@ -56,6 +57,7 @@
 		FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCheckboxToggleStyle.swift; sourceTree = "<group>"; };
 		FC68CD262E866824003BBDD4 /* ImportExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportExportManager.swift; sourceTree = "<group>"; };
 		FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBackupPicker.swift; sourceTree = "<group>"; };
+		FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsEventPublisher.swift; sourceTree = "<group>"; };
 		FC9300192E8ED59800194E89 /* ProgressReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressReporting.swift; sourceTree = "<group>"; };
 		FCAFED942E7EF4D600764A17 /* PathPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathPickerView.swift; sourceTree = "<group>"; };
 		FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
@@ -200,6 +202,7 @@
 				FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */,
 				FC9300192E8ED59800194E89 /* ProgressReporting.swift */,
 				FCD990642E7EC53600C7087A /* RestoreService.swift */,
+				FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */,
 				FCD990652E7EC53600C7087A /* ThemeManager.swift */,
 				FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */,
 			);
@@ -323,6 +326,7 @@
 				FCD9907C2E7EC53600C7087A /* BackupService.swift in Sources */,
 				FCD9907D2E7EC53600C7087A /* FileOperationService.swift in Sources */,
 				FCF4B5B32E8D6F38008DA739 /* PreferencesManager.swift in Sources */,
+				FC8D8DCA2E90F06100AB8773 /* SettingsEventPublisher.swift in Sources */,
 				FCD9907E2E7EC53600C7087A /* RestoreService.swift in Sources */,
 				FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */,
 				FC195B692E7EB80B00258310 /* AppConfig.swift in Sources */,
