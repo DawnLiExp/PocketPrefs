@@ -2,7 +2,7 @@
 //  SettingsView.swift
 //  PocketPrefs
 //
-//  Settings interface with immediate state synchronization
+//  Settings interface with automatic state synchronization
 //
 
 import SwiftUI
@@ -63,7 +63,6 @@ struct SettingsView: View {
                         newAppName: $newAppName,
                         newAppBundleId: $newAppBundleId,
                         validationError: $validationError,
-                        onRefresh: performManualRefresh,
                     )
                     
                 case .preferences:
@@ -99,11 +98,6 @@ struct SettingsView: View {
         .onDisappear {
             SettingsEventPublisher.shared.publishDidClose()
         }
-    }
-    
-    private func performManualRefresh() {
-        customAppManager.manualRefresh()
-        searchDebouncer.updateApps(customAppManager.customApps, searchText: searchText)
     }
     
     private func addNewApp() {
@@ -269,7 +263,6 @@ struct CustomAppsContent: View {
     @Binding var newAppName: String
     @Binding var newAppBundleId: String
     @Binding var validationError: String
-    let onRefresh: () -> Void
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -282,7 +275,6 @@ struct CustomAppsContent: View {
                     selectedCount: customAppManager.selectedAppIds.count,
                     onAddApp: { showingAddAppSheet = true },
                     onDeleteSelected: deleteSelectedApps,
-                    onRefresh: onRefresh,
                     customAppManager: customAppManager,
                 )
                 
@@ -320,7 +312,6 @@ struct CustomAppsContent: View {
                 ImportExportToolbar(
                     importExportManager: importExportManager,
                     customAppManager: customAppManager,
-                    onImportComplete: onRefresh,
                 )
             }
             .frame(width: 320)
@@ -368,7 +359,6 @@ struct CustomAppsContent: View {
 struct ImportExportToolbar: View {
     @ObservedObject var importExportManager: ImportExportManager
     @ObservedObject var customAppManager: CustomAppManager
-    let onImportComplete: () -> Void
     @State private var isExporting = false
     @State private var isImporting = false
     @Environment(\.colorScheme) var colorScheme
@@ -398,10 +388,6 @@ struct ImportExportToolbar: View {
                 isImporting = true
                 Task {
                     await importExportManager.importCustomApps()
-                    
-                    // Immediate sync after import completes
-                    onImportComplete()
-                    
                     isImporting = false
                 }
             }) {

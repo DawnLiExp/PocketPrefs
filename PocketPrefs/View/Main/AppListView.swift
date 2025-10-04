@@ -54,7 +54,6 @@ struct AppListView: View {
             filteredApps = backupManager.apps
         }
         .onReceive(backupManager.objectWillChange) { _ in
-            // Sync cache when any published property changes
             updateFilteredApps(source: backupManager.apps, searchTerm: searchText)
         }
         .onChange(of: searchText) { _, newSearchText in
@@ -85,7 +84,6 @@ struct AppListHeader: View {
     @ObservedObject var backupManager: BackupManager
     @Environment(\.colorScheme) var colorScheme
     @FocusState private var isSearchFocused: Bool
-    @State private var isRefreshing = false
     @State private var cachedAllSelected = false
     @State private var installedCount = 0
     
@@ -117,30 +115,6 @@ struct AppListHeader: View {
                     }
                     .buttonStyle(PlainButtonStyle())
                 }
-                
-                Spacer()
-                
-                // Manual refresh button
-                Button(action: {
-                    Task {
-                        isRefreshing = true
-                        await backupManager.manualRefresh()
-                        try? await Task.sleep(for: .milliseconds(300))
-                        isRefreshing = false
-                    }
-                }) {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(Color.App.accent.color(for: colorScheme))
-                        .rotationEffect(.degrees(isRefreshing ? 360 : 0))
-                        .animation(
-                            isRefreshing ? .linear(duration: 0.6).repeatForever(autoreverses: false) : .default,
-                            value: isRefreshing,
-                        )
-                }
-                .buttonStyle(PlainButtonStyle())
-                .disabled(isRefreshing)
-                .help(NSLocalizedString("Main_Refresh_Tooltip", comment: "Refresh app list from settings"))
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 9)
@@ -194,11 +168,11 @@ struct AppListHeader: View {
             }
             .padding(.bottom, backupManager.isIncrementalMode && hasAvailableBackups ? 0 : 0)
             
-            // Incremental base backup selector (shown when incremental mode is enabled)
+            // Incremental base backup selector
             if backupManager.isIncrementalMode, hasAvailableBackups {
                 IncrementalBaseSelector(
                     backupManager: backupManager,
-                    isRefreshing: $isRefreshing,
+                    isRefreshing: .constant(false),
                 )
                 .padding(.top, 0)
             }
@@ -279,6 +253,7 @@ struct IncrementalBaseSelector: View {
     @ObservedObject var backupManager: BackupManager
     @Binding var isRefreshing: Bool
     @Environment(\.colorScheme) var colorScheme
+    @State private var localRefreshing = false
     
     var body: some View {
         HStack(spacing: 8) {
@@ -320,10 +295,10 @@ struct IncrementalBaseSelector: View {
                 Image(systemName: "arrow.clockwise")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(Color.App.primary.color(for: colorScheme))
-                    .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                    .rotationEffect(.degrees(localRefreshing ? 360 : 0))
                     .animation(
-                        isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default,
-                        value: isRefreshing,
+                        localRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default,
+                        value: localRefreshing,
                     )
             }
             .buttonStyle(PlainButtonStyle())
@@ -332,19 +307,19 @@ struct IncrementalBaseSelector: View {
                 Color.App.contentAreaBackground.color(for: colorScheme),
             )
             .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
-            .disabled(isRefreshing)
+            .disabled(localRefreshing)
         }
     }
     
     @MainActor
     private func refreshBackups() async {
-        isRefreshing = true
+        localRefreshing = true
         
         try? await Task.sleep(nanoseconds: 200_000_000)
         
         await backupManager.scanBackups()
         
-        isRefreshing = false
+        localRefreshing = false
     }
 }
 

@@ -93,11 +93,6 @@ final class CustomAppManager: ObservableObject {
         logger.info("Loaded \(self.customApps.count) custom apps")
     }
     
-    func manualRefresh() {
-        logger.info("Manual refresh triggered")
-        syncFromStore()
-    }
-    
     // MARK: - App Management
     
     func createNewApp(name: String, bundleId: String) -> AppConfig {
