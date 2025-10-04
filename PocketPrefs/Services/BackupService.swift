@@ -12,21 +12,36 @@ actor BackupService {
     private let logger = Logger(subsystem: "com.pocketprefs", category: "BackupService")
     private let fileOps = FileOperationService.shared
     
-    // Dynamic backup directory from preferences
-    private func getBaseDirectory() async -> String {
-        await PreferencesManager.shared.getBackupDirectory()
-    }
-    
     private enum Config {
         static let backupDateFormat = "yyyy-MM-dd_HH-mm-ss"
         static let backupPrefix = "Backup_"
         static let configFileName = "app_config.json"
     }
     
+    /// Reusable date formatter for backup timestamps
+    private static let dateFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = Config.backupDateFormat
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        return formatter
+    }()
+    
+    private func getBaseDirectory() async -> String {
+        await PreferencesManager.shared.getBackupDirectory()
+    }
+    
+    // MARK: - Public Interface
+    
+    /// Performs backup operation with optional incremental mode
+    /// - Parameters:
+    ///   - apps: Available applications for backup
+    ///   - incrementalBase: Base backup for incremental mode (if valid)
+    ///   - onProgress: Progress callback handler
+    /// - Returns: Backup result with success/failure statistics
     func performBackup(
         apps: [AppConfig],
         incrementalBase: BackupInfo? = nil,
-        onProgress: ProgressHandler? = nil
+        onProgress: ProgressHandler? = nil,
     ) async -> BackupResult {
         let selectedApps = apps.filter { $0.isSelected && $0.isInstalled }
         
@@ -43,12 +58,12 @@ actor BackupService {
             return await performIncrementalBackup(
                 selectedApps: selectedApps,
                 baseBackup: baseBackup,
-                onProgress: onProgress
+                onProgress: onProgress,
             )
         } else {
             return await performRegularBackup(
                 selectedApps: selectedApps,
-                onProgress: onProgress
+                onProgress: onProgress,
             )
         }
     }
@@ -57,7 +72,7 @@ actor BackupService {
     
     private func performRegularBackup(
         selectedApps: [AppConfig],
-        onProgress: ProgressHandler?
+        onProgress: ProgressHandler?,
     ) async -> BackupResult {
         let backupDir = await createBackupPath()
         
@@ -81,7 +96,7 @@ actor BackupService {
     private func performIncrementalBackup(
         selectedApps: [AppConfig],
         baseBackup: BackupInfo,
-        onProgress: ProgressHandler?
+        onProgress: ProgressHandler?,
     ) async -> BackupResult {
         let backupDir = await createBackupPath()
         
@@ -108,7 +123,7 @@ actor BackupService {
         let backupResult = await backupApps(
             selectedApps,
             to: backupDir,
-            onProgress: onProgress
+            onProgress: onProgress,
         )
         
         let totalSuccess = copyResult.successCount + backupResult.successCount
@@ -124,6 +139,7 @@ actor BackupService {
         )
     }
     
+    /// Copies unselected apps from base backup to maintain full state
     private func copyUnselectedAppsFromBase(
         baseBackup: BackupInfo,
         selectedBundleIds: Set<String>,
@@ -191,10 +207,11 @@ actor BackupService {
     
     // MARK: - Common Backup Logic
     
+    /// Backs up selected apps concurrently with progress reporting
     private func backupApps(
         _ apps: [AppConfig],
         to backupDir: String,
-        onProgress: ProgressHandler?
+        onProgress: ProgressHandler?,
     ) async -> BackupResult {
         var successCount = 0
         var failedApps: [(String, Error)] = []
@@ -226,8 +243,8 @@ actor BackupService {
                     total: totalApps,
                     message: String(
                         format: NSLocalizedString("Backup_Progress_Message", comment: ""),
-                        appName
-                    )
+                        appName,
+                    ),
                 )
                 await onProgress?(progress)
             }
@@ -270,15 +287,15 @@ actor BackupService {
     private func backupConfigFile(path: String, to destinationDir: String) async {
         let expandedPath = NSString(string: path).expandingTildeInPath
         
-        if await fileOps.fileExists(at: expandedPath) {
-            let fileName = URL(fileURLWithPath: expandedPath).lastPathComponent
-            let destPath = "\(destinationDir)/\(fileName)"
-            
-            do {
-                try await fileOps.copyFile(from: expandedPath, to: destPath)
-            } catch {
-                logger.warning("Failed to backup file \(path): \(error)")
-            }
+        guard await fileOps.fileExists(at: expandedPath) else { return }
+        
+        let fileName = URL(fileURLWithPath: expandedPath).lastPathComponent
+        let destPath = "\(destinationDir)/\(fileName)"
+        
+        do {
+            try await fileOps.copyFile(from: expandedPath, to: destPath)
+        } catch {
+            logger.warning("Failed to backup file \(path): \(error)")
         }
     }
     
@@ -294,13 +311,12 @@ actor BackupService {
     
     private func validateIncrementalBase(_ baseBackup: BackupInfo?) async -> Bool {
         guard let baseBackup else { return false }
-        
-        let fileManager = FileManager.default
-        return fileManager.fileExists(atPath: baseBackup.path)
+        return FileManager.default.fileExists(atPath: baseBackup.path)
     }
     
     // MARK: - Backup Scanning
     
+    /// Scans backup directory for existing backups
     func scanBackups() async -> [BackupInfo] {
         let baseDir = await getBaseDirectory()
         let fileManager = FileManager.default
@@ -314,17 +330,17 @@ actor BackupService {
             let backupDirs = try fileManager.contentsOfDirectory(atPath: baseDir)
                 .filter { $0.hasPrefix(Config.backupPrefix) }
                 .sorted(by: >)
-
+            
             var backups: [BackupInfo] = []
             
             for dirName in backupDirs {
                 let backupPath = "\(baseDir)/\(dirName)"
                 
-                guard let date = parseDateFromBackupName(dirName) else {
+                guard let date = parseBackupDate(from: dirName) else {
                     logger.warning("Skipping backup '\(dirName)' due to unparseable date format")
                     continue
                 }
-
+                
                 var backup = BackupInfo(
                     path: backupPath,
                     name: dirName,
@@ -398,30 +414,24 @@ actor BackupService {
             return nil
         }
     }
-
+    
     // MARK: - Helpers
     
     private func createBackupPath() async -> String {
         let baseDir = await getBaseDirectory()
-        let formatter = DateFormatter()
-        formatter.dateFormat = Config.backupDateFormat
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        let timestamp = formatter.string(from: Date())
-        
+        let timestamp = Self.dateFormatter.string(from: Date())
         return "\(baseDir)/\(Config.backupPrefix)\(timestamp)"
     }
     
+    /// Sanitizes app name for safe filesystem usage
+    /// - Note: Handles macOS/Windows forbidden characters
     private func sanitizeName(_ name: String) -> String {
-        name.replacingOccurrences(of: " ", with: "_")
+        let invalidChars = CharacterSet(charactersIn: "/\\:*?\"<>|")
+        return name.components(separatedBy: invalidChars).joined(separator: "_")
     }
     
-    private func parseDateFromBackupName(_ name: String) -> Date? {
+    private func parseBackupDate(from name: String) -> Date? {
         let dateString = name.replacingOccurrences(of: Config.backupPrefix, with: "")
-        
-        let formatter = DateFormatter()
-        formatter.dateFormat = Config.backupDateFormat
-        formatter.locale = Locale(identifier: "en_US_POSIX")
-        
-        return formatter.date(from: dateString)
+        return Self.dateFormatter.date(from: dateString)
     }
 }
