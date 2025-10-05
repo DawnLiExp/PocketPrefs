@@ -7,8 +7,9 @@
 
 import AppKit
 
-/// Terminal application icon configuration
-struct TerminalIconConfig {
+// MARK: - Terminal Icon Configuration
+
+struct TerminalIconConfig: Sendable {
     let letter: String
     let backgroundColor: NSColor
     let textColor: NSColor
@@ -17,7 +18,8 @@ struct TerminalIconConfig {
     static let defaultTextColor = NSColor.systemGreen
 }
 
-/// Icon size and padding constants
+// MARK: - Icon Constants
+
 enum IconConstants {
     static let standardSize = NSSize(width: 32, height: 32)
     static let terminalPadding: CGFloat = 3.5
@@ -25,64 +27,67 @@ enum IconConstants {
     static let terminalFontSize: CGFloat = 14
 }
 
-/// Terminal app icon mappings
+// MARK: - Terminal App Registry
+
 enum TerminalApps {
-    static let iconMappings: [String: TerminalIconConfig] = [
-        "oh-my-zsh": TerminalIconConfig(
+    private static let registry: [String: TerminalIconConfig] = [
+        "oh-my-zsh": .init(
             letter: "Z",
-            backgroundColor: TerminalIconConfig.defaultBackground,
-            textColor: TerminalIconConfig.defaultTextColor
+            backgroundColor: .darkGray,
+            textColor: .systemGreen,
         ),
-        "git": TerminalIconConfig(
+        "git": .init(
             letter: "G",
-            backgroundColor: TerminalIconConfig.defaultBackground,
-            textColor: TerminalIconConfig.defaultTextColor
+            backgroundColor: .darkGray,
+            textColor: .systemGreen,
         ),
-        "ssh": TerminalIconConfig(
+        "ssh": .init(
             letter: "S",
-            backgroundColor: TerminalIconConfig.defaultBackground,
-            textColor: TerminalIconConfig.defaultTextColor
+            backgroundColor: .darkGray,
+            textColor: .systemGreen,
         ),
-        "homebrew": TerminalIconConfig(
+        "homebrew": .init(
             letter: "H",
-            backgroundColor: TerminalIconConfig.defaultBackground,
-            textColor: TerminalIconConfig.defaultTextColor
+            backgroundColor: .darkGray,
+            textColor: .systemGreen,
         ),
-        // Future terminal tools can be added here
-        "vim": TerminalIconConfig(
+        "vim": .init(
             letter: "V",
-            backgroundColor: TerminalIconConfig.defaultBackground,
-            textColor: TerminalIconConfig.defaultTextColor
+            backgroundColor: .darkGray,
+            textColor: .systemGreen,
         ),
-        "tmux": TerminalIconConfig(
+        "tmux": .init(
             letter: "T",
-            backgroundColor: TerminalIconConfig.defaultBackground,
-            textColor: TerminalIconConfig.defaultTextColor
+            backgroundColor: .darkGray,
+            textColor: .systemGreen,
         ),
-        "docker": TerminalIconConfig(
+        "docker": .init(
             letter: "D",
             backgroundColor: NSColor(red: 0.13, green: 0.59, blue: 0.95, alpha: 1.0),
-            textColor: NSColor.white
+            textColor: .white,
         ),
-        "python": TerminalIconConfig(
+        "python": .init(
             letter: "P",
             backgroundColor: NSColor(red: 0.22, green: 0.44, blue: 0.64, alpha: 1.0),
-            textColor: NSColor(red: 1.0, green: 0.82, blue: 0.32, alpha: 1.0)
+            textColor: NSColor(red: 1.0, green: 0.82, blue: 0.32, alpha: 1.0),
         ),
-        "node": TerminalIconConfig(
+        "node": .init(
             letter: "N",
             backgroundColor: NSColor(red: 0.16, green: 0.43, blue: 0.16, alpha: 1.0),
-            textColor: NSColor.white
+            textColor: .white,
         ),
-        "ruby": TerminalIconConfig(
+        "ruby": .init(
             letter: "R",
             backgroundColor: NSColor(red: 0.61, green: 0.08, blue: 0.08, alpha: 1.0),
-            textColor: NSColor.white
-        )
+            textColor: .white,
+        ),
     ]
 
-    /// Get icon configuration for a bundle ID
     static func configuration(for bundleId: String) -> TerminalIconConfig? {
-        return iconMappings[bundleId]
+        registry[bundleId]
+    }
+
+    static func isTerminalApp(_ bundleId: String) -> Bool {
+        registry[bundleId] != nil
     }
 }
