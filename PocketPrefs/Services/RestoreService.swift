@@ -18,9 +18,9 @@ actor RestoreService {
     
     func performRestore(
         backup: BackupInfo,
-        onProgress: ProgressHandler? = nil
+        onProgress: ProgressHandler? = nil,
     ) async -> RestoreResult {
-        let selectedApps = backup.apps.filter { $0.isSelected }
+        let selectedApps = backup.apps.filter(\.isSelected)
         
         guard !selectedApps.isEmpty else {
             logger.error("No apps selected for restore")
@@ -63,8 +63,8 @@ actor RestoreService {
                         total: totalApps,
                         message: String(
                             format: NSLocalizedString("Restore_Progress_Message", comment: ""),
-                            appName
-                        )
+                            appName,
+                        ),
                     )
                     await onProgress?(progress)
                 }
@@ -74,7 +74,7 @@ actor RestoreService {
         return RestoreResult(
             successCount: successCount,
             failedApps: failedApps,
-            totalProcessed: selectedApps.count
+            totalProcessed: selectedApps.count,
         )
     }
     
@@ -102,19 +102,9 @@ actor RestoreService {
             return .failure(
                 AppError.restoreFailed(
                     app: app.name,
-                    reason: error.localizedDescription
-                )
+                    reason: error.localizedDescription,
+                ),
             )
-        }
-    }
-}
-
-// MARK: - Array Extension for Chunking
-
-private extension Array {
-    func chunked(into size: Int) -> [[Element]] {
-        return stride(from: 0, to: count, by: size).map {
-            Array(self[$0 ..< Swift.min($0 + size, count)])
         }
     }
 }
