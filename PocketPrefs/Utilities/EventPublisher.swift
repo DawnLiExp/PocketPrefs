@@ -1,5 +1,5 @@
 //
-//  SettingsEventPublisher.swift
+//  EventPublisher.swift
 //  PocketPrefs
 //
 //  Event publisher for settings lifecycle events

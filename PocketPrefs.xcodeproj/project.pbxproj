@@ -13,11 +13,11 @@
 		FC195B772E7EB80B00258310 /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4B2E7EB80B00258310 /* BackupManager.swift */; };
 		FC195B792E7EB80B00258310 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FC195B552E7EB80B00258310 /* Assets.xcassets */; };
 		FC195B7B2E7EB80B00258310 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = FC195B532E7EB80B00258310 /* Localizable.strings */; };
-		FC33DF562E8716CA007C47E5 /* ConcurrencyHelpers.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC33DF552E8716C8007C47E5 /* ConcurrencyHelpers.swift */; };
+		FC33DF562E8716CA007C47E5 /* ConcurrencyUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC33DF552E8716C8007C47E5 /* ConcurrencyUtilities.swift */; };
 		FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */; };
 		FC68CD272E866826003BBDD4 /* ImportExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC68CD262E866824003BBDD4 /* ImportExportManager.swift */; };
 		FC74CB462E85915F00F33BD4 /* CustomBackupPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */; };
-		FC8D8DCA2E90F06100AB8773 /* SettingsEventPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */; };
+		FC8D8DCA2E90F06100AB8773 /* EventPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8D8DC92E90F05F00AB8773 /* EventPublisher.swift */; };
 		FC93001A2E8ED59A00194E89 /* ProgressReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9300192E8ED59800194E89 /* ProgressReporting.swift */; };
 		FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED942E7EF4D600764A17 /* PathPickerView.swift */; };
 		FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */; };
@@ -53,11 +53,11 @@
 		FC195B512E7EB80B00258310 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
 		FC195B522E7EB80B00258310 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		FC195B552E7EB80B00258310 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
-		FC33DF552E8716C8007C47E5 /* ConcurrencyHelpers.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcurrencyHelpers.swift; sourceTree = "<group>"; };
+		FC33DF552E8716C8007C47E5 /* ConcurrencyUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcurrencyUtilities.swift; sourceTree = "<group>"; };
 		FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCheckboxToggleStyle.swift; sourceTree = "<group>"; };
 		FC68CD262E866824003BBDD4 /* ImportExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportExportManager.swift; sourceTree = "<group>"; };
 		FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBackupPicker.swift; sourceTree = "<group>"; };
-		FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsEventPublisher.swift; sourceTree = "<group>"; };
+		FC8D8DC92E90F05F00AB8773 /* EventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventPublisher.swift; sourceTree = "<group>"; };
 		FC9300192E8ED59800194E89 /* ProgressReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressReporting.swift; sourceTree = "<group>"; };
 		FCAFED942E7EF4D600764A17 /* PathPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathPickerView.swift; sourceTree = "<group>"; };
 		FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
@@ -99,36 +99,16 @@
 		FC195B7C2E7EB8EB00258310 /* PocketPrefs */ = {
 			isa = PBXGroup;
 			children = (
+				FC195B7F2E7EC4DE00258310 /* Resources */,
 				FCD9906F2E7EC53600C7087A /* info.plist */,
 				FCD990702E7EC53600C7087A /* PocketPrefs.entitlements */,
-				FC195B7F2E7EC4DE00258310 /* Resources */,
-				FC195B7D2E7EC4AB00258310 /* Managers */,
-				FC195B7E2E7EC4BE00258310 /* Models */,
-				FCD990802E7EC54200C7087A /* Services */,
-				FCD990812E7EC55700C7087A /* View */,
-				FCD990712E7EC53600C7087A /* PocketPrefsApp.swift */,
+				FC615D642E92A8C300DB964D /* App */,
+				FC615D662E92A90500DB964D /* Core */,
+				FC615D6A2E92AA0D00DB964D /* Features */,
+				FC615D712E92AAD900DB964D /* UI */,
+				FC615D742E92AB3600DB964D /* Utilities */,
 			);
 			path = PocketPrefs;
-			sourceTree = "<group>";
-		};
-		FC195B7D2E7EC4AB00258310 /* Managers */ = {
-			isa = PBXGroup;
-			children = (
-				FC195B4B2E7EB80B00258310 /* BackupManager.swift */,
-				FCD990BB2E7EDF0300C7087A /* CustomAppManager.swift */,
-				FC68CD262E866824003BBDD4 /* ImportExportManager.swift */,
-			);
-			path = Managers;
-			sourceTree = "<group>";
-		};
-		FC195B7E2E7EC4BE00258310 /* Models */ = {
-			isa = PBXGroup;
-			children = (
-				FC195B4D2E7EB80B00258310 /* AppConfig.swift */,
-				FC195B4E2E7EB80B00258310 /* AppError.swift */,
-				FC195B4F2E7EB80B00258310 /* BackupModels.swift */,
-			);
-			path = Models;
 			sourceTree = "<group>";
 		};
 		FC195B7F2E7EC4DE00258310 /* Resources */ = {
@@ -148,7 +128,72 @@
 			path = Localizations;
 			sourceTree = "<group>";
 		};
-		FC68CD222E865E1A003BBDD4 /* Main */ = {
+		FC615D642E92A8C300DB964D /* App */ = {
+			isa = PBXGroup;
+			children = (
+				FCD990712E7EC53600C7087A /* PocketPrefsApp.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		FC615D662E92A90500DB964D /* Core */ = {
+			isa = PBXGroup;
+			children = (
+				FC615D692E92A92200DB964D /* Managers */,
+				FC615D672E92A90F00DB964D /* Models */,
+				FC615D682E92A91800DB964D /* Services */,
+			);
+			path = Core;
+			sourceTree = "<group>";
+		};
+		FC615D672E92A90F00DB964D /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				FC195B4D2E7EB80B00258310 /* AppConfig.swift */,
+				FC195B4E2E7EB80B00258310 /* AppError.swift */,
+				FC195B4F2E7EB80B00258310 /* BackupModels.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		FC615D682E92A91800DB964D /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				FCF4B5B02E8D317F008DA739 /* AppInfoReader.swift */,
+				FCD990612E7EC53600C7087A /* BackupService.swift */,
+				FCD990622E7EC53600C7087A /* FileOperationService.swift */,
+				FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */,
+				FCD990642E7EC53600C7087A /* RestoreService.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		FC615D692E92A92200DB964D /* Managers */ = {
+			isa = PBXGroup;
+			children = (
+				FC195B4B2E7EB80B00258310 /* BackupManager.swift */,
+			);
+			path = Managers;
+			sourceTree = "<group>";
+		};
+		FC615D6A2E92AA0D00DB964D /* Features */ = {
+			isa = PBXGroup;
+			children = (
+				FC615D6B2E92AA1600DB964D /* Main */,
+				FC615D6E2E92AA5200DB964D /* Settings */,
+			);
+			path = Features;
+			sourceTree = "<group>";
+		};
+		FC615D6B2E92AA1600DB964D /* Main */ = {
+			isa = PBXGroup;
+			children = (
+				FC615D6C2E92AA1E00DB964D /* Views */,
+			);
+			path = Main;
+			sourceTree = "<group>";
+		};
+		FC615D6C2E92AA1E00DB964D /* Views */ = {
 			isa = PBXGroup;
 			children = (
 				FCD990672E7EC53600C7087A /* AppListView.swift */,
@@ -157,10 +202,19 @@
 				FCD9906C2E7EC53600C7087A /* RestoreListView.swift */,
 				FCD9906D2E7EC53600C7087A /* SidebarView.swift */,
 			);
-			path = Main;
+			path = Views;
 			sourceTree = "<group>";
 		};
-		FC68CD232E865E30003BBDD4 /* Settings */ = {
+		FC615D6E2E92AA5200DB964D /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				FC615D702E92AA6600DB964D /* Services */,
+				FC615D6F2E92AA5B00DB964D /* Views */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		FC615D6F2E92AA5B00DB964D /* Views */ = {
 			isa = PBXGroup;
 			children = (
 				FCAFED942E7EF4D600764A17 /* PathPickerView.swift */,
@@ -168,7 +222,48 @@
 				FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */,
 				FCD990B72E7EDEE900C7087A /* SettingsView.swift */,
 			);
-			path = Settings;
+			path = Views;
+			sourceTree = "<group>";
+		};
+		FC615D702E92AA6600DB964D /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				FCD990BB2E7EDF0300C7087A /* CustomAppManager.swift */,
+				FC68CD262E866824003BBDD4 /* ImportExportManager.swift */,
+				FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		FC615D712E92AAD900DB964D /* UI */ = {
+			isa = PBXGroup;
+			children = (
+				FC68CD242E865E41003BBDD4 /* Components */,
+				FC68CD252E865E4E003BBDD4 /* Extensions */,
+				FC615D732E92AB0000DB964D /* Theme */,
+			);
+			path = UI;
+			sourceTree = "<group>";
+		};
+		FC615D732E92AB0000DB964D /* Theme */ = {
+			isa = PBXGroup;
+			children = (
+				FCFA34982E86CE2D00BCA325 /* IconConfiguration.swift */,
+				FCD990632E7EC53600C7087A /* IconService.swift */,
+				FCF4B5B62E8D81C0008DA739 /* LanguageManager.swift */,
+				FCD990652E7EC53600C7087A /* ThemeManager.swift */,
+			);
+			path = Theme;
+			sourceTree = "<group>";
+		};
+		FC615D742E92AB3600DB964D /* Utilities */ = {
+			isa = PBXGroup;
+			children = (
+				FC33DF552E8716C8007C47E5 /* ConcurrencyUtilities.swift */,
+				FC8D8DC92E90F05F00AB8773 /* EventPublisher.swift */,
+				FC9300192E8ED59800194E89 /* ProgressReporting.swift */,
+			);
+			path = Utilities;
 			sourceTree = "<group>";
 		};
 		FC68CD242E865E41003BBDD4 /* Components */ = {
@@ -187,37 +282,6 @@
 				FCD990682E7EC53600C7087A /* ColorExtensions.swift */,
 			);
 			path = Extensions;
-			sourceTree = "<group>";
-		};
-		FCD990802E7EC54200C7087A /* Services */ = {
-			isa = PBXGroup;
-			children = (
-				FCF4B5B02E8D317F008DA739 /* AppInfoReader.swift */,
-				FCD990612E7EC53600C7087A /* BackupService.swift */,
-				FC33DF552E8716C8007C47E5 /* ConcurrencyHelpers.swift */,
-				FCD990622E7EC53600C7087A /* FileOperationService.swift */,
-				FCFA34982E86CE2D00BCA325 /* IconConfiguration.swift */,
-				FCD990632E7EC53600C7087A /* IconService.swift */,
-				FCF4B5B62E8D81C0008DA739 /* LanguageManager.swift */,
-				FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */,
-				FC9300192E8ED59800194E89 /* ProgressReporting.swift */,
-				FCD990642E7EC53600C7087A /* RestoreService.swift */,
-				FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */,
-				FCD990652E7EC53600C7087A /* ThemeManager.swift */,
-				FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */,
-			);
-			path = Services;
-			sourceTree = "<group>";
-		};
-		FCD990812E7EC55700C7087A /* View */ = {
-			isa = PBXGroup;
-			children = (
-				FC68CD222E865E1A003BBDD4 /* Main */,
-				FC68CD242E865E41003BBDD4 /* Components */,
-				FC68CD252E865E4E003BBDD4 /* Extensions */,
-				FC68CD232E865E30003BBDD4 /* Settings */,
-			);
-			path = View;
 			sourceTree = "<group>";
 		};
 		FCF9C4E02E7ADA4000013E27 = {
@@ -313,7 +377,7 @@
 				FC68CD272E866826003BBDD4 /* ImportExportManager.swift in Sources */,
 				FCF4B5B72E8D81C2008DA739 /* LanguageManager.swift in Sources */,
 				FCD990B82E7EDEEB00C7087A /* SettingsView.swift in Sources */,
-				FC33DF562E8716CA007C47E5 /* ConcurrencyHelpers.swift in Sources */,
+				FC33DF562E8716CA007C47E5 /* ConcurrencyUtilities.swift in Sources */,
 				FCD990752E7EC53600C7087A /* CommonComponents.swift in Sources */,
 				FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */,
 				FCD990762E7EC53600C7087A /* DetailView.swift in Sources */,
@@ -326,7 +390,7 @@
 				FCD9907C2E7EC53600C7087A /* BackupService.swift in Sources */,
 				FCD9907D2E7EC53600C7087A /* FileOperationService.swift in Sources */,
 				FCF4B5B32E8D6F38008DA739 /* PreferencesManager.swift in Sources */,
-				FC8D8DCA2E90F06100AB8773 /* SettingsEventPublisher.swift in Sources */,
+				FC8D8DCA2E90F06100AB8773 /* EventPublisher.swift in Sources */,
 				FCD9907E2E7EC53600C7087A /* RestoreService.swift in Sources */,
 				FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */,
 				FC195B692E7EB80B00258310 /* AppConfig.swift in Sources */,
