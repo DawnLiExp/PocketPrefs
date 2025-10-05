@@ -192,12 +192,6 @@ final class BackupManager: ObservableObject {
         await loadAppsTask?.value
     }
     
-    func manualRefresh() async {
-        logger.info("Manual refresh triggered")
-        await loadApps()
-        logger.info("Manual refresh completed")
-    }
-    
     // MARK: - Icon Management
     
     func getIcon(for app: AppConfig) -> NSImage {

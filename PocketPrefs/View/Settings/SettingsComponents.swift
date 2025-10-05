@@ -40,10 +40,7 @@ struct SettingsToolbar: View {
     let selectedCount: Int
     let onAddApp: () -> Void
     let onDeleteSelected: () -> Void
-    let onRefresh: () -> Void
     let customAppManager: CustomAppManager
-    @State private var showingRefreshHelp = false
-    @State private var isRefreshing = false
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -89,39 +86,6 @@ struct SettingsToolbar: View {
                 }
                 
                 Spacer()
-                
-                // Refresh help button
-                Button(action: { showingRefreshHelp.toggle() }) {
-                    Image(systemName: "questionmark.circle")
-                        .font(.system(size: 16))
-                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                }
-                .buttonStyle(.plain)
-                .popover(isPresented: $showingRefreshHelp, arrowEdge: .bottom) {
-                    RefreshHelpPopover()
-                }
-                
-                // Manual refresh button
-                Button(action: {
-                    Task {
-                        isRefreshing = true
-                        onRefresh()
-                        try? await Task.sleep(for: .milliseconds(300))
-                        isRefreshing = false
-                    }
-                }) {
-                    Image(systemName: "arrow.clockwise")
-                        .font(.system(size: 16, weight: .medium))
-                        .foregroundColor(Color.App.accent.color(for: colorScheme))
-                        .rotationEffect(.degrees(isRefreshing ? 360 : 0))
-                        .animation(
-                            isRefreshing ? .linear(duration: 0.6).repeatForever(autoreverses: false) : .default,
-                            value: isRefreshing,
-                        )
-                }
-                .buttonStyle(.plain)
-                .disabled(isRefreshing)
-                .help(NSLocalizedString("Settings_Refresh_Tooltip", comment: "Refresh app list"))
             }
             
             HStack {
@@ -566,54 +530,4 @@ struct AddAppSheet: View {
 @MainActor
 final class AppInfoReaderWrapper: ObservableObject {
     let reader = AppInfoReader()
-}
-
-// MARK: - Refresh Help Popover
-
-struct RefreshHelpPopover: View {
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(NSLocalizedString("Settings_Refresh_Help_Title", comment: "When to Refresh"))
-                .font(DesignConstants.Typography.headline)
-                .foregroundColor(Color.App.primary.color(for: colorScheme))
-            
-            VStack(alignment: .leading, spacing: 8) {
-                HelpItem(text: NSLocalizedString("Settings_Refresh_Help_Add", comment: "After adding new apps"))
-                HelpItem(text: NSLocalizedString("Settings_Refresh_Help_Edit", comment: "After editing app configurations"))
-                HelpItem(text: NSLocalizedString("Settings_Refresh_Help_Import", comment: "After importing configurations"))
-                HelpItem(text: NSLocalizedString("Settings_Refresh_Help_Delete", comment: "After deleting apps"))
-            }
-            
-            Divider()
-                .padding(.vertical, 4)
-            
-            Text(NSLocalizedString("Settings_Refresh_Help_Footer", comment: "Click refresh to sync changes to main interface"))
-                .font(DesignConstants.Typography.caption)
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
-        }
-        .padding(16)
-        .frame(width: 280)
-        .background(Color.App.secondaryBackground.color(for: colorScheme))
-    }
-}
-
-struct HelpItem: View {
-    let text: String
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        HStack(alignment: .top, spacing: 8) {
-            Image(systemName: "circle.fill")
-                .font(.system(size: 6))
-                .foregroundColor(Color.App.accent.color(for: colorScheme))
-                .padding(.top, 6)
-            
-            Text(text)
-                .font(DesignConstants.Typography.body)
-                .foregroundColor(Color.App.primary.color(for: colorScheme))
-                .fixedSize(horizontal: false, vertical: true)
-        }
-    }
 }

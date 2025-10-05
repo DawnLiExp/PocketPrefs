@@ -191,13 +191,3 @@
 "Language_Restart_Message" = "The application needs to restart for the language change to take effect.";
 "Language_Restart_Now" = "Restart Now";
 "Language_Restart_Later" = "Later";
-
-/* Manual Refresh Feature */
-"Settings_Refresh_Tooltip" = "Refresh app list";
-"Settings_Refresh_Help_Title" = "When to Refresh";
-"Settings_Refresh_Help_Add" = "After adding new apps";
-"Settings_Refresh_Help_Edit" = "After editing app configurations";
-"Settings_Refresh_Help_Import" = "After importing configurations";
-"Settings_Refresh_Help_Delete" = "After deleting apps";
-"Settings_Refresh_Help_Footer" = "Click refresh to sync changes to main interface";
-"Main_Refresh_Tooltip" = "Refresh app list from settings";
