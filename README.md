@@ -7,18 +7,23 @@
 
 PocketPrefs is a configuration management tool for macOS applications. It enables users to easily back up, restore, and manage application configurations and data, simplifying setup when migrating to a new device or reinstalling macOS.
 
-<div style="display: flex; justify-content: space-between; gap: 20px;">
-  <img src="docs/screenshot1.png" style="border: none; width: 32%;" />
-  <img src="docs/screenshot2.png" style="border: none; width: 32%;" />
-  <img src="docs/screenshot3.png" style="border: none; width: 32%;" />
+<div style="display: flex; justify-content: space-between; gap: 20px; margin-bottom: 20px;">
+  <img src="docs/screenshot1.png" style="border: none; width: 48%;" />
+  <img src="docs/screenshot2.png" style="border: none; width: 48%;" />
 </div>
+<div style="display: flex; justify-content: space-between; gap: 20px;">
+  <img src="docs/screenshot3.png" style="border: none; width: 48%;" />
+  <img src="docs/screenshot4.png" style="border: none; width: 48%;" />
+</div>
+
+💡 Besides app settings, you can back up any file via custom paths.
 
 ## Features
 
-- Backup and restore macOS application configurations and specified data.
-- Add and manage custom application configuration paths.
-- Import and export custom application configuration lists.
-- Default backup location: `~/Documents/PocketPrefsBackups`.
+- Backup and restore macOS application configurations and specified data
+- Add and manage custom application configuration paths
+- Import and export custom application configuration lists
+- Incremental backup mode support
 
 ## Data Security ⚠️
 

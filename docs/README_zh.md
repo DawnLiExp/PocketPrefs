@@ -3,22 +3,27 @@
 [![build](https://github.com/DawnLiExp/PocketPrefs/actions/workflows/cl.yml/badge.svg?branch=main)](https://github.com/DawnLiExp/PocketPrefs/actions/workflows/cl.yml)
 [![License](https://img.shields.io/badge/License-MIT-blue)](https://opensource.org/licenses/MIT)
 
-[English](README.md) | [中文](docs/README_zh.md)
+[English](../README.md) | [中文](README_zh.md)
 
 PocketPrefs 是一款 macOS 下的应用程序配置管理工具。它允许用户轻松备份、恢复和管理应用程序的配置文件及数据，简化在新设备或重装系统后的配置过程。
 
-<div style="display: flex; justify-content: space-between; gap: 20px;">
-  <img src="screenshot1.png" style="border: none; width: 32%;" />
-  <img src="screenshot2.png" style="border: none; width: 32%;" />
-  <img src="screenshot3.png" style="border: none; width: 32%;" />
+<div style="display: flex; justify-content: space-between; gap: 20px; margin-bottom: 20px;">
+  <img src="screenshot1.png" style="border: none; width: 48%;" />
+  <img src="screenshot2.png" style="border: none; width: 48%;" />
 </div>
+<div style="display: flex; justify-content: space-between; gap: 20px;">
+  <img src="screenshot3.png" style="border: none; width: 48%;" />
+  <img src="screenshot4.png" style="border: none; width: 48%;" />
+</div>
+
+💡 灵活使用，除了软件配置，你也可以通过自定义路径备份任意文件。
 
 ## 功能特性
 
 - 备份和恢复 macOS 应用程序的配置与指定数据
 - 添加并管理自定义应用程序的配置路径
 - 导入 / 导出自定义的应用程序配置列表
-- 备份默认存放路径：`~/Documents/PocketPrefsBackups`
+- 可选支持增量备份模式
 
 ## 数据安全 ⚠️
 
