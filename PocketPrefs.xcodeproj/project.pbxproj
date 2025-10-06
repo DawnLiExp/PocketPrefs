@@ -165,10 +165,8 @@
 		FC615D682E92A91800DB964D /* Services */ = {
 			isa = PBXGroup;
 			children = (
-				FCF4B5B02E8D317F008DA739 /* AppInfoReader.swift */,
 				FCD990612E7EC53600C7087A /* BackupService.swift */,
 				FCD990622E7EC53600C7087A /* FileOperationService.swift */,
-				FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */,
 				FCD990642E7EC53600C7087A /* RestoreService.swift */,
 			);
 			path = Services;
@@ -235,8 +233,10 @@
 		FC615D702E92AA6600DB964D /* Services */ = {
 			isa = PBXGroup;
 			children = (
+				FCF4B5B02E8D317F008DA739 /* AppInfoReader.swift */,
 				FCD990BB2E7EDF0300C7087A /* CustomAppManager.swift */,
 				FC68CD262E866824003BBDD4 /* ImportExportManager.swift */,
+				FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */,
 				FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */,
 			);
 			path = Services;

@@ -2,7 +2,7 @@
 //  AppInfoReader.swift
 //  PocketPrefs
 //
-//  Service for reading application bundle information
+//  Service for reading application bundle information - used in Settings
 //
 
 import Foundation
