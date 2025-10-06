@@ -12,30 +12,41 @@ import SwiftUI
 
 struct DetailContainerView: View {
     let selectedApp: AppConfig?
-    @ObservedObject var backupManager: BackupManager
+    @ObservedObject var coordinator: MainCoordinator
     let currentMode: MainView.AppMode
     @Binding var showingRestorePicker: Bool
     
+    @StateObject private var viewModel: DetailViewModel
+    
+    init(selectedApp: AppConfig?, coordinator: MainCoordinator, currentMode: MainView.AppMode, showingRestorePicker: Binding<Bool>) {
+        self.selectedApp = selectedApp
+        self.coordinator = coordinator
+        self.currentMode = currentMode
+        self._showingRestorePicker = showingRestorePicker
+        self._viewModel = StateObject(wrappedValue: DetailViewModel(coordinator: coordinator))
+    }
+    
     var body: some View {
-        if backupManager.isProcessing {
+        if coordinator.isProcessing {
             ProgressView(
-                progress: backupManager.currentProgress,
-                messageHistory: backupManager.statusMessageHistory,
+                progress: coordinator.currentProgress,
+                messageHistory: coordinator.statusMessageHistory,
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if currentMode == .backup {
             if let app = selectedApp {
                 AppDetailView(
                     app: app,
-                    backupManager: backupManager,
+                    coordinator: coordinator,
                     currentMode: currentMode,
                     showingRestorePicker: $showingRestorePicker,
+                    viewModel: viewModel,
                 )
             } else {
-                BackupPlaceholderView(backupManager: backupManager)
+                BackupPlaceholderView(coordinator: coordinator, viewModel: viewModel)
             }
         } else {
-            RestorePlaceholderView(backupManager: backupManager)
+            RestorePlaceholderView(coordinator: coordinator, viewModel: viewModel)
         }
     }
 }
@@ -44,14 +55,11 @@ struct DetailContainerView: View {
 
 struct AppDetailView: View {
     let app: AppConfig
-    @ObservedObject var backupManager: BackupManager
+    @ObservedObject var coordinator: MainCoordinator
     let currentMode: MainView.AppMode
     @Binding var showingRestorePicker: Bool
+    @ObservedObject var viewModel: DetailViewModel
     @Environment(\.colorScheme) var colorScheme
-    
-    private var hasValidSelection: Bool {
-        !backupManager.apps.filter { $0.isSelected && $0.isInstalled }.isEmpty
-    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -74,22 +82,18 @@ struct AppDetailView: View {
             HStack {
                 Spacer()
                 
-                Button(action: performBackup) {
+                Button(action: { viewModel.performBackup() }) {
                     Label(
                         NSLocalizedString("Detail_Action_Backup_Selected", comment: ""),
                         systemImage: "arrow.up.circle.fill",
                     )
                 }
                 .buttonStyle(PrimaryButtonStyle())
-                .disabled(!hasValidSelection)
+                .disabled(!viewModel.hasValidBackupSelection)
             }
             .padding(20)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-    
-    private func performBackup() {
-        backupManager.performBackup()
     }
 }
 
@@ -215,12 +219,9 @@ struct ConfigPathItem: View {
 // MARK: - BackupPlaceholderView
 
 struct BackupPlaceholderView: View {
-    @ObservedObject var backupManager: BackupManager
+    @ObservedObject var coordinator: MainCoordinator
+    @ObservedObject var viewModel: DetailViewModel
     @Environment(\.colorScheme) var colorScheme
-    
-    private var hasValidSelection: Bool {
-        !backupManager.apps.filter { $0.isSelected && $0.isInstalled }.isEmpty
-    }
     
     var body: some View {
         VStack(spacing: 32) {
@@ -239,7 +240,7 @@ struct BackupPlaceholderView: View {
             Spacer()
             
             VStack(spacing: 12) {
-                Button(action: performQuickBackup) {
+                Button(action: { viewModel.performBackup() }) {
                     HStack {
                         Image(systemName: "arrow.up.circle.fill")
                             .font(.system(size: 20))
@@ -248,31 +249,29 @@ struct BackupPlaceholderView: View {
                     .frame(maxWidth: .infinity)
                 }
                 .buttonStyle(PrimaryButtonStyle())
-                .disabled(!hasValidSelection)
+                .disabled(!viewModel.hasValidBackupSelection)
             }
             .padding(.horizontal, 40)
             .padding(.bottom, 40)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-    
-    private func performQuickBackup() {
-        backupManager.performBackup()
-    }
 }
 
 // MARK: - RestorePlaceholderView
 
 struct RestorePlaceholderView: View {
-    @ObservedObject var backupManager: BackupManager
+    @ObservedObject var coordinator: MainCoordinator
+    @ObservedObject var viewModel: DetailViewModel
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(spacing: 0) {
-            if let backup = backupManager.selectedBackup {
+            if let backup = coordinator.selectedBackup {
                 RestoreDetailContent(
-                    backupManager: backupManager,
+                    coordinator: coordinator,
                     backup: backup,
+                    viewModel: viewModel,
                 )
             } else {
                 RestoreEmptyDetail()
@@ -285,23 +284,10 @@ struct RestorePlaceholderView: View {
 // MARK: - RestoreDetailContent
 
 struct RestoreDetailContent: View {
-    @ObservedObject var backupManager: BackupManager
+    @ObservedObject var coordinator: MainCoordinator
     let backup: BackupInfo
+    @ObservedObject var viewModel: DetailViewModel
     @Environment(\.colorScheme) var colorScheme
-    
-    private var selectedAppsCount: Int {
-        backupManager.selectedBackup?.apps.count(where: { $0.isSelected }) ?? 0
-    }
-    
-    private var uninstalledSelectedCount: Int {
-        backupManager.selectedBackup?.apps.count(where: {
-            !$0.isCurrentlyInstalled && $0.isSelected
-        }) ?? 0
-    }
-    
-    private var hasSelectedApps: Bool {
-        selectedAppsCount > 0
-    }
     
     var body: some View {
         VStack(spacing: 0) {
@@ -330,13 +316,13 @@ struct RestoreDetailContent: View {
                     Label(
                         String(
                             format: NSLocalizedString("Detail_Restore_Selected_Apps_Count", comment: ""),
-                            selectedAppsCount,
+                            viewModel.selectedRestoreAppsCount(backup: backup),
                         ),
                         systemImage: "checkmark.circle.fill",
                     )
                     .font(DesignConstants.Typography.body)
                     .foregroundColor(
-                        selectedAppsCount > 0
+                        viewModel.selectedRestoreAppsCount(backup: backup) > 0
                             ? Color.App.success.color(for: colorScheme)
                             : Color.App.secondary.color(for: colorScheme),
                     )
@@ -344,13 +330,13 @@ struct RestoreDetailContent: View {
                     Label(
                         String(
                             format: NSLocalizedString("Detail_Restore_Uninstalled_Apps_Count", comment: ""),
-                            uninstalledSelectedCount,
+                            viewModel.uninstalledSelectedCount(backup: backup),
                         ),
                         systemImage: "exclamationmark.triangle.fill",
                     )
                     .font(DesignConstants.Typography.body)
                     .foregroundColor(
-                        uninstalledSelectedCount > 0
+                        viewModel.uninstalledSelectedCount(backup: backup) > 0
                             ? Color.App.warning.color(for: colorScheme)
                             : Color.App.secondary.color(for: colorScheme),
                     )
@@ -359,14 +345,14 @@ struct RestoreDetailContent: View {
             .padding(20)
             .background(Color.App.contentAreaBackground.color(for: colorScheme))
             
-            if hasSelectedApps {
+            if viewModel.hasSelectedRestoreApps(backup: backup) {
                 ScrollView {
                     VStack(alignment: .leading, spacing: 8) {
                         Text(NSLocalizedString("Detail_Restore_Will_Restore_Apps", comment: ""))
                             .font(DesignConstants.Typography.headline)
                             .padding(.bottom, 8)
                         
-                        ForEach(backupManager.selectedBackup?.apps.filter(\.isSelected) ?? []) { app in
+                        ForEach(coordinator.selectedBackup?.apps.filter(\.isSelected) ?? []) { app in
                             HStack {
                                 Image(systemName: app.isCurrentlyInstalled
                                     ? "checkmark.circle"
@@ -411,21 +397,17 @@ struct RestoreDetailContent: View {
             HStack {
                 Spacer()
                 
-                Button(action: performRestore) {
+                Button(action: { viewModel.performRestore() }) {
                     Label(
                         NSLocalizedString("Detail_Restore_Action_Restore_Selected", comment: ""),
                         systemImage: "arrow.down.circle.fill",
                     )
                 }
                 .buttonStyle(PrimaryButtonStyle())
-                .disabled(!hasSelectedApps)
+                .disabled(!viewModel.hasSelectedRestoreApps(backup: backup))
             }
             .padding(20)
         }
-    }
-    
-    private func performRestore() {
-        backupManager.performRestore()
     }
 }
 

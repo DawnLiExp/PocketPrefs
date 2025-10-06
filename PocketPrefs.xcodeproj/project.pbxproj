@@ -10,11 +10,14 @@
 		FC195B692E7EB80B00258310 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4D2E7EB80B00258310 /* AppConfig.swift */; };
 		FC195B6A2E7EB80B00258310 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4E2E7EB80B00258310 /* AppError.swift */; };
 		FC195B6C2E7EB80B00258310 /* BackupModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4F2E7EB80B00258310 /* BackupModels.swift */; };
-		FC195B772E7EB80B00258310 /* BackupManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4B2E7EB80B00258310 /* BackupManager.swift */; };
+		FC195B772E7EB80B00258310 /* MainCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4B2E7EB80B00258310 /* MainCoordinator.swift */; };
 		FC195B792E7EB80B00258310 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FC195B552E7EB80B00258310 /* Assets.xcassets */; };
 		FC195B7B2E7EB80B00258310 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = FC195B532E7EB80B00258310 /* Localizable.strings */; };
 		FC33DF562E8716CA007C47E5 /* ConcurrencyUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC33DF552E8716C8007C47E5 /* ConcurrencyUtilities.swift */; };
 		FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */; };
+		FC615D7E2E92C3AE00DB964D /* AppListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC615D7D2E92C3AB00DB964D /* AppListViewModel.swift */; };
+		FC615D802E92C3BC00DB964D /* RestoreListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC615D7F2E92C3BC00DB964D /* RestoreListViewModel.swift */; };
+		FC615D822E92C3D100DB964D /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC615D812E92C3D000DB964D /* DetailViewModel.swift */; };
 		FC68CD272E866826003BBDD4 /* ImportExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC68CD262E866824003BBDD4 /* ImportExportManager.swift */; };
 		FC74CB462E85915F00F33BD4 /* CustomBackupPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */; };
 		FC8D8DCA2E90F06100AB8773 /* EventPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8D8DC92E90F05F00AB8773 /* EventPublisher.swift */; };
@@ -46,7 +49,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
-		FC195B4B2E7EB80B00258310 /* BackupManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupManager.swift; sourceTree = "<group>"; };
+		FC195B4B2E7EB80B00258310 /* MainCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainCoordinator.swift; sourceTree = "<group>"; };
 		FC195B4D2E7EB80B00258310 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		FC195B4E2E7EB80B00258310 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
 		FC195B4F2E7EB80B00258310 /* BackupModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupModels.swift; sourceTree = "<group>"; };
@@ -55,6 +58,9 @@
 		FC195B552E7EB80B00258310 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FC33DF552E8716C8007C47E5 /* ConcurrencyUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcurrencyUtilities.swift; sourceTree = "<group>"; };
 		FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCheckboxToggleStyle.swift; sourceTree = "<group>"; };
+		FC615D7D2E92C3AB00DB964D /* AppListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppListViewModel.swift; sourceTree = "<group>"; };
+		FC615D7F2E92C3BC00DB964D /* RestoreListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreListViewModel.swift; sourceTree = "<group>"; };
+		FC615D812E92C3D000DB964D /* DetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewModel.swift; sourceTree = "<group>"; };
 		FC68CD262E866824003BBDD4 /* ImportExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportExportManager.swift; sourceTree = "<group>"; };
 		FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBackupPicker.swift; sourceTree = "<group>"; };
 		FC8D8DC92E90F05F00AB8773 /* EventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventPublisher.swift; sourceTree = "<group>"; };
@@ -171,7 +177,7 @@
 		FC615D692E92A92200DB964D /* Managers */ = {
 			isa = PBXGroup;
 			children = (
-				FC195B4B2E7EB80B00258310 /* BackupManager.swift */,
+				FC195B4B2E7EB80B00258310 /* MainCoordinator.swift */,
 			);
 			path = Managers;
 			sourceTree = "<group>";
@@ -188,6 +194,7 @@
 		FC615D6B2E92AA1600DB964D /* Main */ = {
 			isa = PBXGroup;
 			children = (
+				FC615D7C2E92C39400DB964D /* ViewModels */,
 				FC615D6C2E92AA1E00DB964D /* Views */,
 			);
 			path = Main;
@@ -264,6 +271,16 @@
 				FC9300192E8ED59800194E89 /* ProgressReporting.swift */,
 			);
 			path = Utilities;
+			sourceTree = "<group>";
+		};
+		FC615D7C2E92C39400DB964D /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				FC615D7D2E92C3AB00DB964D /* AppListViewModel.swift */,
+				FC615D812E92C3D000DB964D /* DetailViewModel.swift */,
+				FC615D7F2E92C3BC00DB964D /* RestoreListViewModel.swift */,
+			);
+			path = ViewModels;
 			sourceTree = "<group>";
 		};
 		FC68CD242E865E41003BBDD4 /* Components */ = {
@@ -384,6 +401,7 @@
 				FCD990C02E7EDF1D00C7087A /* UserConfigStore.swift in Sources */,
 				FCD990772E7EC53600C7087A /* RestoreListView.swift in Sources */,
 				FCD990782E7EC53600C7087A /* ThemeManager.swift in Sources */,
+				FC615D802E92C3BC00DB964D /* RestoreListViewModel.swift in Sources */,
 				FCD990792E7EC53600C7087A /* SidebarView.swift in Sources */,
 				FCD9907A2E7EC53600C7087A /* PocketPrefsApp.swift in Sources */,
 				FCD9907B2E7EC53600C7087A /* IconService.swift in Sources */,
@@ -392,14 +410,16 @@
 				FCF4B5B32E8D6F38008DA739 /* PreferencesManager.swift in Sources */,
 				FC8D8DCA2E90F06100AB8773 /* EventPublisher.swift in Sources */,
 				FCD9907E2E7EC53600C7087A /* RestoreService.swift in Sources */,
+				FC615D7E2E92C3AE00DB964D /* AppListViewModel.swift in Sources */,
 				FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */,
 				FC195B692E7EB80B00258310 /* AppConfig.swift in Sources */,
 				FCF4B5B12E8D3181008DA739 /* AppInfoReader.swift in Sources */,
 				FC195B6A2E7EB80B00258310 /* AppError.swift in Sources */,
+				FC615D822E92C3D100DB964D /* DetailViewModel.swift in Sources */,
 				FCF4B5B52E8D6F4D008DA739 /* PreferencesView.swift in Sources */,
 				FC195B6C2E7EB80B00258310 /* BackupModels.swift in Sources */,
 				FCFA34992E86CE2F00BCA325 /* IconConfiguration.swift in Sources */,
-				FC195B772E7EB80B00258310 /* BackupManager.swift in Sources */,
+				FC195B772E7EB80B00258310 /* MainCoordinator.swift in Sources */,
 				FCD990BC2E7EDF0500C7087A /* CustomAppManager.swift in Sources */,
 			);
 		};

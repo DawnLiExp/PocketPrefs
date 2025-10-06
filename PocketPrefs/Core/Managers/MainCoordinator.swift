@@ -1,8 +1,8 @@
 //
-//  BackupManager.swift
+//  MainCoordinator.swift
 //  PocketPrefs
 //
-//  Main backup manager with structured concurrency
+//  Core business logic coordinator with structured concurrency
 //
 
 import Foundation
@@ -10,7 +10,7 @@ import os.log
 import SwiftUI
 
 @MainActor
-final class BackupManager: ObservableObject {
+final class MainCoordinator: ObservableObject {
     @Published var apps: [AppConfig] = []
     @Published var isProcessing = false
     @Published var statusMessage = ""
@@ -21,7 +21,7 @@ final class BackupManager: ObservableObject {
     @Published var isIncrementalMode = false
     @Published var incrementalBaseBackup: BackupInfo?
     
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "BackupManager")
+    private let logger = Logger(subsystem: "com.pocketprefs", category: "MainCoordinator")
     private let iconService = IconService.shared
     private let backupService = BackupService()
     private let restoreService = RestoreService()
@@ -58,6 +58,7 @@ final class BackupManager: ObservableObject {
     
     // MARK: - Event Subscriptions
     
+    /// Subscribe to user config store events
     private func subscribeToUserConfigEvents() {
         userConfigEventTask?.cancel()
         userConfigEventTask = Task { [weak self] in
@@ -83,6 +84,7 @@ final class BackupManager: ObservableObject {
         }
     }
     
+    /// Subscribe to settings window events
     private func subscribeToSettingsEvents() {
         settingsEventTask?.cancel()
         settingsEventTask = Task { [weak self] in
@@ -99,12 +101,14 @@ final class BackupManager: ObservableObject {
         }
     }
     
+    /// Handle settings window close event
     private func handleSettingsClose() async {
         logger.info("Settings closed event received")
         await loadApps()
         logger.info("Settings close sync completed")
     }
     
+    /// Subscribe to preferences directory change events
     private func subscribeToPreferencesEvents() {
         prefsEventTask?.cancel()
         prefsEventTask = Task { [weak self] in
@@ -121,6 +125,7 @@ final class BackupManager: ObservableObject {
         }
     }
     
+    /// Subscribe to icon loading events with batching
     private func subscribeToIconEvents() {
         iconEventTask?.cancel()
         iconEventTask = Task { [weak self] in
@@ -143,6 +148,7 @@ final class BackupManager: ObservableObject {
         }
     }
     
+    /// Handle backup directory change
     private func handleDirectoryChange() async {
         logger.info("Handling backup directory change")
         
@@ -154,8 +160,9 @@ final class BackupManager: ObservableObject {
         logger.info("Rescan completed: \(self.availableBackups.count) backups found")
     }
     
-    // MARK: - App Loading
+    // MARK: - App Management
     
+    /// Load and update app installation status
     func loadApps() async {
         loadAppsTask?.cancel()
         
@@ -194,16 +201,19 @@ final class BackupManager: ObservableObject {
     
     // MARK: - Icon Management
     
+    /// Get icon for app config
     func getIcon(for app: AppConfig) -> NSImage {
         iconService.getIcon(for: app.bundleId, category: app.category)
     }
     
+    /// Get icon for backup app info
     func getIcon(for backupApp: BackupAppInfo) -> NSImage {
         iconService.getIcon(for: backupApp.bundleId, category: backupApp.category)
     }
     
-    // MARK: - Backup Operations
+    // MARK: - Backup Management
     
+    /// Scan for available backups
     func scanBackups() async {
         scanBackupsTask?.cancel()
         
@@ -239,22 +249,26 @@ final class BackupManager: ObservableObject {
         await scanBackupsTask?.value
     }
     
+    /// Select backup for restore operations
     func selectBackup(_ backup: BackupInfo) {
         selectedBackup = backup
     }
     
+    /// Select base backup for incremental operations
     func selectIncrementalBase(_ backup: BackupInfo) {
         incrementalBaseBackup = backup
     }
     
     // MARK: - Selection Management
     
+    /// Toggle app selection state
     func toggleSelection(for app: AppConfig) {
         if let index = apps.firstIndex(where: { $0.id == app.id }) {
             apps[index].isSelected.toggle()
         }
     }
     
+    /// Select all installed apps
     func selectAll() {
         apps = apps.map { app in
             var updated = app
@@ -265,6 +279,7 @@ final class BackupManager: ObservableObject {
         }
     }
     
+    /// Deselect all apps
     func deselectAll() {
         apps = apps.map { app in
             var updated = app
@@ -273,6 +288,7 @@ final class BackupManager: ObservableObject {
         }
     }
     
+    /// Toggle restore app selection
     func toggleRestoreSelection(for app: BackupAppInfo) {
         guard let currentBackup = selectedBackup,
               let backupIndex = availableBackups.firstIndex(where: { $0.id == currentBackup.id }),
@@ -283,14 +299,16 @@ final class BackupManager: ObservableObject {
         selectedBackup = availableBackups[backupIndex]
     }
     
-    // MARK: - Backup & Restore
+    // MARK: - Operations
     
+    /// Start backup operation
     func performBackup() {
         Task {
             await performBackupAsync()
         }
     }
     
+    /// Execute backup with progress tracking
     private func performBackupAsync() async {
         let startTime = Date()
         isProcessing = true
@@ -331,6 +349,7 @@ final class BackupManager: ObservableObject {
         statusMessageHistory = []
     }
     
+    /// Start restore operation
     func performRestore() {
         guard let backup = selectedBackup else {
             logger.error("No backup selected for restore")
@@ -342,6 +361,7 @@ final class BackupManager: ObservableObject {
         }
     }
     
+    /// Execute restore with progress tracking
     private func performRestoreAsync(backup: BackupInfo) async {
         let startTime = Date()
         isProcessing = true
@@ -379,12 +399,14 @@ final class BackupManager: ObservableObject {
         statusMessageHistory = []
     }
     
+    /// Scan apps in specific backup directory
     func scanAppsInBackup(at path: String) async -> [BackupAppInfo] {
         await backupService.scanAppsInBackup(at: path)
     }
     
     // MARK: - Message History
     
+    /// Add message to status history with limit
     private func addToMessageHistory(_ message: String) {
         statusMessageHistory.append(message)
         if statusMessageHistory.count > 3 {

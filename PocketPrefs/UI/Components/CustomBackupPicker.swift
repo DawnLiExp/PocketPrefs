@@ -7,16 +7,14 @@
 
 import SwiftUI
 
-/// A custom backup selector view that replaces the system-style picker with a more minimalist design.
-/// It displays the currently selected backup and, when clicked, reveals a menu of available backups.
 struct CustomBackupPicker: View {
-    @ObservedObject var backupManager: BackupManager
+    @ObservedObject var coordinator: MainCoordinator
     @Environment(\.colorScheme) var colorScheme
     @State private var isMenuPresented: Bool = false
 
     var body: some View {
         Group {
-            if backupManager.availableBackups.isEmpty {
+            if coordinator.availableBackups.isEmpty {
                 Text(NSLocalizedString("No_Backups_Found", comment: "No backups available"))
                     .font(DesignConstants.Typography.body)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
@@ -38,15 +36,15 @@ struct CustomBackupPicker: View {
                         .foregroundColor(Color.App.primary.color(for: colorScheme))
 
                     Menu {
-                        ForEach(backupManager.availableBackups) { backup in
+                        ForEach(coordinator.availableBackups) { backup in
                             Button {
-                                backupManager.selectBackup(backup)
+                                coordinator.selectBackup(backup)
                             } label: {
                                 Text(backup.formattedName)
                             }
                         }
                     } label: {
-                        Text(backupManager.selectedBackup?.formattedName ?? "")
+                        Text(coordinator.selectedBackup?.formattedName ?? "")
                             .font(DesignConstants.Typography.body)
                             .foregroundColor(Color.App.primary.color(for: colorScheme))
                             .padding(.horizontal, 12)
