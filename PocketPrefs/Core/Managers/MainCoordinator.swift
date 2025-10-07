@@ -14,8 +14,14 @@ final class MainCoordinator: ObservableObject {
     // MARK: - Internal State (not published)
     
     private var apps: [AppConfig] = []
-    var availableBackups: [BackupInfo] = []
-    private var selectedBackup: BackupInfo?
+    
+    // MARK: - Published State
+
+    // These need to be @Published for direct SwiftUI observers (e.g., CustomBackupPicker)
+    // Events are still published for ViewModel layer communication
+    
+    @Published private(set) var availableBackups: [BackupInfo] = []
+    @Published private(set) var selectedBackup: BackupInfo?
     
     // MARK: - Services
     
@@ -287,7 +293,7 @@ final class MainCoordinator: ObservableObject {
         availableBackups[backupIndex].apps[appIndex].isSelected.toggle()
         selectedBackup = availableBackups[backupIndex]
         
-        // Publish both events to ensure all ViewModels update
+        // Publish events for ViewModel layer
         CoordinatorEventPublisher.shared.publish(.backupsUpdated(availableBackups))
         CoordinatorEventPublisher.shared.publish(.selectedBackupUpdated(selectedBackup))
     }

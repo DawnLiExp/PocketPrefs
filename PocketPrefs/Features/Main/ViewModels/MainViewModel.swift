@@ -22,7 +22,6 @@ final class MainViewModel: ObservableObject {
     
     @Published var isIncrementalMode = false
     @Published var incrementalBaseBackup: BackupInfo?
-    @Published var availableBackups: [BackupInfo] = []
     
     // MARK: - Dependencies
     
@@ -79,8 +78,8 @@ final class MainViewModel: ObservableObject {
         switch event {
         case .appsUpdated:
             break
-        case .backupsUpdated(let backups):
-            handleBackupsUpdate(backups)
+        case .backupsUpdated:
+            handleBackupsUpdate()
         case .selectedBackupUpdated:
             break
         case .operationStarted:
@@ -114,8 +113,9 @@ final class MainViewModel: ObservableObject {
     
     // MARK: - State Updates
     
-    private func handleBackupsUpdate(_ backups: [BackupInfo]) {
-        availableBackups = backups
+    private func handleBackupsUpdate() {
+        guard let coordinator else { return }
+        let availableBackups = coordinator.currentBackups
         
         if let currentBase = incrementalBaseBackup,
            !availableBackups.contains(currentBase)

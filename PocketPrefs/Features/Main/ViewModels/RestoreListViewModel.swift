@@ -123,19 +123,11 @@ final class RestoreListViewModel: ObservableObject {
     }
     
     // MARK: - Event Handlers
-
-    private var lastBackupsUpdate: Date?
-    private var lastSelectedBackupUpdate: Date?
-
+    
     private func handleBackupsUpdate(_ backups: [BackupInfo]) {
-        if let last = lastBackupsUpdate, Date().timeIntervalSince(last) < 0.1 {
-            return
-        }
-        lastBackupsUpdate = Date()
-        
         availableBackups = backups
         
-        // Update selectedBackup from new backups array
+        // Sync selectedBackup with updated data
         if let current = selectedBackup,
            let updated = backups.first(where: { $0.id == current.id })
         {
@@ -147,15 +139,10 @@ final class RestoreListViewModel: ObservableObject {
         updateFilteredApps()
         updateCachedState()
     }
-
+    
     private func handleSelectedBackupUpdate(_ backup: BackupInfo?) {
-        if let last = lastSelectedBackupUpdate, Date().timeIntervalSince(last) < 0.1 {
-            return
-        }
-        lastSelectedBackupUpdate = Date()
-        
+        // Sync with availableBackups to get latest state
         if let backup {
-            // Sync with availableBackups to get latest state
             if let updated = availableBackups.first(where: { $0.id == backup.id }) {
                 selectedBackup = updated
             } else {

@@ -281,9 +281,9 @@
 		FC615D7C2E92C39400DB964D /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
-				FC0567B82E94741300958677 /* MainViewModel.swift */,
 				FC615D7D2E92C3AB00DB964D /* AppListViewModel.swift */,
 				FC615D812E92C3D000DB964D /* DetailViewModel.swift */,
+				FC0567B82E94741300958677 /* MainViewModel.swift */,
 				FC615D7F2E92C3BC00DB964D /* RestoreListViewModel.swift */,
 			);
 			path = ViewModels;

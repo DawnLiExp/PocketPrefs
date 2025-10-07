@@ -83,7 +83,7 @@ struct AppListHeader: View {
     @FocusState private var isSearchFocused: Bool
     
     private var hasAvailableBackups: Bool {
-        !mainViewModel.availableBackups.isEmpty
+        !coordinator.currentBackups.isEmpty
     }
     
     var body: some View {
@@ -235,7 +235,7 @@ struct IncrementalBaseSelector: View {
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
             
             Menu {
-                ForEach(mainViewModel.availableBackups) { backup in
+                ForEach(coordinator.currentBackups) { backup in
                     Button {
                         mainViewModel.selectIncrementalBase(backup)
                     } label: {
