@@ -2,21 +2,28 @@
 //  AppListView.swift
 //  PocketPrefs
 //
-//  Main view for displaying applications available for backup operations
-//  Supports incremental backup mode when available backups exist
+//  Backup app list with incremental mode support
+//
 
 import SwiftUI
 
 struct AppListView: View {
     @ObservedObject var coordinator: MainCoordinator
+    @ObservedObject var mainViewModel: MainViewModel
     @Binding var selectedApp: AppConfig?
     let currentMode: MainView.AppMode
     
     @StateObject private var viewModel: AppListViewModel
     @Environment(\.colorScheme) var colorScheme
     
-    init(coordinator: MainCoordinator, selectedApp: Binding<AppConfig?>, currentMode: MainView.AppMode) {
+    init(
+        coordinator: MainCoordinator,
+        mainViewModel: MainViewModel,
+        selectedApp: Binding<AppConfig?>,
+        currentMode: MainView.AppMode,
+    ) {
         self.coordinator = coordinator
+        self.mainViewModel = mainViewModel
         self._selectedApp = selectedApp
         self.currentMode = currentMode
         self._viewModel = StateObject(wrappedValue: AppListViewModel(coordinator: coordinator))
@@ -27,6 +34,7 @@ struct AppListView: View {
             AppListHeader(
                 searchText: $viewModel.searchText,
                 coordinator: coordinator,
+                mainViewModel: mainViewModel,
                 viewModel: viewModel,
             )
             
@@ -40,6 +48,7 @@ struct AppListView: View {
                                 app: app,
                                 isSelected: selectedApp?.id == app.id,
                                 coordinator: coordinator,
+                                viewModel: viewModel,
                                 currentMode: currentMode,
                             ) {
                                 withAnimation(DesignConstants.Animation.quick) {
@@ -55,13 +64,10 @@ struct AppListView: View {
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
-            viewModel.onAppear(apps: coordinator.apps)
-        }
-        .onReceive(coordinator.objectWillChange) { _ in
-            viewModel.handleAppsChange(apps: coordinator.apps)
+            viewModel.onAppear()
         }
         .onChange(of: viewModel.searchText) { _, newValue in
-            viewModel.handleSearchChange(newValue, apps: coordinator.apps)
+            viewModel.handleSearchChange(newValue)
         }
     }
 }
@@ -71,12 +77,13 @@ struct AppListView: View {
 struct AppListHeader: View {
     @Binding var searchText: String
     @ObservedObject var coordinator: MainCoordinator
+    @ObservedObject var mainViewModel: MainViewModel
     @ObservedObject var viewModel: AppListViewModel
     @Environment(\.colorScheme) var colorScheme
     @FocusState private var isSearchFocused: Bool
     
     private var hasAvailableBackups: Bool {
-        !coordinator.availableBackups.isEmpty
+        !mainViewModel.availableBackups.isEmpty
     }
     
     var body: some View {
@@ -132,7 +139,7 @@ struct AppListHeader: View {
                 .toggleStyle(CustomCheckboxToggleStyle())
                 
                 IncrementalModeToggle(
-                    coordinator: coordinator,
+                    mainViewModel: mainViewModel,
                     hasAvailableBackups: hasAvailableBackups,
                 )
                 
@@ -140,16 +147,17 @@ struct AppListHeader: View {
                 
                 Text(String(
                     format: NSLocalizedString("Selected_Count", comment: ""),
-                    coordinator.apps.count(where: { $0.isSelected }),
-                    coordinator.apps.count,
+                    viewModel.apps.count(where: { $0.isSelected }),
+                    viewModel.apps.count,
                 ))
                 .font(DesignConstants.Typography.caption)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
-            .padding(.bottom, coordinator.isIncrementalMode && hasAvailableBackups ? 0 : 0)
+            .padding(.bottom, mainViewModel.isIncrementalMode && hasAvailableBackups ? 0 : 0)
             
-            if coordinator.isIncrementalMode, hasAvailableBackups {
+            if mainViewModel.isIncrementalMode, hasAvailableBackups {
                 IncrementalBaseSelector(
+                    mainViewModel: mainViewModel,
                     coordinator: coordinator,
                     isRefreshing: .constant(false),
                 )
@@ -166,7 +174,7 @@ struct AppListHeader: View {
 }
 
 struct IncrementalModeToggle: View {
-    @ObservedObject var coordinator: MainCoordinator
+    @ObservedObject var mainViewModel: MainViewModel
     let hasAvailableBackups: Bool
     @State private var showingHelp = false
     @Environment(\.colorScheme) var colorScheme
@@ -174,10 +182,10 @@ struct IncrementalModeToggle: View {
     var body: some View {
         HStack(spacing: 6) {
             Toggle(isOn: Binding(
-                get: { coordinator.isIncrementalMode },
+                get: { mainViewModel.isIncrementalMode },
                 set: { newValue in
                     if hasAvailableBackups {
-                        coordinator.isIncrementalMode = newValue
+                        mainViewModel.isIncrementalMode = newValue
                     }
                 },
             )) {
@@ -214,6 +222,7 @@ struct IncrementalModeHelpPopover: View {
 }
 
 struct IncrementalBaseSelector: View {
+    @ObservedObject var mainViewModel: MainViewModel
     @ObservedObject var coordinator: MainCoordinator
     @Binding var isRefreshing: Bool
     @Environment(\.colorScheme) var colorScheme
@@ -226,15 +235,15 @@ struct IncrementalBaseSelector: View {
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
             
             Menu {
-                ForEach(coordinator.availableBackups) { backup in
+                ForEach(mainViewModel.availableBackups) { backup in
                     Button {
-                        coordinator.selectIncrementalBase(backup)
+                        mainViewModel.selectIncrementalBase(backup)
                     } label: {
                         Text(backup.formattedName)
                     }
                 }
             } label: {
-                Text(coordinator.incrementalBaseBackup?.formattedName ?? "")
+                Text(mainViewModel.incrementalBaseBackup?.formattedName ?? "")
                     .font(DesignConstants.Typography.body)
                     .foregroundColor(Color.App.primary.color(for: colorScheme))
                     .padding(.horizontal, 12)
@@ -275,7 +284,6 @@ struct IncrementalBaseSelector: View {
         }
     }
     
-    /// Refresh backup list with visual feedback
     @MainActor
     private func refreshBackups() async {
         localRefreshing = true
@@ -318,6 +326,7 @@ struct AppListItem: View {
     let app: AppConfig
     let isSelected: Bool
     let coordinator: MainCoordinator
+    let viewModel: AppListViewModel
     let currentMode: MainView.AppMode
     let onTap: () -> Void
     
@@ -325,14 +334,14 @@ struct AppListItem: View {
     @Environment(\.colorScheme) var colorScheme
     
     private var isChecked: Bool {
-        coordinator.apps.first(where: { $0.id == app.id })?.isSelected ?? false
+        viewModel.apps.first(where: { $0.id == app.id })?.isSelected ?? false
     }
     
     var body: some View {
         HStack(spacing: 5) {
             Toggle("", isOn: Binding(
                 get: { isChecked },
-                set: { _ in coordinator.toggleSelection(for: app) },
+                set: { _ in viewModel.toggleSelection(for: app) },
             ))
             .toggleStyle(CustomCheckboxToggleStyle())
             .disabled(currentMode == .backup ? !app.isInstalled : false)

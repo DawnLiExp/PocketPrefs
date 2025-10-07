@@ -2,7 +2,7 @@
 //  RestoreListView.swift
 //  PocketPrefs
 //
-//  Restore backup list and management view
+//  Restore backup list with event-driven updates
 //
 
 import SwiftUI
@@ -37,6 +37,12 @@ struct RestoreListView: View {
             )
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .onAppear {
+            viewModel.onAppear()
+        }
+        .onChange(of: viewModel.searchText) { _, newValue in
+            viewModel.handleSearchChange(newValue)
+        }
     }
 }
 
@@ -67,13 +73,13 @@ struct RestoreListHeader: View {
                 )
             }
             
-            if coordinator.selectedBackup != nil {
+            if viewModel.selectedBackup != nil {
                 SearchFieldView(searchText: $searchText)
                 
                 HStack {
                     Toggle(isOn: Binding(
                         get: { viewModel.cachedAllSelected },
-                        set: { _ in viewModel.toggleSelectAll(backup: coordinator.selectedBackup) },
+                        set: { _ in viewModel.toggleSelectAll() },
                     )) {
                         Text(NSLocalizedString("Select_All", comment: ""))
                             .font(DesignConstants.Typography.body)
@@ -82,9 +88,13 @@ struct RestoreListHeader: View {
                     
                     Spacer()
                     
-                    Text(String(format: NSLocalizedString("Selected_Count", comment: ""), viewModel.cachedSelectedCount, viewModel.cachedTotalCount))
-                        .font(DesignConstants.Typography.caption)
-                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    Text(String(
+                        format: NSLocalizedString("Selected_Count", comment: ""),
+                        viewModel.cachedSelectedCount,
+                        viewModel.cachedTotalCount,
+                    ))
+                    .font(DesignConstants.Typography.caption)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
             }
         }
@@ -94,15 +104,6 @@ struct RestoreListHeader: View {
         .background(
             Color.App.contentAreaBackground.color(for: colorScheme),
         )
-        .onAppear {
-            viewModel.onAppear(backup: coordinator.selectedBackup)
-        }
-        .onChange(of: coordinator.selectedBackup?.id) { _, _ in
-            viewModel.handleBackupChange(backup: coordinator.selectedBackup)
-        }
-        .onChange(of: searchText) { _, _ in
-            viewModel.handleSearchChange(searchText, backup: coordinator.selectedBackup)
-        }
     }
 }
 
@@ -193,7 +194,7 @@ struct RestoreListContent: View {
     
     var body: some View {
         Group {
-            if coordinator.selectedBackup != nil, !coordinator.availableBackups.isEmpty {
+            if viewModel.selectedBackup != nil, !viewModel.availableBackups.isEmpty {
                 if viewModel.filteredApps.isEmpty, !viewModel.searchText.isEmpty {
                     SearchEmptyState(searchText: viewModel.searchText)
                 } else {
@@ -204,6 +205,7 @@ struct RestoreListContent: View {
                                     app: app,
                                     isSelected: selectedBackupApp?.id == app.id,
                                     coordinator: coordinator,
+                                    viewModel: viewModel,
                                 ) {
                                     withAnimation(DesignConstants.Animation.quick) {
                                         selectedBackupApp = app
@@ -218,15 +220,6 @@ struct RestoreListContent: View {
             } else {
                 RestoreEmptyState()
             }
-        }
-        .onAppear {
-            viewModel.onAppear(backup: coordinator.selectedBackup)
-        }
-        .onChange(of: coordinator.selectedBackup?.id) { _, _ in
-            viewModel.handleBackupChange(backup: coordinator.selectedBackup)
-        }
-        .onChange(of: viewModel.searchText) { _, _ in
-            viewModel.handleSearchChange(viewModel.searchText, backup: coordinator.selectedBackup)
         }
     }
 }
@@ -282,12 +275,13 @@ struct RestoreAppItem: View {
     let app: BackupAppInfo
     let isSelected: Bool
     @ObservedObject var coordinator: MainCoordinator
+    @ObservedObject var viewModel: RestoreListViewModel
     let onTap: () -> Void
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
     
     private var isChecked: Bool {
-        guard let backup = coordinator.selectedBackup else { return false }
+        guard let backup = viewModel.selectedBackup else { return false }
         return backup.apps.first(where: { $0.id == app.id })?.isSelected ?? false
     }
     
@@ -295,7 +289,7 @@ struct RestoreAppItem: View {
         HStack(spacing: 5) {
             Toggle("", isOn: Binding(
                 get: { isChecked },
-                set: { _ in coordinator.toggleRestoreSelection(for: app) },
+                set: { _ in viewModel.toggleSelection(for: app) },
             ))
             .toggleStyle(CustomCheckboxToggleStyle())
             

@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FC0567B92E94741500958677 /* MainViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC0567B82E94741300958677 /* MainViewModel.swift */; };
+		FC0567BA2E9474C800958677 /* CoordinatorEventPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9C90FB2E94739200811BCA /* CoordinatorEventPublisher.swift */; };
 		FC195B692E7EB80B00258310 /* AppConfig.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4D2E7EB80B00258310 /* AppConfig.swift */; };
 		FC195B6A2E7EB80B00258310 /* AppError.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4E2E7EB80B00258310 /* AppError.swift */; };
 		FC195B6C2E7EB80B00258310 /* BackupModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4F2E7EB80B00258310 /* BackupModels.swift */; };
@@ -20,7 +22,7 @@
 		FC615D822E92C3D100DB964D /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC615D812E92C3D000DB964D /* DetailViewModel.swift */; };
 		FC68CD272E866826003BBDD4 /* ImportExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC68CD262E866824003BBDD4 /* ImportExportManager.swift */; };
 		FC74CB462E85915F00F33BD4 /* CustomBackupPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */; };
-		FC8D8DCA2E90F06100AB8773 /* EventPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8D8DC92E90F05F00AB8773 /* EventPublisher.swift */; };
+		FC8D8DCA2E90F06100AB8773 /* SettingsEventPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */; };
 		FC93001A2E8ED59A00194E89 /* ProgressReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9300192E8ED59800194E89 /* ProgressReporting.swift */; };
 		FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED942E7EF4D600764A17 /* PathPickerView.swift */; };
 		FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */; };
@@ -49,6 +51,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		FC0567B82E94741300958677 /* MainViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainViewModel.swift; sourceTree = "<group>"; };
 		FC195B4B2E7EB80B00258310 /* MainCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainCoordinator.swift; sourceTree = "<group>"; };
 		FC195B4D2E7EB80B00258310 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		FC195B4E2E7EB80B00258310 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
@@ -63,8 +66,9 @@
 		FC615D812E92C3D000DB964D /* DetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewModel.swift; sourceTree = "<group>"; };
 		FC68CD262E866824003BBDD4 /* ImportExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportExportManager.swift; sourceTree = "<group>"; };
 		FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBackupPicker.swift; sourceTree = "<group>"; };
-		FC8D8DC92E90F05F00AB8773 /* EventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EventPublisher.swift; sourceTree = "<group>"; };
+		FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsEventPublisher.swift; sourceTree = "<group>"; };
 		FC9300192E8ED59800194E89 /* ProgressReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressReporting.swift; sourceTree = "<group>"; };
+		FC9C90FB2E94739200811BCA /* CoordinatorEventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinatorEventPublisher.swift; sourceTree = "<group>"; };
 		FCAFED942E7EF4D600764A17 /* PathPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathPickerView.swift; sourceTree = "<group>"; };
 		FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
 		FCD990612E7EC53600C7087A /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
@@ -266,8 +270,9 @@
 		FC615D742E92AB3600DB964D /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
+				FC9C90FB2E94739200811BCA /* CoordinatorEventPublisher.swift */,
 				FC33DF552E8716C8007C47E5 /* ConcurrencyUtilities.swift */,
-				FC8D8DC92E90F05F00AB8773 /* EventPublisher.swift */,
+				FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */,
 				FC9300192E8ED59800194E89 /* ProgressReporting.swift */,
 			);
 			path = Utilities;
@@ -276,6 +281,7 @@
 		FC615D7C2E92C39400DB964D /* ViewModels */ = {
 			isa = PBXGroup;
 			children = (
+				FC0567B82E94741300958677 /* MainViewModel.swift */,
 				FC615D7D2E92C3AB00DB964D /* AppListViewModel.swift */,
 				FC615D812E92C3D000DB964D /* DetailViewModel.swift */,
 				FC615D7F2E92C3BC00DB964D /* RestoreListViewModel.swift */,
@@ -390,6 +396,7 @@
 				FCD990732E7EC53600C7087A /* ColorExtensions.swift in Sources */,
 				FC74CB462E85915F00F33BD4 /* CustomBackupPicker.swift in Sources */,
 				FCD990742E7EC53600C7087A /* MainView.swift in Sources */,
+				FC0567B92E94741500958677 /* MainViewModel.swift in Sources */,
 				FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */,
 				FC68CD272E866826003BBDD4 /* ImportExportManager.swift in Sources */,
 				FCF4B5B72E8D81C2008DA739 /* LanguageManager.swift in Sources */,
@@ -408,7 +415,8 @@
 				FCD9907C2E7EC53600C7087A /* BackupService.swift in Sources */,
 				FCD9907D2E7EC53600C7087A /* FileOperationService.swift in Sources */,
 				FCF4B5B32E8D6F38008DA739 /* PreferencesManager.swift in Sources */,
-				FC8D8DCA2E90F06100AB8773 /* EventPublisher.swift in Sources */,
+				FC0567BA2E9474C800958677 /* CoordinatorEventPublisher.swift in Sources */,
+				FC8D8DCA2E90F06100AB8773 /* SettingsEventPublisher.swift in Sources */,
 				FCD9907E2E7EC53600C7087A /* RestoreService.swift in Sources */,
 				FC615D7E2E92C3AE00DB964D /* AppListViewModel.swift in Sources */,
 				FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */,

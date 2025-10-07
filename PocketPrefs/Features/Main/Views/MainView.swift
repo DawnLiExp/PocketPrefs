@@ -2,7 +2,7 @@
 //  MainView.swift
 //  PocketPrefs
 //
-//  Main container view with three-column layout and enhanced glass effects
+//  Main container view with three-column layout
 //
 
 import SwiftUI
@@ -14,6 +14,8 @@ struct MainView: View {
     @State private var selectedApp: AppConfig?
     @State private var showingRestorePicker = false
     @Environment(\.colorScheme) var colorScheme
+    
+    @StateObject private var mainViewModel: MainViewModel
     
     private enum Layout {
         static let unifiedSpacing: CGFloat = 13
@@ -42,6 +44,12 @@ struct MainView: View {
                 return "clock.arrow.trianglehead.2.counterclockwise.rotate.90"
             }
         }
+    }
+    
+    init() {
+        let coordinator = MainCoordinator()
+        _coordinator = StateObject(wrappedValue: coordinator)
+        _mainViewModel = StateObject(wrappedValue: MainViewModel(coordinator: coordinator))
     }
     
     var body: some View {
@@ -96,6 +104,7 @@ struct MainView: View {
             DetailContainerView(
                 selectedApp: selectedApp,
                 coordinator: coordinator,
+                mainViewModel: mainViewModel,
                 currentMode: currentMode,
                 showingRestorePicker: $showingRestorePicker,
             )
@@ -118,13 +127,13 @@ struct MainView: View {
         )
     }
     
-    /// Switch between app list and restore list based on mode
     @ViewBuilder
     private var listView: some View {
         switch currentMode {
         case .backup:
             AppListView(
                 coordinator: coordinator,
+                mainViewModel: mainViewModel,
                 selectedApp: $selectedApp,
                 currentMode: currentMode,
             )

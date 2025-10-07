@@ -2,14 +2,19 @@
 //  RestoreListViewModel.swift
 //  PocketPrefs
 //
-//  ViewModel for restore backup list view
+//  Restore backup list state management
 //
 
 import Foundation
+import os.log
 import SwiftUI
 
 @MainActor
 final class RestoreListViewModel: ObservableObject {
+    // MARK: - Published State
+    
+    @Published var selectedBackup: BackupInfo?
+    @Published var availableBackups: [BackupInfo] = []
     @Published var searchText = ""
     @Published var filteredApps: [BackupAppInfo] = []
     @Published var isRefreshing = false
@@ -17,48 +22,81 @@ final class RestoreListViewModel: ObservableObject {
     @Published var cachedSelectedCount = 0
     @Published var cachedTotalCount = 0
     
+    // MARK: - Dependencies
+    
     private weak var coordinator: MainCoordinator?
+    private let logger = Logger(subsystem: "com.pocketprefs", category: "RestoreListViewModel")
+    
+    private var eventTask: Task<Void, Never>?
     private var searchDebounceTask: Task<Void, Never>?
     
     private static let searchDebounceDelay: Duration = .milliseconds(300)
     
+    // MARK: - Initialization
+    
     init(coordinator: MainCoordinator) {
         self.coordinator = coordinator
+        subscribeToEvents()
     }
     
     deinit {
+        eventTask?.cancel()
         searchDebounceTask?.cancel()
+    }
+    
+    // MARK: - Event Subscription
+    
+    private func subscribeToEvents() {
+        eventTask?.cancel()
+        eventTask = Task { [weak self] in
+            guard let self else { return }
+            let eventStream = CoordinatorEventPublisher.shared.subscribe()
+            
+            for await event in eventStream {
+                guard !Task.isCancelled else { break }
+                
+                switch event {
+                case .backupsUpdated(let backups):
+                    self.handleBackupsUpdate(backups)
+                case .selectedBackupUpdated(let backup):
+                    self.handleSelectedBackupUpdate(backup)
+                default:
+                    break
+                }
+            }
+        }
     }
     
     // MARK: - Public Interface
     
-    /// Initialize view state with backup data
-    func onAppear(backup: BackupInfo?) {
-        updateFilteredApps(backup: backup)
-        updateCachedState(backup: backup)
-    }
-    
-    /// Handle backup selection change
-    func handleBackupChange(backup: BackupInfo?) {
-        searchDebounceTask?.cancel()
-        updateFilteredApps(backup: backup)
-        updateCachedState(backup: backup)
+    /// Initialize view state
+    func onAppear() {
+        guard let coordinator else { return }
+        availableBackups = coordinator.currentBackups
+        selectedBackup = coordinator.currentSelectedBackup
+        updateFilteredApps()
+        updateCachedState()
     }
     
     /// Handle search text changes with debouncing
-    func handleSearchChange(_ newValue: String, backup: BackupInfo?) {
+    func handleSearchChange(_ newValue: String) {
         searchDebounceTask?.cancel()
         searchDebounceTask = Task {
             try? await Task.sleep(for: Self.searchDebounceDelay)
             guard !Task.isCancelled else { return }
-            updateFilteredApps(backup: backup)
-            updateCachedState(backup: backup)
+            updateFilteredApps()
+            updateCachedState()
         }
     }
     
-    /// Toggle selection for all filtered apps in backup
-    func toggleSelectAll(backup: BackupInfo?) {
-        guard let coordinator, let backup else { return }
+    /// Toggle selection for specific app in backup
+    func toggleSelection(for app: BackupAppInfo) {
+        coordinator?.toggleRestoreSelection(for: app)
+    }
+    
+    /// Toggle selection for all filtered apps
+    func toggleSelectAll() {
+        guard let coordinator, let backup = selectedBackup else { return }
         
         let filtered = backup.apps.filter {
             searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText)
@@ -69,6 +107,11 @@ final class RestoreListViewModel: ObservableObject {
                 coordinator.toggleRestoreSelection(for: app)
             }
         }
+    }
+    
+    /// Select backup for restore
+    func selectBackup(_ backup: BackupInfo) {
+        coordinator?.selectBackup(backup)
     }
     
     /// Refresh available backups
@@ -83,11 +126,29 @@ final class RestoreListViewModel: ObservableObject {
         isRefreshing = false
     }
     
+    // MARK: - Event Handlers
+    
+    private func handleBackupsUpdate(_ backups: [BackupInfo]) {
+        availableBackups = backups
+        
+        if let current = selectedBackup, !availableBackups.contains(current) {
+            selectedBackup = availableBackups.first
+        }
+        
+        updateFilteredApps()
+        updateCachedState()
+    }
+    
+    private func handleSelectedBackupUpdate(_ backup: BackupInfo?) {
+        selectedBackup = backup
+        updateFilteredApps()
+        updateCachedState()
+    }
+    
     // MARK: - Private Implementation
     
-    /// Update filtered apps based on search criteria
-    private func updateFilteredApps(backup: BackupInfo?) {
-        guard let backup else {
+    private func updateFilteredApps() {
+        guard let backup = selectedBackup else {
             filteredApps = []
             return
         }
@@ -102,9 +163,8 @@ final class RestoreListViewModel: ObservableObject {
         }
     }
     
-    /// Update cached state for UI optimization
-    private func updateCachedState(backup: BackupInfo?) {
-        guard let backup else {
+    private func updateCachedState() {
+        guard let backup = selectedBackup else {
             cachedAllSelected = false
             cachedSelectedCount = 0
             cachedTotalCount = 0

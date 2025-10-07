@@ -2,7 +2,7 @@
 //  MainCoordinator.swift
 //  PocketPrefs
 //
-//  Core business logic coordinator with structured concurrency
+//  Core business logic coordination with event-driven architecture
 //
 
 import Foundation
@@ -11,15 +11,13 @@ import SwiftUI
 
 @MainActor
 final class MainCoordinator: ObservableObject {
-    @Published var apps: [AppConfig] = []
-    @Published var isProcessing = false
-    @Published var statusMessage = ""
-    @Published var currentProgress: Double = 0.0
-    @Published var statusMessageHistory: [String] = []
-    @Published var availableBackups: [BackupInfo] = []
-    @Published var selectedBackup: BackupInfo?
-    @Published var isIncrementalMode = false
-    @Published var incrementalBaseBackup: BackupInfo?
+    // MARK: - Internal State (not published)
+    
+    private var apps: [AppConfig] = []
+    var availableBackups: [BackupInfo] = []
+    private var selectedBackup: BackupInfo?
+    
+    // MARK: - Services
     
     private let logger = Logger(subsystem: "com.pocketprefs", category: "MainCoordinator")
     private let iconService = IconService.shared
@@ -28,12 +26,16 @@ final class MainCoordinator: ObservableObject {
     private let fileOps = FileOperationService.shared
     private let userStore = UserConfigStore.shared
     
+    // MARK: - Tasks
+    
     private var prefsEventTask: Task<Void, Never>?
     private var iconEventTask: Task<Void, Never>?
     private var userConfigEventTask: Task<Void, Never>?
     private var loadAppsTask: Task<Void, Never>?
     private var scanBackupsTask: Task<Void, Never>?
     private var settingsEventTask: Task<Void, Never>?
+    
+    // MARK: - Initialization
     
     init() {
         Task {
@@ -56,9 +58,14 @@ final class MainCoordinator: ObservableObject {
         settingsEventTask?.cancel()
     }
     
+    // MARK: - Public Accessors
+    
+    var currentApps: [AppConfig] { apps }
+    var currentBackups: [BackupInfo] { availableBackups }
+    var currentSelectedBackup: BackupInfo? { selectedBackup }
+    
     // MARK: - Event Subscriptions
     
-    /// Subscribe to user config store events
     private func subscribeToUserConfigEvents() {
         userConfigEventTask?.cancel()
         userConfigEventTask = Task { [weak self] in
@@ -84,7 +91,6 @@ final class MainCoordinator: ObservableObject {
         }
     }
     
-    /// Subscribe to settings window events
     private func subscribeToSettingsEvents() {
         settingsEventTask?.cancel()
         settingsEventTask = Task { [weak self] in
@@ -101,14 +107,12 @@ final class MainCoordinator: ObservableObject {
         }
     }
     
-    /// Handle settings window close event
     private func handleSettingsClose() async {
         logger.info("Settings closed event received")
         await loadApps()
         logger.info("Settings close sync completed")
     }
     
-    /// Subscribe to preferences directory change events
     private func subscribeToPreferencesEvents() {
         prefsEventTask?.cancel()
         prefsEventTask = Task { [weak self] in
@@ -125,7 +129,6 @@ final class MainCoordinator: ObservableObject {
         }
     }
     
-    /// Subscribe to icon loading events with batching
     private func subscribeToIconEvents() {
         iconEventTask?.cancel()
         iconEventTask = Task { [weak self] in
@@ -148,12 +151,10 @@ final class MainCoordinator: ObservableObject {
         }
     }
     
-    /// Handle backup directory change
     private func handleDirectoryChange() async {
         logger.info("Handling backup directory change")
         
         selectedBackup = nil
-        incrementalBaseBackup = nil
         availableBackups = []
         
         await scanBackups()
@@ -162,7 +163,6 @@ final class MainCoordinator: ObservableObject {
     
     // MARK: - App Management
     
-    /// Load and update app installation status
     func loadApps() async {
         loadAppsTask?.cancel()
         
@@ -191,6 +191,7 @@ final class MainCoordinator: ObservableObject {
                 
                 guard !Task.isCancelled else { return }
                 self.apps = updatedApps
+                CoordinatorEventPublisher.shared.publish(.appsUpdated(updatedApps))
             }
             
             logger.info("Loaded \(self.apps.count) apps (\(self.userStore.customApps.count) custom)")
@@ -201,19 +202,16 @@ final class MainCoordinator: ObservableObject {
     
     // MARK: - Icon Management
     
-    /// Get icon for app config
     func getIcon(for app: AppConfig) -> NSImage {
         iconService.getIcon(for: app.bundleId, category: app.category)
     }
     
-    /// Get icon for backup app info
     func getIcon(for backupApp: BackupAppInfo) -> NSImage {
         iconService.getIcon(for: backupApp.bundleId, category: backupApp.category)
     }
     
     // MARK: - Backup Management
     
-    /// Scan for available backups
     func scanBackups() async {
         scanBackupsTask?.cancel()
         
@@ -233,15 +231,7 @@ final class MainCoordinator: ObservableObject {
                 selectBackup(firstBackup)
             }
             
-            if let currentBase = incrementalBaseBackup,
-               !availableBackups.contains(currentBase)
-            {
-                incrementalBaseBackup = nil
-            }
-            
-            if incrementalBaseBackup == nil, let firstBackup = availableBackups.first {
-                incrementalBaseBackup = firstBackup
-            }
+            CoordinatorEventPublisher.shared.publish(.backupsUpdated(backups))
             
             logger.info("Found \(self.availableBackups.count) backups")
         }
@@ -249,26 +239,25 @@ final class MainCoordinator: ObservableObject {
         await scanBackupsTask?.value
     }
     
-    /// Select backup for restore operations
     func selectBackup(_ backup: BackupInfo) {
         selectedBackup = backup
+        CoordinatorEventPublisher.shared.publish(.selectedBackupUpdated(backup))
     }
     
-    /// Select base backup for incremental operations
     func selectIncrementalBase(_ backup: BackupInfo) {
-        incrementalBaseBackup = backup
+        // Incremental base is managed by MainViewModel
+        // This method exists for coordination if needed
     }
     
     // MARK: - Selection Management
     
-    /// Toggle app selection state
     func toggleSelection(for app: AppConfig) {
         if let index = apps.firstIndex(where: { $0.id == app.id }) {
             apps[index].isSelected.toggle()
+            CoordinatorEventPublisher.shared.publish(.appsUpdated(apps))
         }
     }
     
-    /// Select all installed apps
     func selectAll() {
         apps = apps.map { app in
             var updated = app
@@ -277,18 +266,18 @@ final class MainCoordinator: ObservableObject {
             }
             return updated
         }
+        CoordinatorEventPublisher.shared.publish(.appsUpdated(apps))
     }
     
-    /// Deselect all apps
     func deselectAll() {
         apps = apps.map { app in
             var updated = app
             updated.isSelected = false
             return updated
         }
+        CoordinatorEventPublisher.shared.publish(.appsUpdated(apps))
     }
     
-    /// Toggle restore app selection
     func toggleRestoreSelection(for app: BackupAppInfo) {
         guard let currentBackup = selectedBackup,
               let backupIndex = availableBackups.firstIndex(where: { $0.id == currentBackup.id }),
@@ -297,37 +286,29 @@ final class MainCoordinator: ObservableObject {
         
         availableBackups[backupIndex].apps[appIndex].isSelected.toggle()
         selectedBackup = availableBackups[backupIndex]
+        
+        CoordinatorEventPublisher.shared.publish(.selectedBackupUpdated(selectedBackup))
     }
     
     // MARK: - Operations
     
-    /// Start backup operation
-    func performBackup() {
-        Task {
-            await performBackupAsync()
-        }
-    }
-    
-    /// Execute backup with progress tracking
-    private func performBackupAsync() async {
+    func performBackupOperation(
+        incrementalBase: BackupInfo?,
+        onProgress: @escaping @Sendable (ProgressUpdate) async -> Void,
+    ) async {
         let startTime = Date()
-        isProcessing = true
-        currentProgress = 0.0
-        statusMessage = NSLocalizedString("Backup_Starting", comment: "")
-        statusMessageHistory = [statusMessage]
         
-        let baseBackup = isIncrementalMode ? incrementalBaseBackup : nil
+        CoordinatorEventPublisher.shared.publish(.operationStarted)
+        
+        await onProgress(ProgressUpdate(
+            fraction: 0.0,
+            message: NSLocalizedString("Backup_Starting", comment: ""),
+        ))
         
         let result = await backupService.performBackup(
             apps: apps,
-            incrementalBase: baseBackup,
-            onProgress: { @MainActor update in
-                self.currentProgress = update.fraction
-                if let message = update.message {
-                    self.statusMessage = message
-                    self.addToMessageHistory(message)
-                }
-            },
+            incrementalBase: incrementalBase,
+            onProgress: onProgress,
         )
         
         let elapsed = Date().timeIntervalSince(startTime)
@@ -336,48 +317,38 @@ final class MainCoordinator: ObservableObject {
             try? await Task.sleep(for: .seconds(minDuration - elapsed))
         }
         
-        currentProgress = 1.0
-        statusMessage = result.statusMessage
-        addToMessageHistory(result.statusMessage)
+        await onProgress(ProgressUpdate(
+            fraction: 1.0,
+            message: result.statusMessage,
+        ))
         
         try? await Task.sleep(for: .seconds(0.5))
         await scanBackups()
         
         try? await Task.sleep(for: .seconds(0.2))
-        isProcessing = false
-        currentProgress = 0.0
-        statusMessageHistory = []
+        CoordinatorEventPublisher.shared.publish(.operationCompleted)
     }
     
-    /// Start restore operation
-    func performRestore() {
+    func performRestoreOperation(
+        onProgress: @escaping @Sendable (ProgressUpdate) async -> Void,
+    ) async {
         guard let backup = selectedBackup else {
             logger.error("No backup selected for restore")
             return
         }
         
-        Task {
-            await performRestoreAsync(backup: backup)
-        }
-    }
-    
-    /// Execute restore with progress tracking
-    private func performRestoreAsync(backup: BackupInfo) async {
         let startTime = Date()
-        isProcessing = true
-        currentProgress = 0.0
-        statusMessage = NSLocalizedString("Restore_Starting", comment: "")
-        statusMessageHistory = [statusMessage]
+        
+        CoordinatorEventPublisher.shared.publish(.operationStarted)
+        
+        await onProgress(ProgressUpdate(
+            fraction: 0.0,
+            message: NSLocalizedString("Restore_Starting", comment: ""),
+        ))
         
         let result = await restoreService.performRestore(
             backup: backup,
-            onProgress: { @MainActor update in
-                self.currentProgress = update.fraction
-                if let message = update.message {
-                    self.statusMessage = message
-                    self.addToMessageHistory(message)
-                }
-            },
+            onProgress: onProgress,
         )
         
         let elapsed = Date().timeIntervalSince(startTime)
@@ -386,31 +357,19 @@ final class MainCoordinator: ObservableObject {
             try? await Task.sleep(for: .seconds(minDuration - elapsed))
         }
         
-        currentProgress = 1.0
-        statusMessage = result.statusMessage
-        addToMessageHistory(result.statusMessage)
+        await onProgress(ProgressUpdate(
+            fraction: 1.0,
+            message: result.statusMessage,
+        ))
         
         try? await Task.sleep(for: .seconds(0.5))
         await loadApps()
         
         try? await Task.sleep(for: .seconds(0.2))
-        isProcessing = false
-        currentProgress = 0.0
-        statusMessageHistory = []
+        CoordinatorEventPublisher.shared.publish(.operationCompleted)
     }
     
-    /// Scan apps in specific backup directory
     func scanAppsInBackup(at path: String) async -> [BackupAppInfo] {
         await backupService.scanAppsInBackup(at: path)
-    }
-    
-    // MARK: - Message History
-    
-    /// Add message to status history with limit
-    private func addToMessageHistory(_ message: String) {
-        statusMessageHistory.append(message)
-        if statusMessageHistory.count > 3 {
-            statusMessageHistory.removeFirst()
-        }
     }
 }

@@ -2,7 +2,7 @@
 //  DetailView.swift
 //  PocketPrefs
 //
-//  App detail and backup/restore management views
+//  Detail views with MainViewModel integration
 //
 
 import AppKit
@@ -13,24 +13,32 @@ import SwiftUI
 struct DetailContainerView: View {
     let selectedApp: AppConfig?
     @ObservedObject var coordinator: MainCoordinator
+    @ObservedObject var mainViewModel: MainViewModel
     let currentMode: MainView.AppMode
     @Binding var showingRestorePicker: Bool
     
     @StateObject private var viewModel: DetailViewModel
     
-    init(selectedApp: AppConfig?, coordinator: MainCoordinator, currentMode: MainView.AppMode, showingRestorePicker: Binding<Bool>) {
+    init(
+        selectedApp: AppConfig?,
+        coordinator: MainCoordinator,
+        mainViewModel: MainViewModel,
+        currentMode: MainView.AppMode,
+        showingRestorePicker: Binding<Bool>,
+    ) {
         self.selectedApp = selectedApp
         self.coordinator = coordinator
+        self.mainViewModel = mainViewModel
         self.currentMode = currentMode
         self._showingRestorePicker = showingRestorePicker
-        self._viewModel = StateObject(wrappedValue: DetailViewModel(coordinator: coordinator))
+        self._viewModel = StateObject(wrappedValue: DetailViewModel(mainViewModel: mainViewModel))
     }
     
     var body: some View {
-        if coordinator.isProcessing {
+        if mainViewModel.isProcessing {
             ProgressView(
-                progress: coordinator.currentProgress,
-                messageHistory: coordinator.statusMessageHistory,
+                progress: mainViewModel.currentProgress,
+                messageHistory: mainViewModel.statusMessageHistory,
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         } else if currentMode == .backup {
@@ -267,7 +275,7 @@ struct RestorePlaceholderView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            if let backup = coordinator.selectedBackup {
+            if let backup = viewModel.selectedBackup {
                 RestoreDetailContent(
                     coordinator: coordinator,
                     backup: backup,
@@ -352,7 +360,7 @@ struct RestoreDetailContent: View {
                             .font(DesignConstants.Typography.headline)
                             .padding(.bottom, 8)
                         
-                        ForEach(coordinator.selectedBackup?.apps.filter(\.isSelected) ?? []) { app in
+                        ForEach(backup.apps.filter(\.isSelected)) { app in
                             HStack {
                                 Image(systemName: app.isCurrentlyInstalled
                                     ? "checkmark.circle"

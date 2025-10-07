@@ -2,26 +2,66 @@
 //  DetailViewModel.swift
 //  PocketPrefs
 //
-//  ViewModel for detail view (backup and restore modes)
+//  Detail view state and operation management
 //
 
 import Foundation
+import os.log
 import SwiftUI
 
 @MainActor
 final class DetailViewModel: ObservableObject {
-    private weak var coordinator: MainCoordinator?
+    // MARK: - Published State
     
-    init(coordinator: MainCoordinator) {
-        self.coordinator = coordinator
+    @Published private(set) var apps: [AppConfig] = []
+    @Published private(set) var selectedBackup: BackupInfo?
+    
+    // MARK: - Dependencies
+    
+    private weak var mainViewModel: MainViewModel?
+    private let logger = Logger(subsystem: "com.pocketprefs", category: "DetailViewModel")
+    
+    private var eventTask: Task<Void, Never>?
+    
+    // MARK: - Initialization
+    
+    init(mainViewModel: MainViewModel) {
+        self.mainViewModel = mainViewModel
+        subscribeToEvents()
+    }
+    
+    deinit {
+        eventTask?.cancel()
+    }
+    
+    // MARK: - Event Subscription
+    
+    private func subscribeToEvents() {
+        eventTask?.cancel()
+        eventTask = Task { [weak self] in
+            guard let self else { return }
+            let eventStream = CoordinatorEventPublisher.shared.subscribe()
+            
+            for await event in eventStream {
+                guard !Task.isCancelled else { break }
+                
+                switch event {
+                case .appsUpdated(let updatedApps):
+                    self.apps = updatedApps
+                case .selectedBackupUpdated(let backup):
+                    self.selectedBackup = backup
+                default:
+                    break
+                }
+            }
+        }
     }
     
     // MARK: - Computed Properties
     
     /// Check if valid backup selection exists
     var hasValidBackupSelection: Bool {
-        guard let coordinator else { return false }
-        return !coordinator.apps.filter { $0.isSelected && $0.isInstalled }.isEmpty
+        !apps.filter { $0.isSelected && $0.isInstalled }.isEmpty
     }
     
     /// Count selected apps in backup
@@ -41,13 +81,13 @@ final class DetailViewModel: ObservableObject {
     
     // MARK: - Actions
     
-    /// Trigger backup operation
+    /// Request backup operation
     func performBackup() {
-        coordinator?.performBackup()
+        mainViewModel?.requestBackup()
     }
     
-    /// Trigger restore operation
+    /// Request restore operation
     func performRestore() {
-        coordinator?.performRestore()
+        mainViewModel?.requestRestore()
     }
 }
