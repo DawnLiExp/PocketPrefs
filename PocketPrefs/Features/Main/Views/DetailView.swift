@@ -275,10 +275,9 @@ struct RestorePlaceholderView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            if let backup = viewModel.selectedBackup {
+            if viewModel.selectedBackup != nil {
                 RestoreDetailContent(
                     coordinator: coordinator,
-                    backup: backup,
                     viewModel: viewModel,
                 )
             } else {
@@ -293,129 +292,139 @@ struct RestorePlaceholderView: View {
 
 struct RestoreDetailContent: View {
     @ObservedObject var coordinator: MainCoordinator
-    let backup: BackupInfo
     @ObservedObject var viewModel: DetailViewModel
     @Environment(\.colorScheme) var colorScheme
     
+    private var backup: BackupInfo? {
+        viewModel.selectedBackup
+    }
+    
     var body: some View {
-        VStack(spacing: 0) {
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Image(systemName: "archivebox.fill")
-                        .font(.system(size: 24))
-                        .foregroundColor(Color.App.accent.color(for: colorScheme))
-                    
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(backup.formattedName)
-                            .font(DesignConstants.Typography.title)
+        guard let backup else {
+            return AnyView(RestoreEmptyDetail())
+        }
+        
+        return AnyView(
+            VStack(spacing: 0) {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Image(systemName: "archivebox.fill")
+                            .font(.system(size: 24))
+                            .foregroundColor(Color.App.accent.color(for: colorScheme))
                         
-                        Text(String(
-                            format: NSLocalizedString("Detail_Restore_Backup_App_Count", comment: ""),
-                            backup.apps.count,
-                        ))
-                        .font(DesignConstants.Typography.caption)
-                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(backup.formattedName)
+                                .font(DesignConstants.Typography.title)
+                            
+                            Text(String(
+                                format: NSLocalizedString("Detail_Restore_Backup_App_Count", comment: ""),
+                                backup.apps.count,
+                            ))
+                            .font(DesignConstants.Typography.caption)
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                        }
+                        
+                        Spacer()
                     }
                     
-                    Spacer()
+                    VStack(alignment: .leading, spacing: 8) {
+                        Label(
+                            String(
+                                format: NSLocalizedString("Detail_Restore_Selected_Apps_Count", comment: ""),
+                                viewModel.selectedRestoreAppsCount,
+                            ),
+                            systemImage: "checkmark.circle.fill",
+                        )
+                        .font(DesignConstants.Typography.body)
+                        .foregroundColor(
+                            viewModel.selectedRestoreAppsCount > 0
+                                ? Color.App.success.color(for: colorScheme)
+                                : Color.App.secondary.color(for: colorScheme),
+                        )
+                        
+                        Label(
+                            String(
+                                format: NSLocalizedString("Detail_Restore_Uninstalled_Apps_Count", comment: ""),
+                                viewModel.uninstalledSelectedCount,
+                            ),
+                            systemImage: "exclamationmark.triangle.fill",
+                        )
+                        .font(DesignConstants.Typography.body)
+                        .foregroundColor(
+                            viewModel.uninstalledSelectedCount > 0
+                                ? Color.App.warning.color(for: colorScheme)
+                                : Color.App.secondary.color(for: colorScheme),
+                        )
+                    }
+                }
+                .padding(20)
+                .background(Color.App.contentAreaBackground.color(for: colorScheme))
+                
+                if viewModel.hasSelectedRestoreApps {
+                    ScrollView {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text(NSLocalizedString("Detail_Restore_Will_Restore_Apps", comment: ""))
+                                .font(DesignConstants.Typography.headline)
+                                .padding(.bottom, 8)
+                            
+                            ForEach(backup.apps.filter(\.isSelected)) { app in
+                                HStack {
+                                    Image(systemName: app.isCurrentlyInstalled
+                                        ? "checkmark.circle"
+                                        : "exclamationmark.circle")
+                                        .foregroundColor(
+                                            app.isCurrentlyInstalled
+                                                ? Color.App.success.color(for: colorScheme)
+                                                : Color.App.warning.color(for: colorScheme),
+                                        )
+                                    
+                                    Text(app.name)
+                                        .font(DesignConstants.Typography.body)
+                                    
+                                    if !app.isCurrentlyInstalled {
+                                        Text(NSLocalizedString("Detail_Restore_App_Not_Installed_Badge", comment: ""))
+                                            .font(DesignConstants.Typography.caption)
+                                            .foregroundColor(Color.App.warning.color(for: colorScheme))
+                                    }
+                                    
+                                    Spacer()
+                                }
+                                .padding(.vertical, 4)
+                            }
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
+                    }
+                } else {
+                    VStack(spacing: 16) {
+                        Image(systemName: "info.circle")
+                            .font(.system(size: 48))
+                            .foregroundColor(Color.App.accent.color(for: colorScheme).opacity(0.6))
+                        
+                        Text(NSLocalizedString("Detail_Restore_No_Apps_Selected", comment: ""))
+                            .font(DesignConstants.Typography.headline)
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
                 }
                 
-                VStack(alignment: .leading, spacing: 8) {
-                    Label(
-                        String(
-                            format: NSLocalizedString("Detail_Restore_Selected_Apps_Count", comment: ""),
-                            viewModel.selectedRestoreAppsCount(backup: backup),
-                        ),
-                        systemImage: "checkmark.circle.fill",
-                    )
-                    .font(DesignConstants.Typography.body)
-                    .foregroundColor(
-                        viewModel.selectedRestoreAppsCount(backup: backup) > 0
-                            ? Color.App.success.color(for: colorScheme)
-                            : Color.App.secondary.color(for: colorScheme),
-                    )
-                    
-                    Label(
-                        String(
-                            format: NSLocalizedString("Detail_Restore_Uninstalled_Apps_Count", comment: ""),
-                            viewModel.uninstalledSelectedCount(backup: backup),
-                        ),
-                        systemImage: "exclamationmark.triangle.fill",
-                    )
-                    .font(DesignConstants.Typography.body)
-                    .foregroundColor(
-                        viewModel.uninstalledSelectedCount(backup: backup) > 0
-                            ? Color.App.warning.color(for: colorScheme)
-                            : Color.App.secondary.color(for: colorScheme),
-                    )
-                }
-            }
-            .padding(20)
-            .background(Color.App.contentAreaBackground.color(for: colorScheme))
-            
-            if viewModel.hasSelectedRestoreApps(backup: backup) {
-                ScrollView {
-                    VStack(alignment: .leading, spacing: 8) {
-                        Text(NSLocalizedString("Detail_Restore_Will_Restore_Apps", comment: ""))
-                            .font(DesignConstants.Typography.headline)
-                            .padding(.bottom, 8)
-                        
-                        ForEach(backup.apps.filter(\.isSelected)) { app in
-                            HStack {
-                                Image(systemName: app.isCurrentlyInstalled
-                                    ? "checkmark.circle"
-                                    : "exclamationmark.circle")
-                                    .foregroundColor(
-                                        app.isCurrentlyInstalled
-                                            ? Color.App.success.color(for: colorScheme)
-                                            : Color.App.warning.color(for: colorScheme),
-                                    )
-                                
-                                Text(app.name)
-                                    .font(DesignConstants.Typography.body)
-                                
-                                if !app.isCurrentlyInstalled {
-                                    Text(NSLocalizedString("Detail_Restore_App_Not_Installed_Badge", comment: ""))
-                                        .font(DesignConstants.Typography.caption)
-                                        .foregroundColor(Color.App.warning.color(for: colorScheme))
-                                }
-                                
-                                Spacer()
-                            }
-                            .padding(.vertical, 4)
-                        }
-                    }
-                    .padding(16)
-                }
-            } else {
-                VStack(spacing: 16) {
-                    Image(systemName: "info.circle")
-                        .font(.system(size: 48))
-                        .foregroundColor(Color.App.accent.color(for: colorScheme).opacity(0.6))
-                    
-                    Text(NSLocalizedString("Detail_Restore_No_Apps_Selected", comment: ""))
-                        .font(DesignConstants.Typography.headline)
-                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            }
-            
-            Spacer()
-            
-            HStack {
                 Spacer()
                 
-                Button(action: { viewModel.performRestore() }) {
-                    Label(
-                        NSLocalizedString("Detail_Restore_Action_Restore_Selected", comment: ""),
-                        systemImage: "arrow.down.circle.fill",
-                    )
+                HStack {
+                    Spacer()
+                    
+                    Button(action: { viewModel.performRestore() }) {
+                        Label(
+                            NSLocalizedString("Detail_Restore_Action_Restore_Selected", comment: ""),
+                            systemImage: "arrow.down.circle.fill",
+                        )
+                    }
+                    .buttonStyle(PrimaryButtonStyle())
+                    .disabled(!viewModel.hasSelectedRestoreApps)
                 }
-                .buttonStyle(PrimaryButtonStyle())
-                .disabled(!viewModel.hasSelectedRestoreApps(backup: backup))
-            }
-            .padding(20)
-        }
+                .padding(20)
+            },
+        )
     }
 }
 

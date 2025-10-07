@@ -96,7 +96,13 @@ final class AppListViewModel: ObservableObject {
     
     // MARK: - Event Handlers
     
+    private var lastAppsUpdate: Date?
+
     private func handleAppsUpdate(_ updatedApps: [AppConfig]) {
+        if let last = lastAppsUpdate, Date().timeIntervalSince(last) < 0.1 {
+            return
+        }
+        lastAppsUpdate = Date()
         apps = updatedApps
         updateFilteredApps(source: apps, searchTerm: searchText)
         updateCachedState(apps: apps)

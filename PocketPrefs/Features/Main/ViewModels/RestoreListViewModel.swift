@@ -96,16 +96,12 @@ final class RestoreListViewModel: ObservableObject {
     
     /// Toggle selection for all filtered apps
     func toggleSelectAll() {
-        guard let coordinator, let backup = selectedBackup else { return }
+        guard let coordinator else { return }
         
-        let filtered = backup.apps.filter {
-            searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText)
-        }
-        
-        for app in filtered {
-            if cachedAllSelected != app.isSelected {
-                coordinator.toggleRestoreSelection(for: app)
-            }
+        if cachedAllSelected {
+            coordinator.deselectAllRestoreApps()
+        } else {
+            coordinator.selectAllRestoreApps()
         }
     }
     
@@ -127,20 +123,48 @@ final class RestoreListViewModel: ObservableObject {
     }
     
     // MARK: - Event Handlers
-    
+
+    private var lastBackupsUpdate: Date?
+    private var lastSelectedBackupUpdate: Date?
+
     private func handleBackupsUpdate(_ backups: [BackupInfo]) {
+        if let last = lastBackupsUpdate, Date().timeIntervalSince(last) < 0.1 {
+            return
+        }
+        lastBackupsUpdate = Date()
+        
         availableBackups = backups
         
-        if let current = selectedBackup, !availableBackups.contains(current) {
-            selectedBackup = availableBackups.first
+        // Update selectedBackup from new backups array
+        if let current = selectedBackup,
+           let updated = backups.first(where: { $0.id == current.id })
+        {
+            selectedBackup = updated
+        } else if let current = selectedBackup, !backups.contains(where: { $0.id == current.id }) {
+            selectedBackup = backups.first
         }
         
         updateFilteredApps()
         updateCachedState()
     }
-    
+
     private func handleSelectedBackupUpdate(_ backup: BackupInfo?) {
-        selectedBackup = backup
+        if let last = lastSelectedBackupUpdate, Date().timeIntervalSince(last) < 0.1 {
+            return
+        }
+        lastSelectedBackupUpdate = Date()
+        
+        if let backup {
+            // Sync with availableBackups to get latest state
+            if let updated = availableBackups.first(where: { $0.id == backup.id }) {
+                selectedBackup = updated
+            } else {
+                selectedBackup = backup
+            }
+        } else {
+            selectedBackup = backup
+        }
+        
         updateFilteredApps()
         updateCachedState()
     }

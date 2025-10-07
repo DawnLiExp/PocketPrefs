@@ -50,6 +50,10 @@ final class DetailViewModel: ObservableObject {
                     self.apps = updatedApps
                 case .selectedBackupUpdated(let backup):
                     self.selectedBackup = backup
+                    self.objectWillChange.send()
+                case .backupsUpdated:
+                    // Trigger UI update when backups change
+                    self.objectWillChange.send()
                 default:
                     break
                 }
@@ -64,19 +68,19 @@ final class DetailViewModel: ObservableObject {
         !apps.filter { $0.isSelected && $0.isInstalled }.isEmpty
     }
     
-    /// Count selected apps in backup
-    func selectedRestoreAppsCount(backup: BackupInfo?) -> Int {
-        backup?.apps.count(where: { $0.isSelected }) ?? 0
+    /// Count selected apps in current backup
+    var selectedRestoreAppsCount: Int {
+        selectedBackup?.apps.count(where: { $0.isSelected }) ?? 0
     }
     
-    /// Count uninstalled selected apps in backup
-    func uninstalledSelectedCount(backup: BackupInfo?) -> Int {
-        backup?.apps.count(where: { !$0.isCurrentlyInstalled && $0.isSelected }) ?? 0
+    /// Count uninstalled selected apps in current backup
+    var uninstalledSelectedCount: Int {
+        selectedBackup?.apps.count(where: { !$0.isCurrentlyInstalled && $0.isSelected }) ?? 0
     }
     
-    /// Check if backup has selected apps for restore
-    func hasSelectedRestoreApps(backup: BackupInfo?) -> Bool {
-        selectedRestoreAppsCount(backup: backup) > 0
+    /// Check if current backup has selected apps for restore
+    var hasSelectedRestoreApps: Bool {
+        selectedRestoreAppsCount > 0
     }
     
     // MARK: - Actions

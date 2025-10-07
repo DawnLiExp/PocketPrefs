@@ -287,6 +287,42 @@ final class MainCoordinator: ObservableObject {
         availableBackups[backupIndex].apps[appIndex].isSelected.toggle()
         selectedBackup = availableBackups[backupIndex]
         
+        // Publish both events to ensure all ViewModels update
+        CoordinatorEventPublisher.shared.publish(.backupsUpdated(availableBackups))
+        CoordinatorEventPublisher.shared.publish(.selectedBackupUpdated(selectedBackup))
+    }
+    
+    func selectAllRestoreApps() {
+        guard let currentBackup = selectedBackup,
+              let backupIndex = availableBackups.firstIndex(where: { $0.id == currentBackup.id })
+        else { return }
+        
+        availableBackups[backupIndex].apps = availableBackups[backupIndex].apps.map { app in
+            var updated = app
+            updated.isSelected = true
+            return updated
+        }
+        
+        selectedBackup = availableBackups[backupIndex]
+        
+        CoordinatorEventPublisher.shared.publish(.backupsUpdated(availableBackups))
+        CoordinatorEventPublisher.shared.publish(.selectedBackupUpdated(selectedBackup))
+    }
+    
+    func deselectAllRestoreApps() {
+        guard let currentBackup = selectedBackup,
+              let backupIndex = availableBackups.firstIndex(where: { $0.id == currentBackup.id })
+        else { return }
+        
+        availableBackups[backupIndex].apps = availableBackups[backupIndex].apps.map { app in
+            var updated = app
+            updated.isSelected = false
+            return updated
+        }
+        
+        selectedBackup = availableBackups[backupIndex]
+        
+        CoordinatorEventPublisher.shared.publish(.backupsUpdated(availableBackups))
         CoordinatorEventPublisher.shared.publish(.selectedBackupUpdated(selectedBackup))
     }
     
