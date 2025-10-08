@@ -25,7 +25,7 @@ struct AppDetailView: View {
             )
             
             ScrollView {
-                VStack(spacing: 8) {
+                LazyVStack(spacing: 8) {
                     ForEach(app.configPaths, id: \.self) { path in
                         ConfigPathItem(path: path)
                     }

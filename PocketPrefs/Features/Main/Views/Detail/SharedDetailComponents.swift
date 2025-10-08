@@ -104,8 +104,10 @@ struct ConfigPathItem: View {
                 isHovered = hovering
             }
         }
-        .task {
-            fileSize = await FileOperationService.shared.calculateFileSize(at: path)
+        .onAppear {
+            Task {
+                fileSize = await FileOperationService.shared.calculateFileSize(at: path)
+            }
         }
     }
     
