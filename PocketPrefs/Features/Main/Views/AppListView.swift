@@ -41,7 +41,7 @@ struct AppListView: View {
             if viewModel.filteredApps.isEmpty, !viewModel.searchText.isEmpty {
                 BackupSearchEmptyState(searchText: viewModel.searchText)
             } else {
-                ScrollView {
+                ScrollGradientContainer {
                     LazyVStack(spacing: 8) {
                         ForEach(viewModel.filteredApps) { app in
                             AppListItem(
