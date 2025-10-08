@@ -26,11 +26,14 @@
 		FC93001A2E8ED59A00194E89 /* ProgressReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9300192E8ED59800194E89 /* ProgressReporting.swift */; };
 		FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED942E7EF4D600764A17 /* PathPickerView.swift */; };
 		FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */; };
+		FCD19B9D2E956E5F004FA64A /* RestoreDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD19B9B2E956E5F004FA64A /* RestoreDetailView.swift */; };
+		FCD19B9E2E956E5F004FA64A /* SharedDetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD19B9C2E956E5F004FA64A /* SharedDetailComponents.swift */; };
+		FCD19B9F2E956E5F004FA64A /* DetailContainerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD19B9A2E956E5F004FA64A /* DetailContainerView.swift */; };
+		FCD19BA02E956E5F004FA64A /* BackupDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD19B992E956E5F004FA64A /* BackupDetailView.swift */; };
 		FCD990722E7EC53600C7087A /* AppListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990672E7EC53600C7087A /* AppListView.swift */; };
 		FCD990732E7EC53600C7087A /* ColorExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990682E7EC53600C7087A /* ColorExtensions.swift */; };
 		FCD990742E7EC53600C7087A /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD9906B2E7EC53600C7087A /* MainView.swift */; };
 		FCD990752E7EC53600C7087A /* CommonComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990692E7EC53600C7087A /* CommonComponents.swift */; };
-		FCD990762E7EC53600C7087A /* DetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD9906A2E7EC53600C7087A /* DetailView.swift */; };
 		FCD990772E7EC53600C7087A /* RestoreListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD9906C2E7EC53600C7087A /* RestoreListView.swift */; };
 		FCD990782E7EC53600C7087A /* ThemeManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990652E7EC53600C7087A /* ThemeManager.swift */; };
 		FCD990792E7EC53600C7087A /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD9906D2E7EC53600C7087A /* SidebarView.swift */; };
@@ -71,6 +74,10 @@
 		FC9C90FB2E94739200811BCA /* CoordinatorEventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinatorEventPublisher.swift; sourceTree = "<group>"; };
 		FCAFED942E7EF4D600764A17 /* PathPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathPickerView.swift; sourceTree = "<group>"; };
 		FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
+		FCD19B992E956E5F004FA64A /* BackupDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupDetailView.swift; sourceTree = "<group>"; };
+		FCD19B9A2E956E5F004FA64A /* DetailContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailContainerView.swift; sourceTree = "<group>"; };
+		FCD19B9B2E956E5F004FA64A /* RestoreDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreDetailView.swift; sourceTree = "<group>"; };
+		FCD19B9C2E956E5F004FA64A /* SharedDetailComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedDetailComponents.swift; sourceTree = "<group>"; };
 		FCD990612E7EC53600C7087A /* BackupService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupService.swift; sourceTree = "<group>"; };
 		FCD990622E7EC53600C7087A /* FileOperationService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileOperationService.swift; sourceTree = "<group>"; };
 		FCD990632E7EC53600C7087A /* IconService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IconService.swift; sourceTree = "<group>"; };
@@ -79,7 +86,6 @@
 		FCD990672E7EC53600C7087A /* AppListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppListView.swift; sourceTree = "<group>"; };
 		FCD990682E7EC53600C7087A /* ColorExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ColorExtensions.swift; sourceTree = "<group>"; };
 		FCD990692E7EC53600C7087A /* CommonComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CommonComponents.swift; sourceTree = "<group>"; };
-		FCD9906A2E7EC53600C7087A /* DetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailView.swift; sourceTree = "<group>"; };
 		FCD9906B2E7EC53600C7087A /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		FCD9906C2E7EC53600C7087A /* RestoreListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreListView.swift; sourceTree = "<group>"; };
 		FCD9906D2E7EC53600C7087A /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
@@ -205,8 +211,8 @@
 		FC615D6C2E92AA1E00DB964D /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				FCD19B982E956DD4004FA64A /* Detail */,
 				FCD990672E7EC53600C7087A /* AppListView.swift */,
-				FCD9906A2E7EC53600C7087A /* DetailView.swift */,
 				FCD9906B2E7EC53600C7087A /* MainView.swift */,
 				FCD9906C2E7EC53600C7087A /* RestoreListView.swift */,
 				FCD9906D2E7EC53600C7087A /* SidebarView.swift */,
@@ -307,6 +313,17 @@
 			path = Extensions;
 			sourceTree = "<group>";
 		};
+		FCD19B982E956DD4004FA64A /* Detail */ = {
+			isa = PBXGroup;
+			children = (
+				FCD19B992E956E5F004FA64A /* BackupDetailView.swift */,
+				FCD19B9A2E956E5F004FA64A /* DetailContainerView.swift */,
+				FCD19B9B2E956E5F004FA64A /* RestoreDetailView.swift */,
+				FCD19B9C2E956E5F004FA64A /* SharedDetailComponents.swift */,
+			);
+			path = Detail;
+			sourceTree = "<group>";
+		};
 		FCF9C4E02E7ADA4000013E27 = {
 			isa = PBXGroup;
 			children = (
@@ -404,7 +421,6 @@
 				FC33DF562E8716CA007C47E5 /* ConcurrencyUtilities.swift in Sources */,
 				FCD990752E7EC53600C7087A /* CommonComponents.swift in Sources */,
 				FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */,
-				FCD990762E7EC53600C7087A /* DetailView.swift in Sources */,
 				FCD990C02E7EDF1D00C7087A /* UserConfigStore.swift in Sources */,
 				FCD990772E7EC53600C7087A /* RestoreListView.swift in Sources */,
 				FCD990782E7EC53600C7087A /* ThemeManager.swift in Sources */,
@@ -429,6 +445,10 @@
 				FCFA34992E86CE2F00BCA325 /* IconConfiguration.swift in Sources */,
 				FC195B772E7EB80B00258310 /* MainCoordinator.swift in Sources */,
 				FCD990BC2E7EDF0500C7087A /* CustomAppManager.swift in Sources */,
+				FCD19B9D2E956E5F004FA64A /* RestoreDetailView.swift in Sources */,
+				FCD19B9E2E956E5F004FA64A /* SharedDetailComponents.swift in Sources */,
+				FCD19B9F2E956E5F004FA64A /* DetailContainerView.swift in Sources */,
+				FCD19BA02E956E5F004FA64A /* BackupDetailView.swift in Sources */,
 			);
 		};
 /* End PBXSourcesBuildPhase section */
