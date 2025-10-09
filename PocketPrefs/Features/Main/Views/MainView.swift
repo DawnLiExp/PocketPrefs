@@ -20,7 +20,6 @@ struct MainView: View {
     private enum Layout {
         static let unifiedSpacing: CGFloat = 13
         static let sidebarGap: CGFloat = 0
-        static let topPadding: CGFloat = 0
     }
     
     enum AppMode: String, CaseIterable {
@@ -78,8 +77,9 @@ struct MainView: View {
             floatingContentArea
                 .padding(.trailing, Layout.unifiedSpacing)
                 .padding(.bottom, Layout.unifiedSpacing)
-                .padding(.top, Layout.topPadding)
+                .padding(.top, Layout.unifiedSpacing)
         }
+        .ignoresSafeArea(.all, edges: .top)
     }
     
     @ViewBuilder
@@ -98,9 +98,9 @@ struct MainView: View {
                     maxWidth: DesignConstants.Layout.listWidth + 60,
                 )
                 .background(contentAreaBackgroundColor)
-            
+
             contentDivider
-            
+
             DetailContainerView(
                 selectedApp: selectedApp,
                 coordinator: coordinator,
@@ -126,7 +126,7 @@ struct MainView: View {
                 ),
         )
     }
-    
+
     @ViewBuilder
     private var listView: some View {
         switch currentMode {

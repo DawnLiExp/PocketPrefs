@@ -17,14 +17,15 @@ struct SidebarView: View {
     var body: some View {
         VStack(spacing: 12) {
             // Top spacer for title bar area
-       
+            Spacer()
+                .frame(height: 20)
             // Mode selection buttons with enhanced visual hierarchy
             VStack(spacing: 8) {
                 ForEach(modes, id: \.self) { mode in
                     SidebarIconButton(
                         icon: mode.icon,
                         title: mode.displayName,
-                        isSelected: currentMode == mode
+                        isSelected: currentMode == mode,
                     ) {
                         withAnimation(DesignConstants.Animation.quick) {
                             currentMode = mode
@@ -40,7 +41,7 @@ struct SidebarView: View {
             SidebarIconButton(
                 icon: "gearshape.2",
                 title: NSLocalizedString("Sidebar_Settings", comment: ""),
-                isSelected: false
+                isSelected: false,
             ) {
                 showingSettings = true
             }
@@ -66,7 +67,7 @@ struct SidebarView: View {
                 .fill(
                     Color.App.lightSeparator
                         .color(for: colorScheme)
-                        .opacity(0.3)
+                        .opacity(0.3),
                 )
                 .frame(height: 0.5)
                 .padding(.horizontal, 18)
@@ -152,7 +153,7 @@ struct SidebarIconButton: View {
                 withAnimation(.easeOut(duration: 0.2)) {
                     isPressing = false
                 }
-            }
+            },
         )
     }
     
@@ -165,7 +166,7 @@ struct SidebarIconButton: View {
                 color: isSelected ? iconColor.opacity(0.3) : .clear,
                 radius: 2,
                 x: 0,
-                y: 1
+                y: 1,
             )
     }
     
@@ -194,7 +195,7 @@ private struct PressEventsModifier: ViewModifier {
                     }
                     .onEnded { _ in
                         onRelease()
-                    }
+                    },
             )
     }
 }
