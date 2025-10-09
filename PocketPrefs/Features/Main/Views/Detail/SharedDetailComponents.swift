@@ -53,7 +53,6 @@ struct AppDetailHeader: View {
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
         }
         .padding(20)
-        .background(Color.App.contentAreaBackground.color(for: colorScheme))
     }
 }
 

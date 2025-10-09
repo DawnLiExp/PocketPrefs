@@ -98,8 +98,21 @@ struct MainView: View {
                     maxWidth: DesignConstants.Layout.listWidth + 60,
                 )
                 .background(contentAreaBackgroundColor)
-
-            contentDivider
+                .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
+                .shadow(
+                    color: shadowColor,
+                    radius: 5,
+                    x: 0,
+                    y: 2,
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius)
+                        .stroke(
+                            Color.App.contentAreaBorder.color(for: colorScheme),
+                            lineWidth: DesignConstants.Layout.contentAreaBorderWidth,
+                        ),
+                )
+                .padding(.trailing, Layout.unifiedSpacing)
 
             DetailContainerView(
                 selectedApp: selectedApp,
@@ -109,22 +122,7 @@ struct MainView: View {
                 showingRestorePicker: $showingRestorePicker,
             )
             .frame(maxWidth: .infinity)
-            .background(contentAreaBackgroundColor)
         }
-        .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
-        .shadow(
-            color: shadowColor,
-            radius: 5,
-            x: 0,
-            y: 2,
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius)
-                .stroke(
-                    Color.App.contentAreaBorder.color(for: colorScheme),
-                    lineWidth: DesignConstants.Layout.contentAreaBorderWidth,
-                ),
-        )
     }
 
     @ViewBuilder
@@ -143,21 +141,6 @@ struct MainView: View {
                 selectedApp: $selectedApp,
             )
         }
-    }
-    
-    @ViewBuilder
-    private var contentDivider: some View {
-        Rectangle()
-            .fill(.ultraThinMaterial)
-            .overlay(
-                Rectangle()
-                    .fill(
-                        Color.App.lightSeparator
-                            .color(for: colorScheme)
-                            .opacity(0.25),
-                    ),
-            )
-            .frame(width: 1)
     }
     
     // MARK: - Computed Properties

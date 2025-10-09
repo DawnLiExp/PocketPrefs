@@ -91,7 +91,6 @@ struct RestoreDetailContent: View {
                     }
                 }
                 .padding(20)
-                .background(Color.App.contentAreaBackground.color(for: colorScheme))
                 
                 if viewModel.hasSelectedRestoreApps {
                     ScrollView {
