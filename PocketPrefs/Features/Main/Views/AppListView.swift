@@ -38,27 +38,29 @@ struct AppListView: View {
                 viewModel: viewModel,
             )
             
-            if viewModel.filteredApps.isEmpty, !viewModel.searchText.isEmpty {
-                BackupSearchEmptyState(searchText: viewModel.searchText)
-            } else {
-                ScrollView {
-                    LazyVStack(spacing: 8) {
-                        ForEach(viewModel.filteredApps) { app in
-                            AppListItem(
-                                app: app,
-                                isSelected: selectedApp?.id == app.id,
-                                coordinator: coordinator,
-                                viewModel: viewModel,
-                                currentMode: currentMode,
-                            ) {
-                                withAnimation(DesignConstants.Animation.quick) {
-                                    selectedApp = app
+            NonDraggableView {
+                if viewModel.filteredApps.isEmpty, !viewModel.searchText.isEmpty {
+                    BackupSearchEmptyState(searchText: viewModel.searchText)
+                } else {
+                    ScrollView {
+                        LazyVStack(spacing: 8) {
+                            ForEach(viewModel.filteredApps) { app in
+                                AppListItem(
+                                    app: app,
+                                    isSelected: selectedApp?.id == app.id,
+                                    coordinator: coordinator,
+                                    viewModel: viewModel,
+                                    currentMode: currentMode,
+                                ) {
+                                    withAnimation(DesignConstants.Animation.quick) {
+                                        selectedApp = app
+                                    }
                                 }
                             }
                         }
+                        .padding(.horizontal, 16)
+                        .padding(.bottom, 16)
                     }
-                    .padding(.horizontal, 16)
-                    .padding(.bottom, 16)
                 }
             }
         }
@@ -168,7 +170,10 @@ struct AppListHeader: View {
         .padding(.top, 18)
         .padding(.bottom, 18)
         .background(
-            Color.App.contentAreaBackground.color(for: colorScheme),
+            ZStack {
+                Color.App.contentAreaBackground.color(for: colorScheme)
+                DraggableBackgroundView()
+            },
         )
     }
 }

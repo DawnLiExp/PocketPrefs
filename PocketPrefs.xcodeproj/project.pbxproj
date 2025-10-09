@@ -26,6 +26,8 @@
 		FC93001A2E8ED59A00194E89 /* ProgressReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9300192E8ED59800194E89 /* ProgressReporting.swift */; };
 		FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED942E7EF4D600764A17 /* PathPickerView.swift */; };
 		FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */; };
+		FCB96E482E97828600E87540 /* NonDraggableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCB96E472E97828400E87540 /* NonDraggableView.swift */; };
+		FCB96E4A2E978EEB00E87540 /* DraggableBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCB96E492E978EE800E87540 /* DraggableBackgroundView.swift */; };
 		FCBABED72E96553400A45538 /* UserInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCBABED62E96553300A45538 /* UserInfoView.swift */; };
 		FCD19B9D2E956E5F004FA64A /* RestoreDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD19B9B2E956E5F004FA64A /* RestoreDetailView.swift */; };
 		FCD19B9E2E956E5F004FA64A /* SharedDetailComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD19B9C2E956E5F004FA64A /* SharedDetailComponents.swift */; };
@@ -75,6 +77,8 @@
 		FC9C90FB2E94739200811BCA /* CoordinatorEventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinatorEventPublisher.swift; sourceTree = "<group>"; };
 		FCAFED942E7EF4D600764A17 /* PathPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathPickerView.swift; sourceTree = "<group>"; };
 		FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
+		FCB96E472E97828400E87540 /* NonDraggableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NonDraggableView.swift; sourceTree = "<group>"; };
+		FCB96E492E978EE800E87540 /* DraggableBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DraggableBackgroundView.swift; sourceTree = "<group>"; };
 		FCBABED62E96553300A45538 /* UserInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserInfoView.swift; sourceTree = "<group>"; };
 		FCD19B992E956E5F004FA64A /* BackupDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupDetailView.swift; sourceTree = "<group>"; };
 		FCD19B9A2E956E5F004FA64A /* DetailContainerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailContainerView.swift; sourceTree = "<group>"; };
@@ -303,6 +307,8 @@
 				FCD990692E7EC53600C7087A /* CommonComponents.swift */,
 				FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */,
 				FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */,
+				FCB96E492E978EE800E87540 /* DraggableBackgroundView.swift */,
+				FCB96E472E97828400E87540 /* NonDraggableView.swift */,
 				FCBABED62E96553300A45538 /* UserInfoView.swift */,
 			);
 			path = Components;
@@ -427,6 +433,7 @@
 				FCD990C02E7EDF1D00C7087A /* UserConfigStore.swift in Sources */,
 				FCD990772E7EC53600C7087A /* RestoreListView.swift in Sources */,
 				FCBABED72E96553400A45538 /* UserInfoView.swift in Sources */,
+				FCB96E4A2E978EEB00E87540 /* DraggableBackgroundView.swift in Sources */,
 				FCD990782E7EC53600C7087A /* ThemeManager.swift in Sources */,
 				FC615D802E92C3BC00DB964D /* RestoreListViewModel.swift in Sources */,
 				FCD990792E7EC53600C7087A /* SidebarView.swift in Sources */,
@@ -452,6 +459,7 @@
 				FCD19B9D2E956E5F004FA64A /* RestoreDetailView.swift in Sources */,
 				FCD19B9E2E956E5F004FA64A /* SharedDetailComponents.swift in Sources */,
 				FCD19B9F2E956E5F004FA64A /* DetailContainerView.swift in Sources */,
+				FCB96E482E97828600E87540 /* NonDraggableView.swift in Sources */,
 				FCD19BA02E956E5F004FA64A /* BackupDetailView.swift in Sources */,
 			);
 		};

@@ -30,11 +30,13 @@ struct RestoreListView: View {
             )
             .padding(.bottom, 6)
             
-            RestoreListContent(
-                coordinator: coordinator,
-                selectedBackupApp: $selectedBackupApp,
-                viewModel: viewModel,
-            )
+            NonDraggableView {
+                RestoreListContent(
+                    coordinator: coordinator,
+                    selectedBackupApp: $selectedBackupApp,
+                    viewModel: viewModel,
+                )
+            }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .onAppear {
@@ -102,7 +104,10 @@ struct RestoreListHeader: View {
         .padding(.top, 20)
         .padding(.bottom, 11)
         .background(
-            Color.App.contentAreaBackground.color(for: colorScheme),
+            ZStack {
+                Color.App.contentAreaBackground.color(for: colorScheme)
+                DraggableBackgroundView()
+            },
         )
     }
 }

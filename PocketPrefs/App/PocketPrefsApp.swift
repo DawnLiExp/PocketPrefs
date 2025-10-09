@@ -35,6 +35,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         window.styleMask.insert(.fullSizeContentView)
         window.toolbarStyle = .unified
         window.isOpaque = false
+        window.isMovableByWindowBackground = true
         window.hasShadow = true
         window.invalidateShadow()
         
