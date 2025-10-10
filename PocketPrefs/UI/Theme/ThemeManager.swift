@@ -79,19 +79,19 @@ struct GlassConfiguration {
     static let adaptive = GlassConfiguration(
         backgroundOpacity: 0.72,
         materialIntensity: 0.85,
-        tintOpacity: 0.08
+        tintOpacity: 0.08,
     )
 
     static let light = GlassConfiguration(
         backgroundOpacity: 0.72,
         materialIntensity: 0.85,
-        tintOpacity: 0.08
+        tintOpacity: 0.08,
     )
 
     static let dark = GlassConfiguration(
         backgroundOpacity: 0.72,
         materialIntensity: 0.85,
-        tintOpacity: 0.08
+        tintOpacity: 0.08,
     )
 }
 
@@ -100,10 +100,11 @@ struct GlassConfiguration {
 enum DesignConstants {
     // Layout with glass effect considerations
     enum Layout {
-        static let sidebarWidth: CGFloat = 76
-        static let listWidth: CGFloat = 280
+        static let sidebarWidth: CGFloat = 70
+
+        static let listWidth: CGFloat = 270
         static let minWindowWidth: CGFloat = 820
-        static let minWindowHeight: CGFloat = 570
+        static let minWindowHeight: CGFloat = 590
 
         static let cornerRadius: CGFloat = 12
         static let smallCornerRadius: CGFloat = 8
@@ -115,8 +116,6 @@ enum DesignConstants {
         // Glass effect specific spacing
         static let glassSpacing: CGFloat = 13
         static let titleBarHeight: CGFloat = 28
-
-        // 可调节参数：内容区域装饰线宽度
         static let contentAreaBorderWidth: CGFloat = 1.0
     }
 
@@ -125,7 +124,7 @@ enum DesignConstants {
         static let largeTitle: Font = .system(size: 26, weight: .bold, design: .rounded)
         static let title: Font = .system(size: 18, weight: .semibold, design: .rounded)
         static let headline: Font = .system(size: 12, weight: .semibold, design: .rounded)
-        static let body: Font = .system(size: 12, weight: .medium) // Slightly bolder for glass backgrounds
+        static let body: Font = .system(size: 12, weight: .medium)
         static let caption: Font = .system(size: 11, weight: .medium)
         static let tiny: Font = .system(size: 10, weight: .medium)
     }
@@ -135,7 +134,7 @@ enum DesignConstants {
         static let standard = SwiftUI.Animation.spring(response: 0.35, dampingFraction: 0.86)
         static let quick = SwiftUI.Animation.spring(response: 0.25, dampingFraction: 0.9)
         static let smooth = SwiftUI.Animation.easeInOut(duration: 0.3)
-        static let glass = SwiftUI.Animation.easeInOut(duration: 0.25) // Optimized for glass transitions
+        static let glass = SwiftUI.Animation.easeInOut(duration: 0.25)
     }
 }
 
@@ -161,14 +160,14 @@ struct EnhancedGlassEffect: ViewModifier {
                     // Enhanced glass overlay
                     AdaptiveColor.glassOverlay.color(for: colorScheme)
                         .opacity(0.5 * intensity)
-                }
+                },
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius)
                     .stroke(
                         Color.App.lightSeparator.color(for: colorScheme).opacity(0.5 * intensity),
-                        lineWidth: 0.5
-                    )
+                        lineWidth: 0.5,
+                    ),
             )
             .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
     }
@@ -193,7 +192,7 @@ struct EnhancedCardEffect: ViewModifier {
                         .fill(
                             isSelected
                                 ? Color.App.accent.color(for: colorScheme).opacity(0.1)
-                                : Color.clear
+                                : Color.clear,
                         )
 
                     // Glass effect background
@@ -204,7 +203,7 @@ struct EnhancedCardEffect: ViewModifier {
                     // Hover background
                     RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                         .fill(Color.App.hoverBackground.color(for: colorScheme))
-                }
+                },
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
@@ -212,8 +211,8 @@ struct EnhancedCardEffect: ViewModifier {
                         isSelected
                             ? Color.App.accent.color(for: colorScheme).opacity(0.3)
                             : Color.clear,
-                        lineWidth: 1
-                    )
+                        lineWidth: 1,
+                    ),
             )
     }
 }
@@ -228,11 +227,11 @@ struct CardEffect: ViewModifier {
         content
             .background(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                    .fill(isSelected ? (Color.App.accent.color(for: colorScheme)).opacity(0.1) : Color.clear)
+                    .fill(isSelected ? (Color.App.accent.color(for: colorScheme)).opacity(0.1) : Color.clear),
             )
             .background(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                    .fill(Color.App.hoverBackground.color(for: colorScheme))
+                    .fill(Color.App.hoverBackground.color(for: colorScheme)),
             )
             .overlay(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
@@ -240,8 +239,8 @@ struct CardEffect: ViewModifier {
                         isSelected
                             ? (Color.App.accent.color(for: colorScheme)).opacity(0.3)
                             : Color.clear,
-                        lineWidth: 1
-                    )
+                        lineWidth: 1,
+                    ),
             )
     }
 }
@@ -280,7 +279,7 @@ private struct SectionBackgroundModifier: ViewModifier {
                     Rectangle()
                         .fill(.ultraThinMaterial)
                         .opacity(0.3)
-                }
+                },
             )
             .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
     }

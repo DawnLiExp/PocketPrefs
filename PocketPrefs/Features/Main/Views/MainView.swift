@@ -18,7 +18,7 @@ struct MainView: View {
     @StateObject private var mainViewModel: MainViewModel
     
     private enum Layout {
-        static let unifiedSpacing: CGFloat = 13
+        static let unifiedSpacing: CGFloat = 10
         static let sidebarGap: CGFloat = 0
     }
     

@@ -154,7 +154,7 @@ struct RestoreDetailContent: View {
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(!viewModel.hasSelectedRestoreApps)
                 }
-                .padding(20)
+                .padding(22)
             }
         } else {
             RestoreEmptyDetail()

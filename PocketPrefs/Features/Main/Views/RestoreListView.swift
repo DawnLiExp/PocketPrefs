@@ -57,12 +57,12 @@ struct RestoreListHeader: View {
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 13) {
             Text(NSLocalizedString("Restore_Backup_Title", comment: ""))
                 .font(DesignConstants.Typography.title)
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
             
-            HStack(spacing: 12) {
+            HStack(spacing: 13) {
                 CustomBackupPicker(coordinator: coordinator)
                 
                 RefreshButton(
@@ -100,7 +100,7 @@ struct RestoreListHeader: View {
                 }
             }
         }
-        .padding(.horizontal, 20)
+        .padding(.horizontal, 15)
         .padding(.top, 20)
         .padding(.bottom, 11)
         .background(
@@ -218,8 +218,9 @@ struct RestoreListContent: View {
                                 }
                             }
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
+                        .padding(.horizontal, 15)
+                        .padding(.bottom, 15)
+                        .padding(.top, 3)
                     }
                 }
             } else {
@@ -340,7 +341,7 @@ struct RestoreAppItem: View {
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .opacity(isHovered ? 0.6 : 0)
         }
-        .padding(12)
+        .padding(11)
         .cardEffect(isSelected: isSelected)
         .onTapGesture(perform: onTap)
         .onHover { hovering in

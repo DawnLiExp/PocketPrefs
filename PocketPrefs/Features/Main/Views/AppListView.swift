@@ -58,8 +58,9 @@ struct AppListView: View {
                                 }
                             }
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
+                        .padding(.horizontal, 15)
+                        .padding(.bottom, 15)
+                        .padding(.top, 3)
                     }
                 }
             }
@@ -89,7 +90,7 @@ struct AppListHeader: View {
     }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 13) {
             HStack {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
@@ -128,7 +129,6 @@ struct AppListHeader: View {
                     ),
             )
             .animation(.easeInOut(duration: 0.15), value: isSearchFocused)
-            .padding(.bottom, 6)
             
             HStack(spacing: 16) {
                 Toggle(isOn: Binding(
@@ -137,6 +137,7 @@ struct AppListHeader: View {
                 )) {
                     Text(NSLocalizedString("Select_All", comment: ""))
                         .font(DesignConstants.Typography.body)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
                 .toggleStyle(CustomCheckboxToggleStyle())
                 
@@ -154,6 +155,7 @@ struct AppListHeader: View {
                 ))
                 .font(DesignConstants.Typography.caption)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .fixedSize(horizontal: true, vertical: false)
             }
             .padding(.bottom, mainViewModel.isIncrementalMode && hasAvailableBackups ? 0 : 0)
             
@@ -166,9 +168,9 @@ struct AppListHeader: View {
                 .padding(.top, 0)
             }
         }
-        .padding(.horizontal, 20)
-        .padding(.top, 18)
-        .padding(.bottom, 18)
+        .padding(.horizontal, 15)
+        .padding(.top, 11)
+        .padding(.bottom, 15)
         .background(
             ZStack {
                 Color.App.contentAreaBackground.color(for: colorScheme)
@@ -196,6 +198,7 @@ struct IncrementalModeToggle: View {
             )) {
                 Text(NSLocalizedString("Incremental_Mode", comment: ""))
                     .font(DesignConstants.Typography.body)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             .toggleStyle(CustomCheckboxToggleStyle())
             .disabled(!hasAvailableBackups)
@@ -387,7 +390,7 @@ struct AppListItem: View {
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .opacity(isHovered ? 1 : 0)
         }
-        .padding(12)
+        .padding(11)
         .cardEffect(isSelected: isSelected)
         .onTapGesture(perform: onTap)
         .onHover { hovering in

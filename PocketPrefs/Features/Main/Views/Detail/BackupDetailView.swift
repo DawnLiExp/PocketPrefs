@@ -47,7 +47,7 @@ struct AppDetailView: View {
                 .buttonStyle(PrimaryButtonStyle())
                 .disabled(!viewModel.hasValidBackupSelection)
             }
-            .padding(20)
+            .padding(22)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
@@ -77,7 +77,7 @@ struct BackupPlaceholderView: View {
 
                 Spacer()
 
-                VStack(spacing: 12) {
+                VStack(spacing: 112) {
                     Button(action: { viewModel.performBackup() }) {
                         HStack {
                             Image(systemName: "arrow.up.circle.fill")
@@ -89,14 +89,14 @@ struct BackupPlaceholderView: View {
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(!viewModel.hasValidBackupSelection)
                 }
-                .padding(.horizontal, 40)
-                .padding(.bottom, 40)
+                .padding(.horizontal, 22)
+                .padding(.bottom, 22)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             UserInfoView()
-                .padding(.top, 18)
-                .padding(.trailing, 18)
+                .padding(.top, 5)
+                .padding(.trailing, 5)
         }
     }
 }

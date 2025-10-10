@@ -160,7 +160,7 @@ struct SidebarIconButton: View {
     @ViewBuilder
     private var iconView: some View {
         Image(systemName: icon)
-            .font(.system(size: 24, weight: .medium))
+            .font(.system(size: 22, weight: .medium))
             .foregroundColor(iconColor)
             .shadow(
                 color: isSelected ? iconColor.opacity(0.3) : .clear,
