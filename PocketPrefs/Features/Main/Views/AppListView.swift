@@ -38,6 +38,7 @@ struct AppListView: View {
                 viewModel: viewModel,
             )
             
+            // Only the scrollable list content needs to be non-draggable
             NonDraggableView {
                 if viewModel.filteredApps.isEmpty, !viewModel.searchText.isEmpty {
                     BackupSearchEmptyState(searchText: viewModel.searchText)
@@ -171,12 +172,7 @@ struct AppListHeader: View {
         .padding(.horizontal, 15)
         .padding(.top, 11)
         .padding(.bottom, 15)
-        .background(
-            ZStack {
-                Color.App.contentAreaBackground.color(for: colorScheme)
-                DraggableBackgroundView()
-            },
-        )
+        .background(Color.App.contentAreaBackground.color(for: colorScheme))
     }
 }
 

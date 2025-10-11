@@ -30,6 +30,7 @@ struct RestoreListView: View {
             )
             .padding(.bottom, 6)
             
+            // Only the scrollable list content needs to be non-draggable
             NonDraggableView {
                 RestoreListContent(
                     coordinator: coordinator,
@@ -103,12 +104,7 @@ struct RestoreListHeader: View {
         .padding(.horizontal, 15)
         .padding(.top, 20)
         .padding(.bottom, 11)
-        .background(
-            ZStack {
-                Color.App.contentAreaBackground.color(for: colorScheme)
-                DraggableBackgroundView()
-            },
-        )
+        .background(Color.App.contentAreaBackground.color(for: colorScheme))
     }
 }
 
