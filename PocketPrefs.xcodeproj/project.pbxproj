@@ -17,6 +17,9 @@
 		FC195B7B2E7EB80B00258310 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = FC195B532E7EB80B00258310 /* Localizable.strings */; };
 		FC33DF562E8716CA007C47E5 /* ConcurrencyUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC33DF552E8716C8007C47E5 /* ConcurrencyUtilities.swift */; };
 		FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */; };
+		FC55C07A2E9A1D2900B5BBDC /* PreferencesComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC55C0792E9A1D2800B5BBDC /* PreferencesComponents.swift */; };
+		FC55C07C2E9A1D5500B5BBDC /* CustomAppsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC55C07B2E9A1D5300B5BBDC /* CustomAppsComponents.swift */; };
+		FC55C07E2E9A1D5F00B5BBDC /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC55C07D2E9A1D5D00B5BBDC /* SharedComponents.swift */; };
 		FC615D7E2E92C3AE00DB964D /* AppListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC615D7D2E92C3AB00DB964D /* AppListViewModel.swift */; };
 		FC615D802E92C3BC00DB964D /* RestoreListViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC615D7F2E92C3BC00DB964D /* RestoreListViewModel.swift */; };
 		FC615D822E92C3D100DB964D /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC615D812E92C3D000DB964D /* DetailViewModel.swift */; };
@@ -25,7 +28,6 @@
 		FC8D8DCA2E90F06100AB8773 /* SettingsEventPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */; };
 		FC93001A2E8ED59A00194E89 /* ProgressReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9300192E8ED59800194E89 /* ProgressReporting.swift */; };
 		FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED942E7EF4D600764A17 /* PathPickerView.swift */; };
-		FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */; };
 		FCB96E482E97828600E87540 /* NonDraggableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCB96E472E97828400E87540 /* NonDraggableView.swift */; };
 		FCBABED72E96553400A45538 /* UserInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCBABED62E96553300A45538 /* UserInfoView.swift */; };
 		FCD19B9D2E956E5F004FA64A /* RestoreDetailView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD19B9B2E956E5F004FA64A /* RestoreDetailView.swift */; };
@@ -66,6 +68,9 @@
 		FC195B552E7EB80B00258310 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FC33DF552E8716C8007C47E5 /* ConcurrencyUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcurrencyUtilities.swift; sourceTree = "<group>"; };
 		FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCheckboxToggleStyle.swift; sourceTree = "<group>"; };
+		FC55C0792E9A1D2800B5BBDC /* PreferencesComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesComponents.swift; sourceTree = "<group>"; };
+		FC55C07B2E9A1D5300B5BBDC /* CustomAppsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomAppsComponents.swift; sourceTree = "<group>"; };
+		FC55C07D2E9A1D5D00B5BBDC /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
 		FC615D7D2E92C3AB00DB964D /* AppListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppListViewModel.swift; sourceTree = "<group>"; };
 		FC615D7F2E92C3BC00DB964D /* RestoreListViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RestoreListViewModel.swift; sourceTree = "<group>"; };
 		FC615D812E92C3D000DB964D /* DetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewModel.swift; sourceTree = "<group>"; };
@@ -75,7 +80,6 @@
 		FC9300192E8ED59800194E89 /* ProgressReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressReporting.swift; sourceTree = "<group>"; };
 		FC9C90FB2E94739200811BCA /* CoordinatorEventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinatorEventPublisher.swift; sourceTree = "<group>"; };
 		FCAFED942E7EF4D600764A17 /* PathPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathPickerView.swift; sourceTree = "<group>"; };
-		FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsComponents.swift; sourceTree = "<group>"; };
 		FCB96E472E97828400E87540 /* NonDraggableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NonDraggableView.swift; sourceTree = "<group>"; };
 		FCBABED62E96553300A45538 /* UserInfoView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserInfoView.swift; sourceTree = "<group>"; };
 		FCD19B992E956E5F004FA64A /* BackupDetailView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupDetailView.swift; sourceTree = "<group>"; };
@@ -146,6 +150,16 @@
 				FC195B532E7EB80B00258310 /* Localizable.strings */,
 			);
 			path = Localizations;
+			sourceTree = "<group>";
+		};
+		FC55C0782E9A1D1F00B5BBDC /* Components */ = {
+			isa = PBXGroup;
+			children = (
+				FC55C07B2E9A1D5300B5BBDC /* CustomAppsComponents.swift */,
+				FC55C0792E9A1D2800B5BBDC /* PreferencesComponents.swift */,
+				FC55C07D2E9A1D5D00B5BBDC /* SharedComponents.swift */,
+			);
+			path = Components;
 			sourceTree = "<group>";
 		};
 		FC615D642E92A8C300DB964D /* App */ = {
@@ -236,9 +250,9 @@
 		FC615D6F2E92AA5B00DB964D /* Views */ = {
 			isa = PBXGroup;
 			children = (
+				FC55C0782E9A1D1F00B5BBDC /* Components */,
 				FCAFED942E7EF4D600764A17 /* PathPickerView.swift */,
 				FCF4B5B42E8D6F4B008DA739 /* PreferencesView.swift */,
-				FCAFED962E7EF4F500764A17 /* SettingsComponents.swift */,
 				FCD990B72E7EDEE900C7087A /* SettingsView.swift */,
 			);
 			path = Views;
@@ -416,6 +430,7 @@
 			files = (
 				FCD990722E7EC53600C7087A /* AppListView.swift in Sources */,
 				FC93001A2E8ED59A00194E89 /* ProgressReporting.swift in Sources */,
+				FC55C07E2E9A1D5F00B5BBDC /* SharedComponents.swift in Sources */,
 				FCD990732E7EC53600C7087A /* ColorExtensions.swift in Sources */,
 				FC74CB462E85915F00F33BD4 /* CustomBackupPicker.swift in Sources */,
 				FCD990742E7EC53600C7087A /* MainView.swift in Sources */,
@@ -423,15 +438,16 @@
 				FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */,
 				FC68CD272E866826003BBDD4 /* ImportExportManager.swift in Sources */,
 				FCF4B5B72E8D81C2008DA739 /* LanguageManager.swift in Sources */,
+				FC55C07C2E9A1D5500B5BBDC /* CustomAppsComponents.swift in Sources */,
 				FCD990B82E7EDEEB00C7087A /* SettingsView.swift in Sources */,
 				FC33DF562E8716CA007C47E5 /* ConcurrencyUtilities.swift in Sources */,
 				FCD990752E7EC53600C7087A /* CommonComponents.swift in Sources */,
-				FCAFED972E7EF4F500764A17 /* SettingsComponents.swift in Sources */,
 				FCD990C02E7EDF1D00C7087A /* UserConfigStore.swift in Sources */,
 				FCD990772E7EC53600C7087A /* RestoreListView.swift in Sources */,
 				FCBABED72E96553400A45538 /* UserInfoView.swift in Sources */,
 				FCD990782E7EC53600C7087A /* ThemeManager.swift in Sources */,
 				FC615D802E92C3BC00DB964D /* RestoreListViewModel.swift in Sources */,
+				FC55C07A2E9A1D2900B5BBDC /* PreferencesComponents.swift in Sources */,
 				FCD990792E7EC53600C7087A /* SidebarView.swift in Sources */,
 				FCD9907A2E7EC53600C7087A /* PocketPrefsApp.swift in Sources */,
 				FCD9907B2E7EC53600C7087A /* IconService.swift in Sources */,

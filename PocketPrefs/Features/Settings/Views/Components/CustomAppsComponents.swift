@@ -1,121 +1,11 @@
 //
-//  SettingsComponents.swift
+//  CustomAppsComponents.swift
 //  PocketPrefs
 //
-//  Reusable UI components with reliable state updates
+//  Custom apps management UI components
 //
 
 import SwiftUI
-
-// MARK: - Settings Title Bar
-
-struct SettingsTitleBar: View {
-    let onClose: () -> Void
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        HStack {
-            Text(NSLocalizedString("Settings_Title", comment: ""))
-                .font(DesignConstants.Typography.title)
-                .foregroundColor(Color.App.primary.color(for: colorScheme))
-            
-            Spacer()
-            
-            Button(action: onClose) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 20))
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(16)
-        .background(Color.App.secondaryBackground.color(for: colorScheme))
-    }
-}
-
-// MARK: - Settings Toolbar
-
-struct SettingsToolbar: View {
-    @Binding var searchText: String
-    let selectedCount: Int
-    let onAddApp: () -> Void
-    let onDeleteSelected: () -> Void
-    let customAppManager: CustomAppManager
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            // Search bar
-            HStack {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                
-                TextField(NSLocalizedString("Search_Placeholder", comment: "Search apps..."), text: $searchText)
-                    .textFieldStyle(.plain)
-                
-                if !searchText.isEmpty {
-                    Button(action: { searchText = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
-            .padding(8)
-            .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.5))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            
-            // Action buttons
-            HStack {
-                Button(action: onAddApp) {
-                    Label(NSLocalizedString("Settings_Add_App", comment: ""),
-                          systemImage: "plus")
-                        .font(DesignConstants.Typography.body)
-                }
-                .buttonStyle(.bordered)
-                
-                if selectedCount > 0 {
-                    Button(action: onDeleteSelected) {
-                        Label(String(format: NSLocalizedString("Settings_Delete_Selected", comment: ""),
-                                     selectedCount),
-                              systemImage: "trash")
-                            .font(DesignConstants.Typography.body)
-                    }
-                    .buttonStyle(.bordered)
-                    .tint(Color.App.error.color(for: colorScheme))
-                }
-                
-                Spacer()
-            }
-            
-            HStack {
-                Toggle(isOn: Binding(
-                    get: { !customAppManager.customApps.isEmpty && customAppManager.selectedAppIds.count == customAppManager.customApps.count },
-                    set: { newValue in
-                        if newValue {
-                            Task {
-                                await customAppManager.selectAll()
-                            }
-                        } else {
-                            customAppManager.deselectAll()
-                        }
-                    },
-                )) {
-                    Text(NSLocalizedString("Select_All", comment: ""))
-                        .font(DesignConstants.Typography.body)
-                }
-                .toggleStyle(.checkbox)
-                
-                Spacer()
-                
-                Text(String(format: NSLocalizedString("Selected_Count", comment: ""), customAppManager.selectedAppIds.count, customAppManager.customApps.count))
-                    .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
-            }
-        }
-        .padding(12)
-    }
-}
 
 // MARK: - Custom App List Item
 
@@ -323,53 +213,6 @@ struct PathPickerViewWrapper: View {
     }
 }
 
-// MARK: - Empty States
-
-struct EmptyAppsListView: View {
-    let searchActive: Bool
-    let searchText: String
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: searchActive ? "magnifyingglass" : "plus.app")
-                .font(.system(size: 48))
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
-            
-            Text(searchActive ?
-                String(format: NSLocalizedString("Search_No_Results", comment: ""), searchText) :
-                NSLocalizedString("Settings_No_Custom_Apps", comment: ""))
-                .font(DesignConstants.Typography.headline)
-                .foregroundColor(Color.App.primary.color(for: colorScheme))
-                       
-            Text(searchActive ?
-                NSLocalizedString("Search_Try_Different_Keyword", comment: "") :
-                NSLocalizedString("Settings_Add_First_App_Hint", comment: ""))
-                .font(DesignConstants.Typography.caption)
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                .multilineTextAlignment(.center)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
-struct EmptyDetailView: View {
-    @Environment(\.colorScheme) var colorScheme
-    
-    var body: some View {
-        VStack(spacing: 16) {
-            Image(systemName: "sidebar.left")
-                .font(.system(size: 48))
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
-            
-            Text(NSLocalizedString("Settings_Select_App_To_Configure", comment: ""))
-                .font(DesignConstants.Typography.headline)
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
 // MARK: - Add App Sheet
 
 struct AddAppSheet: View {
@@ -530,4 +373,101 @@ struct AddAppSheet: View {
 @MainActor
 final class AppInfoReaderWrapper: ObservableObject {
     let reader = AppInfoReader()
+}
+
+// MARK: - Import/Export Toolbar
+
+struct ImportExportToolbar: View {
+    @ObservedObject var importExportManager: ImportExportManager
+    @ObservedObject var customAppManager: CustomAppManager
+    @State private var isExporting = false
+    @State private var isImporting = false
+    @Environment(\.colorScheme) var colorScheme
+    
+    private var exportButtonLabel: String {
+        if !customAppManager.selectedAppIds.isEmpty {
+            return NSLocalizedString("Export_Selected", comment: "")
+        } else {
+            return NSLocalizedString("Export_All", comment: "")
+        }
+    }
+
+    private var exportTooltip: String {
+        if !customAppManager.selectedAppIds.isEmpty {
+            return String(
+                format: NSLocalizedString("Export_Selected_Tooltip_Count", comment: ""),
+                customAppManager.selectedAppIds.count,
+            )
+        } else {
+            return NSLocalizedString("Export_All_Tooltip", comment: "")
+        }
+    }
+    
+    var body: some View {
+        HStack(spacing: 8) {
+            Button(action: {
+                isImporting = true
+                Task {
+                    await importExportManager.importCustomApps()
+                    isImporting = false
+                }
+            }) {
+                Label(
+                    NSLocalizedString("Import_Button", comment: ""),
+                    systemImage: "square.and.arrow.down",
+                )
+                .font(DesignConstants.Typography.caption)
+            }
+            .buttonStyle(.bordered)
+            .disabled(isImporting || isExporting)
+            .help(NSLocalizedString("Import_Tooltip", comment: ""))
+            
+            Button(action: {
+                isExporting = true
+                Task {
+                    let idsToExport = customAppManager.selectedAppIds.isEmpty ? nil : customAppManager.selectedAppIds
+                    await importExportManager.exportCustomApps(selectedIds: idsToExport)
+                    isExporting = false
+                }
+            }) {
+                Label(exportButtonLabel, systemImage: "square.and.arrow.up")
+                    .font(DesignConstants.Typography.caption)
+            }
+            .buttonStyle(.bordered)
+            .disabled(customAppManager.customApps.isEmpty || isImporting || isExporting)
+            .help(exportTooltip)
+            
+            Spacer()
+            
+            if !customAppManager.customApps.isEmpty {
+                HStack(spacing: 4) {
+                    if !customAppManager.selectedAppIds.isEmpty {
+                        Text(
+                            String(
+                                format: NSLocalizedString("Selected_Count_Simple", comment: ""),
+                                customAppManager.selectedAppIds.count,
+                            ),
+                        )
+                        .font(DesignConstants.Typography.caption)
+                        .foregroundColor(Color.App.accent.color(for: colorScheme))
+                        
+                        Text("•")
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    }
+                    
+                    Text(
+                        String(
+                            format: NSLocalizedString("Settings_Apps_Count", comment: ""),
+                            customAppManager.customApps.count,
+                        ),
+                    )
+                    .font(DesignConstants.Typography.caption)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                }
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+        .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
+    }
 }
