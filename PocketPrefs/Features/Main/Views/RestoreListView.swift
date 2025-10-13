@@ -46,6 +46,13 @@ struct RestoreListView: View {
         .onChange(of: viewModel.searchText) { _, newValue in
             viewModel.handleSearchChange(newValue)
         }
+        .task {
+            for await event in SettingsEventPublisher.shared.subscribe() {
+                if case .didClose = event {
+                    viewModel.onSettingsClose()
+                }
+            }
+        }
     }
 }
 

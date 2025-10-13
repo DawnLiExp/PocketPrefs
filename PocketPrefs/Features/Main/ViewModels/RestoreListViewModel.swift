@@ -79,6 +79,14 @@ final class RestoreListViewModel: ObservableObject {
     }
     
     /// Handle search text changes with debouncing
+    func onSettingsClose() {
+        guard let coordinator else { return }
+        coordinator.deselectAllRestoreApps()
+        availableBackups = coordinator.currentBackups
+        selectedBackup = coordinator.currentSelectedBackup
+        updateFilteredApps()
+    }
+        
     func handleSearchChange(_ newValue: String) {
         searchDebounceTask?.cancel()
         searchDebounceTask = Task {
@@ -89,12 +97,10 @@ final class RestoreListViewModel: ObservableObject {
         }
     }
     
-    /// Toggle selection for specific app in backup
     func toggleSelection(for app: BackupAppInfo) {
         coordinator?.toggleRestoreSelection(for: app)
     }
     
-    /// Toggle selection for all filtered apps
     func toggleSelectAll() {
         guard let coordinator else { return }
         
@@ -104,13 +110,11 @@ final class RestoreListViewModel: ObservableObject {
             coordinator.selectAllRestoreApps()
         }
     }
-    
-    /// Select backup for restore
+        
     func selectBackup(_ backup: BackupInfo) {
         coordinator?.selectBackup(backup)
     }
-    
-    /// Refresh available backups
+        
     func refreshBackups() async {
         guard let coordinator else { return }
         isRefreshing = true
@@ -157,6 +161,11 @@ final class RestoreListViewModel: ObservableObject {
     }
     
     // MARK: - Private Implementation
+        
+    private func deselectAllRestoreApps() {
+        guard let coordinator else { return }
+        coordinator.deselectAllRestoreApps()
+    }
     
     private func updateFilteredApps() {
         guard let backup = selectedBackup else {

@@ -26,7 +26,8 @@ final class SettingsEventPublisher {
     private init() {}
     
     deinit {
-        continuations.values.forEach { $0.finish() }
+        let conts = continuations.values
+        conts.forEach { $0.finish() }
     }
     
     // MARK: - Subscription
@@ -40,12 +41,12 @@ final class SettingsEventPublisher {
         continuation.onTermination = { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.continuations.removeValue(forKey: id)
-                self?.logger.debug("Settings event subscriber unregistered: \(id)")
+                self?.logger.debug("SettingsEventPublisher subscriber unregistered: \(id)")
             }
         }
         
         continuations[id] = continuation
-        logger.debug("Settings event subscriber registered: \(id)")
+        logger.debug("SettingsEventPublisher subscriber registered: \(id)")
         
         return stream
     }
