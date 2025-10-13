@@ -50,6 +50,9 @@
 		FCD990B82E7EDEEB00C7087A /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990B72E7EDEE900C7087A /* SettingsView.swift */; };
 		FCD990BC2E7EDF0500C7087A /* CustomAppManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990BB2E7EDF0300C7087A /* CustomAppManager.swift */; };
 		FCD990C02E7EDF1D00C7087A /* UserConfigStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */; };
+		FCE3E4E62E9CC4F50066678A /* BreathingPulseAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE3E4E32E9CC4F50066678A /* BreathingPulseAnimation.swift */; };
+		FCE3E4E72E9CC4F50066678A /* FadeInScaleAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE3E4E42E9CC4F50066678A /* FadeInScaleAnimation.swift */; };
+		FCE3E4E82E9CC4F50066678A /* SlideInAnimation.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCE3E4E52E9CC4F50066678A /* SlideInAnimation.swift */; };
 		FCF4B5B12E8D3181008DA739 /* AppInfoReader.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF4B5B02E8D317F008DA739 /* AppInfoReader.swift */; };
 		FCF4B5B32E8D6F38008DA739 /* PreferencesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */; };
 		FCF4B5B52E8D6F4D008DA739 /* PreferencesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF4B5B42E8D6F4B008DA739 /* PreferencesView.swift */; };
@@ -103,6 +106,9 @@
 		FCD990B72E7EDEE900C7087A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
 		FCD990BB2E7EDF0300C7087A /* CustomAppManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomAppManager.swift; sourceTree = "<group>"; };
 		FCD990BF2E7EDF1A00C7087A /* UserConfigStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UserConfigStore.swift; sourceTree = "<group>"; };
+		FCE3E4E32E9CC4F50066678A /* BreathingPulseAnimation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BreathingPulseAnimation.swift; sourceTree = "<group>"; };
+		FCE3E4E42E9CC4F50066678A /* FadeInScaleAnimation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FadeInScaleAnimation.swift; sourceTree = "<group>"; };
+		FCE3E4E52E9CC4F50066678A /* SlideInAnimation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SlideInAnimation.swift; sourceTree = "<group>"; };
 		FCF4B5B02E8D317F008DA739 /* AppInfoReader.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppInfoReader.swift; sourceTree = "<group>"; };
 		FCF4B5B22E8D6F36008DA739 /* PreferencesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesManager.swift; sourceTree = "<group>"; };
 		FCF4B5B42E8D6F4B008DA739 /* PreferencesView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesView.swift; sourceTree = "<group>"; };
@@ -273,6 +279,7 @@
 		FC615D712E92AAD900DB964D /* UI */ = {
 			isa = PBXGroup;
 			children = (
+				FCE3E4E22E9CC4D80066678A /* Animations */,
 				FC68CD242E865E41003BBDD4 /* Components */,
 				FC68CD252E865E4E003BBDD4 /* Extensions */,
 				FC615D732E92AB0000DB964D /* Theme */,
@@ -342,6 +349,16 @@
 				FCD19B9C2E956E5F004FA64A /* SharedDetailComponents.swift */,
 			);
 			path = Detail;
+			sourceTree = "<group>";
+		};
+		FCE3E4E22E9CC4D80066678A /* Animations */ = {
+			isa = PBXGroup;
+			children = (
+				FCE3E4E32E9CC4F50066678A /* BreathingPulseAnimation.swift */,
+				FCE3E4E42E9CC4F50066678A /* FadeInScaleAnimation.swift */,
+				FCE3E4E52E9CC4F50066678A /* SlideInAnimation.swift */,
+			);
+			path = Animations;
 			sourceTree = "<group>";
 		};
 		FCF9C4E02E7ADA4000013E27 = {
@@ -472,6 +489,9 @@
 				FCD19B9E2E956E5F004FA64A /* SharedDetailComponents.swift in Sources */,
 				FCD19B9F2E956E5F004FA64A /* DetailContainerView.swift in Sources */,
 				FCB96E482E97828600E87540 /* NonDraggableView.swift in Sources */,
+				FCE3E4E62E9CC4F50066678A /* BreathingPulseAnimation.swift in Sources */,
+				FCE3E4E72E9CC4F50066678A /* FadeInScaleAnimation.swift in Sources */,
+				FCE3E4E82E9CC4F50066678A /* SlideInAnimation.swift in Sources */,
 				FCD19BA02E956E5F004FA64A /* BackupDetailView.swift in Sources */,
 			);
 		};

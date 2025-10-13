@@ -29,7 +29,7 @@
 "Detail_Select_All_Config_Files" = "选择所有配置文件";
 "Detail_Action_Backup_Selected" = "备份已选配置";
 "Detail_Action_Select_Backup_File_To_Restore" = "选择备份文件进行恢复";
-"Detail_Placeholder_Select_App" = "选择一个应用以查看详情";
+"Detail_Placeholder_Select_App" = "<<< 选择一个应用以查看详情";
 "Detail_Placeholder_Quick_Backup_All_Selected" = "快速备份所有已选配置";
 "Detail_Restore_Backup_App_Count" = "%d 个应用";
 "Detail_Restore_Selected_Apps_Count" = "%d 个应用已选择";

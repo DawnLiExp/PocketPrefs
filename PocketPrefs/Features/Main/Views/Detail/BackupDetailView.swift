@@ -66,13 +66,15 @@ struct BackupPlaceholderView: View {
                 Spacer()
 
                 VStack(spacing: 16) {
-                    Image(systemName: "arrowshape.turn.up.left.2.fill")
+                    Image(systemName: "document.badge.gearshape.fill")
                         .font(.system(size: 108))
                         .foregroundColor(Color.App.accent.color(for: colorScheme).opacity(0.7))
+                        .fadeInScaleAnimation()
 
                     Text(NSLocalizedString("Detail_Placeholder_Select_App", comment: ""))
                         .font(DesignConstants.Typography.headline)
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                        .breathingPulseAnimation() // .fadeInScaleAnimation / .slideInAnimation / .breathingPulseAnimation
                 }
 
                 Spacer()
