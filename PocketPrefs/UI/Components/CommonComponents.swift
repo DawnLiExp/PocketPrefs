@@ -145,24 +145,31 @@ struct PrimaryButtonStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
             .font(DesignConstants.Typography.headline)
-            .foregroundColor(.white)
+            .foregroundColor(Color.App.accent.color(for: colorScheme))
             .padding(.horizontal, 20)
             .padding(.vertical, 12)
             .background(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                     .fill(
-                        (Color.App.accent.color(for: colorScheme))
-                            .opacity(isEnabled ? (isHovered ? 0.9 : 1.0) : 0.5)
+                        LinearGradient(
+                            gradient: Gradient(colors: [
+                                Color.App.accent.color(for: colorScheme).opacity(isHovered ? 0.15 : 0.1),
+                                Color.App.accent.color(for: colorScheme).opacity(isHovered ? 0.1 : 0.1)
+                            ]),
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                            .stroke(
+                                Color.App.accent.color(for: colorScheme),
+                                lineWidth: 0.6
+                            )
                     )
             )
-            .scaleEffect(configuration.isPressed ? 0.98 : 1)
-            .shadow(
-                color: (Color.App.accent.color(for: colorScheme)).opacity(isEnabled ? (isHovered ? 0.4 : 0.2) : 0.1),
-                radius: isHovered ? 10 : 5,
-                x: 0,
-                y: isHovered ? 4 : 2
-            )
-            .animation(DesignConstants.Animation.smooth, value: configuration.isPressed || isHovered)
+            .opacity(isEnabled ? 1.0 : 0.5)
+            .opacity(configuration.isPressed ? 0.7 : 1.0)
             .onHover { hovering in
                 isHovered = hovering
             }
@@ -188,6 +195,6 @@ struct SecondaryButtonStyle: ButtonStyle {
                     .stroke(Color.App.lightSeparator.color(for: colorScheme), lineWidth: 0.5)
             )
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .animation(DesignConstants.Animation.quick, value: configuration.isPressed)
+            .opacity(configuration.isPressed ? 0.8 : 1.0)
     }
 }

@@ -67,7 +67,7 @@ extension Color {
         )
         static let primary = AdaptiveColor(
             light: Color(hex: "1C1C1E"),
-            dark: Color(hex: "FFFFFF")
+            dark: Color(hex: "EBEBF5", opacity: 0.95)
         )
         static let secondary = AdaptiveColor(
             light: Color(hex: "3C3C43", opacity: 0.6),
@@ -135,7 +135,7 @@ extension Color {
         // Text Colors
         static let primaryText = AdaptiveColor(
             light: Color(hex: "1C1C1E"),
-            dark: Color(hex: "FFFFFF")
+            dark: Color(hex: "EBEBF5", opacity: 0.95)
         )
         static let secondaryText = AdaptiveColor(
             light: Color(hex: "3C3C43", opacity: 0.6),

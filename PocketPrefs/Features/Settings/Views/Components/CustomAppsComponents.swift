@@ -313,7 +313,7 @@ struct AddAppSheet: View {
                     .disabled(isLoadingAppInfo)
                 
                 Button(NSLocalizedString("Settings_Add_App", comment: ""), action: onAdd)
-                    .buttonStyle(PrimaryButtonStyle())
+                    .buttonStyle(SecondaryButtonStyle())
                     .disabled(appName.isEmpty || bundleId.isEmpty || isLoadingAppInfo)
                     .keyboardShortcut(.defaultAction)
             }
