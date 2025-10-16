@@ -1,4 +1,3 @@
-//
 //  ColorExtensions.swift
 //  PocketPrefs
 //
@@ -54,6 +53,13 @@ struct AdaptiveColor {
     func color(for scheme: ColorScheme) -> Color {
         scheme == .dark ? dark : light
     }
+
+    /// Converts to NSColor for AppKit usage
+    /// - Parameter scheme: The current `ColorScheme`.
+    /// - Returns: The `NSColor` for the given scheme.
+    func nsColor(for scheme: ColorScheme) -> NSColor {
+        NSColor(color(for: scheme))
+    }
 }
 
 // MARK: - Color Palette
@@ -63,131 +69,137 @@ extension Color {
         // Primary Colors
         static let accent = AdaptiveColor(
             light: Color(hex: "748873"),
-            dark: Color(hex: "8D99AE")
+            dark: Color(hex: "8D99AE"),
         )
         static let primary = AdaptiveColor(
             light: Color(hex: "1C1C1E"),
-            dark: Color(hex: "EBEBF5", opacity: 0.95)
+            dark: Color(hex: "EBEBF5", opacity: 0.95),
         )
         static let secondary = AdaptiveColor(
             light: Color(hex: "3C3C43", opacity: 0.6),
-            dark: Color(hex: "EBEBF5", opacity: 0.6)
+            dark: Color(hex: "EBEBF5", opacity: 0.6),
         )
 
         // Semantic Colors
         static let success = AdaptiveColor(
             light: Color(hex: "34C759"),
-            dark: Color(hex: "32D74B")
+            dark: Color(hex: "32D74B"),
         )
         static let warning = AdaptiveColor(
             light: Color(hex: "FF9500"),
-            dark: Color(hex: "FF9F0A")
+            dark: Color(hex: "FF9F0A"),
         )
         static let error = AdaptiveColor(
             light: Color(hex: "FF3B30"),
-            dark: Color(hex: "FF453A")
+            dark: Color(hex: "FF453A"),
         )
         static let info = AdaptiveColor(
             light: Color(hex: "007AFF"),
-            dark: Color(hex: "0A84FF")
+            dark: Color(hex: "0A84FF"),
         )
 
         // Enhanced unified background system with glass support
         static let unifiedBackground = AdaptiveColor(
             light: Color(hex: "F5F2ED"),
-            dark: Color(hex: "44444E")
+            dark: Color(hex: "44444E"),
+        )
+
+        // Window background with transparency for glass effect
+        static let windowBackground = AdaptiveColor(
+            light: Color(hex: "F5F2ED", opacity: 0.70),
+            dark: Color(hex: "44444E", opacity: 0.68),
         )
 
         // Content area backgrounds (floating windows)
         static let contentAreaBackground = AdaptiveColor(
             light: Color(hex: "fdfbfa"),
-            dark: Color(hex: "1C1C1E")
+            dark: Color(hex: "1C1C1E"),
         )
 
         // Legacy background colors (kept for compatibility)
         static let background = AdaptiveColor(
             light: Color(hex: "F5F5F7"),
-            dark: Color(hex: "0D0D0D")
+            dark: Color(hex: "0D0D0D"),
         )
         static let secondaryBackground = AdaptiveColor(
             light: Color(hex: "FFFFFF"),
-            dark: Color(hex: "1C1C1E")
+            dark: Color(hex: "1C1C1E"),
         )
         static let tertiaryBackground = AdaptiveColor(
             light: Color(hex: "F5F2ED"),
-            dark: Color(hex: "2C2C2E")
+            dark: Color(hex: "2C2C2E"),
         )
 
         // Interactive Elements
         static let controlBackground = AdaptiveColor(
             light: Color(hex: "FFFFFF"),
-            dark: Color(hex: "1C1C1E")
+            dark: Color(hex: "1C1C1E"),
         )
         static let selectedControlBackground = AdaptiveColor(
             light: Color(hex: "7A9A7A"),
-            dark: Color(hex: "0A84FF")
+            dark: Color(hex: "0A84FF"),
         )
         static let hoverBackground = AdaptiveColor(
             light: Color(hex: "7A9A7A", opacity: 0.08),
-            dark: Color(hex: "44444E", opacity: 0.08)
+            dark: Color(hex: "44444E", opacity: 0.08),
         )
 
         // Text Colors
         static let primaryText = AdaptiveColor(
             light: Color(hex: "1C1C1E"),
-            dark: Color(hex: "EBEBF5", opacity: 0.95)
+            dark: Color(hex: "EBEBF5", opacity: 0.95),
         )
         static let secondaryText = AdaptiveColor(
             light: Color(hex: "3C3C43", opacity: 0.6),
-            dark: Color(hex: "EBEBF5", opacity: 0.6)
+            dark: Color(hex: "EBEBF5", opacity: 0.6),
         )
         static let tertiaryText = AdaptiveColor(
             light: Color(hex: "3C3C43", opacity: 0.3),
-            dark: Color(hex: "EBEBF5", opacity: 0.3)
+            dark: Color(hex: "EBEBF5", opacity: 0.3),
         )
         static let disabledText = AdaptiveColor(
             light: Color(hex: "3C3C43", opacity: 0.3),
-            dark: Color(hex: "EBEBF5", opacity: 0.3)
+            dark: Color(hex: "EBEBF5", opacity: 0.3),
         )
 
         // Separator (subtle, for minimal visibility)
         static let separator = AdaptiveColor(
             light: Color(hex: "C6C6C8"),
-            dark: Color(hex: "38383A")
+            dark: Color(hex: "38383A"),
         )
         static let lightSeparator = AdaptiveColor(
             light: Color(hex: "748873", opacity: 0.8),
-            dark: Color(hex: "8D99AE", opacity: 0.8)
+            dark: Color(hex: "8D99AE", opacity: 0.8),
         )
 
         // Content Area Border for decorative lines
         static let contentAreaBorder = AdaptiveColor(
             light: Color(hex: "748873", opacity: 0.4),
-            dark: Color(hex: "7c889e", opacity: 0.4)
+            dark: Color(hex: "7c889e", opacity: 0.4),
         )
 
         // Status Colors
         static let installed = AdaptiveColor(
             light: Color(hex: "748873", opacity: 0.8),
-            dark: Color(hex: "748873", opacity: 0.8)
+            dark: Color(hex: "748873", opacity: 0.8),
         )
         static let notInstalled = AdaptiveColor(
             light: Color(hex: "FF9500", opacity: 0.8),
-            dark: Color(hex: "FF9F0A", opacity: 0.8)
+            dark: Color(hex: "FF9F0A", opacity: 0.8),
         )
         static let processing = AdaptiveColor(
             light: Color(hex: "007AFF", opacity: 0.8),
-            dark: Color(hex: "0A84FF", opacity: 0.8)
+            dark: Color(hex: "0A84FF", opacity: 0.8),
         )
 
         // Progress Colors
         static let progressTrack = AdaptiveColor(
             light: Color(hex: "8E8E93", opacity: 0.2),
-            dark: Color(hex: "8E8E93", opacity: 0.2)
+            dark: Color(hex: "8E8E93", opacity: 0.2),
         )
         static let progressFill = AdaptiveColor(
             light: Color(hex: "007AFF"),
-            dark: Color(hex: "0A84FF")
+            dark: Color(hex: "0A84FF"),
         )
     }
 }
@@ -204,7 +216,7 @@ extension LinearGradient {
         return LinearGradient(
             gradient: Gradient(colors: [accentColor, endColor]),
             startPoint: .topLeading,
-            endPoint: .bottomTrailing
+            endPoint: .bottomTrailing,
         )
     }
 }
@@ -273,7 +285,7 @@ private struct EnhancedUnifiedBackgroundModifier: ViewModifier {
                     // Subtle color tint overlay for depth
                     Color.App.unifiedBackground.color(for: colorScheme)
                         .opacity(0.08)
-                }
+                },
             )
     }
 }
@@ -297,7 +309,7 @@ private struct EnhancedSidebarBackgroundModifier: ViewModifier {
                     // Subtle warmth tint for differentiation while maintaining unity
                     Color.App.unifiedBackground.color(for: colorScheme)
                         .opacity(0.12)
-                }
+                },
             )
     }
 }
@@ -315,7 +327,7 @@ private struct ContentAreaBackgroundModifier: ViewModifier {
                     : Color.black.opacity(0.08),
                 radius: 8,
                 x: 0,
-                y: 2
+                y: 2,
             )
     }
 }
@@ -337,7 +349,7 @@ private struct SidebarBackgroundModifier: ViewModifier {
                     Rectangle()
                         .fill(.ultraThinMaterial)
                         .opacity(0.75)
-                }
+                },
             )
     }
 }
@@ -375,7 +387,7 @@ private struct SoftShadowModifier: ViewModifier {
                 color: Color.App.primary.color(for: colorScheme).opacity(0.1),
                 radius: 8,
                 x: 0,
-                y: 2
+                y: 2,
             )
     }
 }
@@ -394,7 +406,7 @@ private struct ElevationShadowModifier: ViewModifier {
                 color: Color.App.primary.color(for: colorScheme).opacity(min(opacity, 0.2)),
                 radius: radius,
                 x: 0,
-                y: y
+                y: y,
             )
     }
 }
@@ -404,22 +416,22 @@ private struct ElevationShadowModifier: ViewModifier {
 extension AdaptiveColor {
     static let cardBackground = AdaptiveColor(
         light: Color(hex: "FFFFFF", opacity: 0.7),
-        dark: Color(hex: "000000", opacity: 0.3)
+        dark: Color(hex: "000000", opacity: 0.3),
     )
 
     static let hoverHighlight = AdaptiveColor(
         light: Color(hex: "000000", opacity: 0.05),
-        dark: Color(hex: "FFFFFF", opacity: 0.05)
+        dark: Color(hex: "FFFFFF", opacity: 0.05),
     )
 
     static let glassOverlay = AdaptiveColor(
         light: Color(hex: "FFFFFF", opacity: 0.5),
-        dark: Color(hex: "FFFFFF", opacity: 0.1)
+        dark: Color(hex: "FFFFFF", opacity: 0.1),
     )
 
     /// Enhanced glass tint for unified visual hierarchy
     static let glassTint = AdaptiveColor(
         light: Color(hex: "F5F2ED", opacity: 0.4),
-        dark: Color(hex: "44444E", opacity: 0.3)
+        dark: Color(hex: "44444E", opacity: 0.3),
     )
 }

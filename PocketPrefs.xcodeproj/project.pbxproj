@@ -25,6 +25,8 @@
 		FC615D822E92C3D100DB964D /* DetailViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC615D812E92C3D000DB964D /* DetailViewModel.swift */; };
 		FC68CD272E866826003BBDD4 /* ImportExportManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC68CD262E866824003BBDD4 /* ImportExportManager.swift */; };
 		FC74CB462E85915F00F33BD4 /* CustomBackupPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */; };
+		FC79F8962E9F61CD00BA0B12 /* WindowBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC79F8952E9F61CA00BA0B12 /* WindowBackgroundView.swift */; };
+		FC79F8982E9F61DD00BA0B12 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC79F8972E9F61DA00BA0B12 /* AppDelegate.swift */; };
 		FC8D8DCA2E90F06100AB8773 /* SettingsEventPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */; };
 		FC93001A2E8ED59A00194E89 /* ProgressReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9300192E8ED59800194E89 /* ProgressReporting.swift */; };
 		FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED942E7EF4D600764A17 /* PathPickerView.swift */; };
@@ -79,6 +81,8 @@
 		FC615D812E92C3D000DB964D /* DetailViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DetailViewModel.swift; sourceTree = "<group>"; };
 		FC68CD262E866824003BBDD4 /* ImportExportManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImportExportManager.swift; sourceTree = "<group>"; };
 		FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBackupPicker.swift; sourceTree = "<group>"; };
+		FC79F8952E9F61CA00BA0B12 /* WindowBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowBackgroundView.swift; sourceTree = "<group>"; };
+		FC79F8972E9F61DA00BA0B12 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsEventPublisher.swift; sourceTree = "<group>"; };
 		FC9300192E8ED59800194E89 /* ProgressReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressReporting.swift; sourceTree = "<group>"; };
 		FC9C90FB2E94739200811BCA /* CoordinatorEventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinatorEventPublisher.swift; sourceTree = "<group>"; };
@@ -171,6 +175,7 @@
 		FC615D642E92A8C300DB964D /* App */ = {
 			isa = PBXGroup;
 			children = (
+				FC79F8972E9F61DA00BA0B12 /* AppDelegate.swift */,
 				FCD990712E7EC53600C7087A /* PocketPrefsApp.swift */,
 			);
 			path = App;
@@ -328,6 +333,7 @@
 				FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */,
 				FCB96E472E97828400E87540 /* NonDraggableView.swift */,
 				FCBABED62E96553300A45538 /* UserInfoView.swift */,
+				FC79F8952E9F61CA00BA0B12 /* WindowBackgroundView.swift */,
 			);
 			path = Components;
 			sourceTree = "<group>";
@@ -448,6 +454,7 @@
 				FCD990722E7EC53600C7087A /* AppListView.swift in Sources */,
 				FC93001A2E8ED59A00194E89 /* ProgressReporting.swift in Sources */,
 				FC55C07E2E9A1D5F00B5BBDC /* SharedComponents.swift in Sources */,
+				FC79F8962E9F61CD00BA0B12 /* WindowBackgroundView.swift in Sources */,
 				FCD990732E7EC53600C7087A /* ColorExtensions.swift in Sources */,
 				FC74CB462E85915F00F33BD4 /* CustomBackupPicker.swift in Sources */,
 				FCD990742E7EC53600C7087A /* MainView.swift in Sources */,
@@ -482,6 +489,7 @@
 				FC615D822E92C3D100DB964D /* DetailViewModel.swift in Sources */,
 				FCF4B5B52E8D6F4D008DA739 /* PreferencesView.swift in Sources */,
 				FC195B6C2E7EB80B00258310 /* BackupModels.swift in Sources */,
+				FC79F8982E9F61DD00BA0B12 /* AppDelegate.swift in Sources */,
 				FCFA34992E86CE2F00BCA325 /* IconConfiguration.swift in Sources */,
 				FC195B772E7EB80B00258310 /* MainCoordinator.swift in Sources */,
 				FCD990BC2E7EDF0500C7087A /* CustomAppManager.swift in Sources */,
