@@ -11,14 +11,11 @@ import SwiftUI
 
 @MainActor
 final class MainCoordinator: ObservableObject {
-    // MARK: - Internal State (not published)
+    // MARK: - Internal State
     
     private var apps: [AppConfig] = []
     
     // MARK: - Published State
-
-    // These need to be @Published for direct SwiftUI observers (e.g., CustomBackupPicker)
-    // Events are still published for ViewModel layer communication
     
     @Published private(set) var availableBackups: [BackupInfo] = []
     @Published private(set) var selectedBackup: BackupInfo?
@@ -32,14 +29,9 @@ final class MainCoordinator: ObservableObject {
     private let fileOps = FileOperationService.shared
     private let userStore = UserConfigStore.shared
     
-    // MARK: - Tasks
+    // MARK: - Tasks Management
     
-    private var prefsEventTask: Task<Void, Never>?
-    private var iconEventTask: Task<Void, Never>?
-    private var userConfigEventTask: Task<Void, Never>?
-    private var loadAppsTask: Task<Void, Never>?
-    private var scanBackupsTask: Task<Void, Never>?
-    private var settingsEventTask: Task<Void, Never>?
+    private var tasks: [Task<Void, Never>] = []
     
     // MARK: - Initialization
     
@@ -49,19 +41,11 @@ final class MainCoordinator: ObservableObject {
             await scanBackups()
         }
         
-        subscribeToPreferencesEvents()
-        subscribeToIconEvents()
-        subscribeToUserConfigEvents()
-        subscribeToSettingsEvents()
+        subscribeToEvents()
     }
     
     deinit {
-        prefsEventTask?.cancel()
-        iconEventTask?.cancel()
-        userConfigEventTask?.cancel()
-        loadAppsTask?.cancel()
-        scanBackupsTask?.cancel()
-        settingsEventTask?.cancel()
+        tasks.forEach { $0.cancel() }
     }
     
     // MARK: - Public Accessors
@@ -72,138 +56,114 @@ final class MainCoordinator: ObservableObject {
     
     // MARK: - Event Subscriptions
     
-    private func subscribeToUserConfigEvents() {
-        userConfigEventTask?.cancel()
-        userConfigEventTask = Task { [weak self] in
-            guard let self else { return }
-            let eventStream = userStore.subscribe()
+    private func subscribeToEvents() {
+        tasks.append(Task { await subscribeToUserConfigEvents() })
+        tasks.append(Task { await subscribeToSettingsEvents() })
+        tasks.append(Task { await subscribeToPreferencesEvents() })
+        tasks.append(Task { await subscribeToIconEvents() })
+    }
+    
+    private func subscribeToUserConfigEvents() async {
+        let eventStream = userStore.subscribe()
+        
+        for await event in eventStream {
+            guard !Task.isCancelled else { break }
             
-            for await event in eventStream {
-                guard !Task.isCancelled else { break }
-                
-                switch event {
-                case .appAdded(let app):
-                    logger.info("User config event: app added - \(app.name)")
-                case .appUpdated(let app):
-                    logger.info("User config event: app updated - \(app.name)")
-                case .appsRemoved(let ids):
-                    logger.info("User config event: apps removed - \(ids.count) apps")
-                case .batchUpdated(let apps):
-                    logger.info("User config event: batch update - \(apps.count) apps")
-                }
-                
-                await self.loadApps()
+            switch event {
+            case .appAdded(let app):
+                logger.info("User config event: app added - \(app.name)")
+            case .appUpdated(let app):
+                logger.info("User config event: app updated - \(app.name)")
+            case .appsRemoved(let ids):
+                logger.info("User config event: apps removed - \(ids.count) apps")
+            case .batchUpdated(let apps):
+                logger.info("User config event: batch update - \(apps.count) apps")
+            }
+            
+            await loadApps()
+        }
+    }
+    
+    private func subscribeToSettingsEvents() async {
+        let eventStream = SettingsEventPublisher.shared.subscribe()
+        
+        for await event in eventStream {
+            guard !Task.isCancelled else { break }
+            
+            if case .didClose = event {
+                logger.info("Settings closed - reloading apps")
+                await loadApps()
             }
         }
     }
     
-    private func subscribeToSettingsEvents() {
-        settingsEventTask?.cancel()
-        settingsEventTask = Task { [weak self] in
-            guard let self else { return }
-            let eventStream = SettingsEventPublisher.shared.subscribe()
+    private func subscribeToPreferencesEvents() async {
+        for await event in PreferencesManager.shared.events {
+            guard !Task.isCancelled else { break }
             
-            for await event in eventStream {
-                guard !Task.isCancelled else { break }
-                
-                if case .didClose = event {
-                    await self.handleSettingsClose()
-                }
+            if case .directoryChanged(let path) = event {
+                logger.info("Backup directory changed: \(path)")
+                await handleDirectoryChange()
             }
         }
     }
     
-    private func handleSettingsClose() async {
-        logger.info("Settings closed event received")
-        await loadApps()
-        logger.info("Settings close sync completed")
-    }
-    
-    private func subscribeToPreferencesEvents() {
-        prefsEventTask?.cancel()
-        prefsEventTask = Task { [weak self] in
-            guard let self else { return }
+    private func subscribeToIconEvents() async {
+        var loadedIcons: Set<String> = []
+        
+        for await bundleId in iconService.events {
+            guard !Task.isCancelled else { break }
+            loadedIcons.insert(bundleId)
             
-            for await event in PreferencesManager.shared.events {
-                guard !Task.isCancelled else { break }
-                
-                if case .directoryChanged(let path) = event {
-                    logger.info("Backup directory changed: \(path)")
-                    await self.handleDirectoryChange()
-                }
-            }
-        }
-    }
-    
-    private func subscribeToIconEvents() {
-        iconEventTask?.cancel()
-        iconEventTask = Task { [weak self] in
-            guard let self else { return }
-            var loadedIcons: Set<String> = []
+            try? await Task.sleep(for: .seconds(0.5))
+            guard !Task.isCancelled else { break }
             
-            for await bundleId in iconService.events {
-                guard !Task.isCancelled else { break }
-                loadedIcons.insert(bundleId)
-                
-                try? await Task.sleep(for: .seconds(0.5))
-                guard !Task.isCancelled else { break }
-                
-                if !loadedIcons.isEmpty {
-                    logger.debug("Batch icon update: \(loadedIcons.count) icons loaded")
-                    loadedIcons.removeAll()
-                    self.objectWillChange.send()
-                }
+            if !loadedIcons.isEmpty {
+                logger.debug("Batch icon update: \(loadedIcons.count) icons loaded")
+                loadedIcons.removeAll()
+                objectWillChange.send()
             }
         }
     }
     
     private func handleDirectoryChange() async {
         logger.info("Handling backup directory change")
-        
         selectedBackup = nil
         availableBackups = []
-        
         await scanBackups()
-        logger.info("Rescan completed: \(self.availableBackups.count) backups found")
     }
     
     // MARK: - App Management
     
     func loadApps() async {
-        loadAppsTask?.cancel()
+        var allApps = AppConfig.presetConfigs
+        allApps.append(contentsOf: userStore.customApps)
         
-        loadAppsTask = Task {
-            var allApps = AppConfig.presetConfigs
-            allApps.append(contentsOf: userStore.customApps)
-            
-            await withTaskGroup(of: (UUID, Bool).self) { group in
-                for app in allApps {
-                    group.addTask { [weak self] in
-                        guard let self else { return (app.id, false) }
-                        let isInstalled = await self.fileOps.checkIfAppInstalled(bundleId: app.bundleId)
-                        return (app.id, isInstalled)
-                    }
+        await withTaskGroup(of: (UUID, Bool).self) { group in
+            for app in allApps {
+                group.addTask { [weak self] in
+                    guard let self else { return (app.id, false) }
+                    let isInstalled = await self.fileOps.checkIfAppInstalled(bundleId: app.bundleId)
+                    return (app.id, isInstalled)
                 }
-                
-                var updatedApps = allApps
-                for await (appId, isInstalled) in group {
-                    guard !Task.isCancelled else { break }
-                    
-                    if let index = updatedApps.firstIndex(where: { $0.id == appId }) {
-                        updatedApps[index].isInstalled = isInstalled
-                        updatedApps[index].isSelected = false
-                    }
-                }
-                
-                guard !Task.isCancelled else { return }
-                self.apps = updatedApps
-                CoordinatorEventPublisher.shared.publish(.appsUpdated(updatedApps))
             }
             
-            logger.info("Loaded \(self.apps.count) apps (\(self.userStore.customApps.count) custom)")
+            var updatedApps = allApps
+            for await (appId, isInstalled) in group {
+                guard !Task.isCancelled else { break }
+                
+                if let index = updatedApps.firstIndex(where: { $0.id == appId }) {
+                    updatedApps[index].isInstalled = isInstalled
+                    updatedApps[index].isSelected = false
+                }
+            }
+            
+            guard !Task.isCancelled else { return }
+            apps = updatedApps
+            publishEvent(.appsUpdated(updatedApps))
         }
         
-        await loadAppsTask?.value
+        logger.info("Loaded \(self.apps.count) apps (\(self.userStore.customApps.count) custom)")
     }
     
     // MARK: - Icon Management
@@ -219,49 +179,40 @@ final class MainCoordinator: ObservableObject {
     // MARK: - Backup Management
     
     func scanBackups() async {
-        scanBackupsTask?.cancel()
+        let backups = await backupService.scanBackups()
+        guard !Task.isCancelled else { return }
         
-        scanBackupsTask = Task {
-            let backups = await backupService.scanBackups()
-            guard !Task.isCancelled else { return }
-            
-            availableBackups = backups
-            
-            if let currentSelected = selectedBackup,
-               !availableBackups.contains(currentSelected)
-            {
-                selectedBackup = nil
-            }
-            
-            if selectedBackup == nil, let firstBackup = availableBackups.first {
-                selectBackup(firstBackup)
-            }
-            
-            CoordinatorEventPublisher.shared.publish(.backupsUpdated(backups))
-            
-            logger.info("Found \(self.availableBackups.count) backups")
+        availableBackups = backups
+        
+        if let currentSelected = selectedBackup,
+           !availableBackups.contains(currentSelected)
+        {
+            selectedBackup = nil
         }
         
-        await scanBackupsTask?.value
+        if selectedBackup == nil, let firstBackup = availableBackups.first {
+            selectBackup(firstBackup)
+        }
+        
+        publishEvent(.backupsUpdated(backups))
+        logger.info("Found \(self.availableBackups.count) backups")
     }
     
     func selectBackup(_ backup: BackupInfo) {
         selectedBackup = backup
-        CoordinatorEventPublisher.shared.publish(.selectedBackupUpdated(backup))
+        publishEvent(.selectedBackupUpdated(backup))
     }
     
     func selectIncrementalBase(_ backup: BackupInfo) {
-        // Incremental base is managed by MainViewModel
-        // This method exists for coordination if needed
+        // Managed by MainViewModel
     }
     
     // MARK: - Selection Management
     
     func toggleSelection(for app: AppConfig) {
-        if let index = apps.firstIndex(where: { $0.id == app.id }) {
-            apps[index].isSelected.toggle()
-            CoordinatorEventPublisher.shared.publish(.appsUpdated(apps))
-        }
+        guard let index = apps.firstIndex(where: { $0.id == app.id }) else { return }
+        apps[index].isSelected.toggle()
+        publishEvent(.appsUpdated(apps))
     }
     
     func selectAll() {
@@ -272,7 +223,7 @@ final class MainCoordinator: ObservableObject {
             }
             return updated
         }
-        CoordinatorEventPublisher.shared.publish(.appsUpdated(apps))
+        publishEvent(.appsUpdated(apps))
     }
     
     func deselectAll() {
@@ -281,55 +232,34 @@ final class MainCoordinator: ObservableObject {
             updated.isSelected = false
             return updated
         }
-        CoordinatorEventPublisher.shared.publish(.appsUpdated(apps))
+        publishEvent(.appsUpdated(apps))
     }
     
     func toggleRestoreSelection(for app: BackupAppInfo) {
-        guard let currentBackup = selectedBackup,
-              let backupIndex = availableBackups.firstIndex(where: { $0.id == currentBackup.id }),
-              let appIndex = availableBackups[backupIndex].apps.firstIndex(where: { $0.id == app.id })
-        else { return }
-        
-        availableBackups[backupIndex].apps[appIndex].isSelected.toggle()
-        selectedBackup = availableBackups[backupIndex]
-        
-        // Publish events for ViewModel layer
-        CoordinatorEventPublisher.shared.publish(.backupsUpdated(availableBackups))
-        CoordinatorEventPublisher.shared.publish(.selectedBackupUpdated(selectedBackup))
+        modifyBackupApps { apps in
+            guard let index = apps.firstIndex(where: { $0.id == app.id }) else { return }
+            apps[index].isSelected.toggle()
+        }
     }
     
     func selectAllRestoreApps() {
-        guard let currentBackup = selectedBackup,
-              let backupIndex = availableBackups.firstIndex(where: { $0.id == currentBackup.id })
-        else { return }
-        
-        availableBackups[backupIndex].apps = availableBackups[backupIndex].apps.map { app in
-            var updated = app
-            updated.isSelected = true
-            return updated
+        modifyBackupApps { apps in
+            apps = apps.map { app in
+                var updated = app
+                updated.isSelected = true
+                return updated
+            }
         }
-        
-        selectedBackup = availableBackups[backupIndex]
-        
-        CoordinatorEventPublisher.shared.publish(.backupsUpdated(availableBackups))
-        CoordinatorEventPublisher.shared.publish(.selectedBackupUpdated(selectedBackup))
     }
     
     func deselectAllRestoreApps() {
-        guard let currentBackup = selectedBackup,
-              let backupIndex = availableBackups.firstIndex(where: { $0.id == currentBackup.id })
-        else { return }
-        
-        availableBackups[backupIndex].apps = availableBackups[backupIndex].apps.map { app in
-            var updated = app
-            updated.isSelected = false
-            return updated
+        modifyBackupApps { apps in
+            apps = apps.map { app in
+                var updated = app
+                updated.isSelected = false
+                return updated
+            }
         }
-        
-        selectedBackup = availableBackups[backupIndex]
-        
-        CoordinatorEventPublisher.shared.publish(.backupsUpdated(availableBackups))
-        CoordinatorEventPublisher.shared.publish(.selectedBackupUpdated(selectedBackup))
     }
     
     // MARK: - Operations
@@ -340,7 +270,7 @@ final class MainCoordinator: ObservableObject {
     ) async {
         let startTime = Date()
         
-        CoordinatorEventPublisher.shared.publish(.operationStarted)
+        publishEvent(.operationStarted)
         
         await onProgress(ProgressUpdate(
             fraction: 0.0,
@@ -353,22 +283,12 @@ final class MainCoordinator: ObservableObject {
             onProgress: onProgress,
         )
         
-        let elapsed = Date().timeIntervalSince(startTime)
-        let minDuration = 1.3
-        if elapsed < minDuration {
-            try? await Task.sleep(for: .seconds(minDuration - elapsed))
-        }
+        await enforceMinimumDuration(startTime: startTime, onProgress: onProgress, result: result.statusMessage)
         
-        await onProgress(ProgressUpdate(
-            fraction: 1.0,
-            message: result.statusMessage,
-        ))
-        
-        try? await Task.sleep(for: .seconds(0.5))
         await scanBackups()
         
         try? await Task.sleep(for: .seconds(0.2))
-        CoordinatorEventPublisher.shared.publish(.operationCompleted)
+        publishEvent(.operationCompleted)
     }
     
     func performRestoreOperation(
@@ -381,7 +301,7 @@ final class MainCoordinator: ObservableObject {
         
         let startTime = Date()
         
-        CoordinatorEventPublisher.shared.publish(.operationStarted)
+        publishEvent(.operationStarted)
         
         await onProgress(ProgressUpdate(
             fraction: 0.0,
@@ -393,6 +313,45 @@ final class MainCoordinator: ObservableObject {
             onProgress: onProgress,
         )
         
+        await enforceMinimumDuration(startTime: startTime, onProgress: onProgress, result: result.statusMessage)
+        
+        await loadApps()
+        
+        try? await Task.sleep(for: .seconds(0.2))
+        publishEvent(.operationCompleted)
+    }
+    
+    func scanAppsInBackup(at path: String) async -> [BackupAppInfo] {
+        await backupService.scanAppsInBackup(at: path)
+    }
+    
+    // MARK: - Private Helpers
+    
+    private func modifyBackupApps(_ modify: (inout [BackupAppInfo]) -> Void) {
+        guard let currentBackup = selectedBackup,
+              let backupIndex = availableBackups.firstIndex(where: { $0.id == currentBackup.id })
+        else { return }
+        
+        modify(&availableBackups[backupIndex].apps)
+        selectedBackup = availableBackups[backupIndex]
+        
+        publishBackupUpdates()
+    }
+    
+    private func publishEvent(_ event: CoordinatorEvent) {
+        CoordinatorEventPublisher.shared.publish(event)
+    }
+    
+    private func publishBackupUpdates() {
+        publishEvent(.backupsUpdated(availableBackups))
+        publishEvent(.selectedBackupUpdated(selectedBackup))
+    }
+    
+    private func enforceMinimumDuration(
+        startTime: Date,
+        onProgress: @escaping @Sendable (ProgressUpdate) async -> Void,
+        result: String,
+    ) async {
         let elapsed = Date().timeIntervalSince(startTime)
         let minDuration = 1.3
         if elapsed < minDuration {
@@ -401,17 +360,9 @@ final class MainCoordinator: ObservableObject {
         
         await onProgress(ProgressUpdate(
             fraction: 1.0,
-            message: result.statusMessage,
+            message: result,
         ))
         
         try? await Task.sleep(for: .seconds(0.5))
-        await loadApps()
-        
-        try? await Task.sleep(for: .seconds(0.2))
-        CoordinatorEventPublisher.shared.publish(.operationCompleted)
-    }
-    
-    func scanAppsInBackup(at path: String) async -> [BackupAppInfo] {
-        await backupService.scanAppsInBackup(at: path)
     }
 }
