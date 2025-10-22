@@ -26,6 +26,10 @@ PocketPrefs 是一款 macOS 下的应用程序配置管理工具。它允许用�
 - 导入 / 导出自定义的应用程序配置列表
 - 可选支持增量备份模式
 
+## 📦 配置文件分享
+
+个人使用的一些app自定义配置路径，可导入: <a href="https://github.com/DawnLiExp/PocketPrefs/discussions/1" target="_blank">discussion</a>
+
 ## 数据安全 ⚠️
 
 PocketPrefs 在恢复关键配置文件时，采用以下策略以保障现有配置的完整性：

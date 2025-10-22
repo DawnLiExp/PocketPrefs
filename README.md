@@ -26,6 +26,10 @@ PocketPrefs is a configuration management tool for macOS applications. It enable
 - Import and export custom application configuration lists
 - Incremental backup mode support
 
+## 📦 Configuration Sharing
+
+Here's my custom configs JSON (importable): <a href="https://github.com/DawnLiExp/PocketPrefs/discussions/1" target="_blank">discussion</a>
+
 ## Data Security ⚠️
 
 PocketPrefs uses the following strategy to protect existing configurations when restoring files:
