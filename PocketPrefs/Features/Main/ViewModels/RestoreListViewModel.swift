@@ -23,6 +23,13 @@ final class RestoreListViewModel: ObservableObject {
     @Published var cachedTotalCount = 0
     @Published var currentSortOption: SortOption = .nameAscending
     
+    // MARK: - Public Properties
+    
+    /// Define available sort options for restore list (exclude date added)
+    var supportedSortOptions: [SortOption] {
+        [.nameAscending, .nameDescending]
+    }
+    
     // MARK: - Dependencies
     
     private weak var coordinator: MainCoordinator?
@@ -98,8 +105,10 @@ final class RestoreListViewModel: ObservableObject {
         }
     }
     
-    /// Set sort option
+    /// Set sort option - only allows supported options
     func setSortOption(_ option: SortOption) {
+        // Ensure the option is supported before setting
+        guard supportedSortOptions.contains(option) else { return }
         currentSortOption = option
         updateFilteredApps()
     }
@@ -189,7 +198,7 @@ final class RestoreListViewModel: ObservableObject {
             }
         }
         
-        // Apply sorting
+        // Apply sorting using current option
         filteredApps = currentSortOption.apply(to: filtered)
     }
     

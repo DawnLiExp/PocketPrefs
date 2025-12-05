@@ -151,7 +151,7 @@ struct SearchFieldView: View {
             // MARK: - Modified Menu
 
             Menu {
-                ForEach(SortOption.allCases, id: \.self) { option in
+                ForEach(viewModel.supportedSortOptions, id: \.self) { option in
                     Button {
                         viewModel.setSortOption(option)
                     } label: {
