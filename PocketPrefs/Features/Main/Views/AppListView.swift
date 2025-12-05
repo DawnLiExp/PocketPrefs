@@ -92,11 +92,14 @@ struct AppListHeader: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 13) {
-            HStack {
+            // Search field with sort button
+            HStack(spacing: 0) {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
                     .font(.system(size: 14))
-                
+                    .padding(.leading, 12)
+                    .padding(.trailing, 8)
+                    
                 TextField(
                     NSLocalizedString("Search_Placeholder", comment: ""),
                     text: $searchText,
@@ -104,7 +107,9 @@ struct AppListHeader: View {
                 .textFieldStyle(PlainTextFieldStyle())
                 .focused($isSearchFocused)
                 .font(DesignConstants.Typography.body)
-                
+                    
+                Spacer(minLength: 8)
+                    
                 if !searchText.isEmpty {
                     Button(action: { searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
@@ -112,10 +117,36 @@ struct AppListHeader: View {
                             .font(.system(size: 14))
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .padding(.trailing, 8)
                 }
+                    
+                // MARK: - Modified Menu
+
+                Menu {
+                    ForEach(SortOption.allCases, id: \.self) { option in
+                        Button {
+                            viewModel.setSortOption(option)
+                        } label: {
+                            HStack {
+                                Image(systemName: viewModel.currentSortOption == option ? "circle.fill" : "circle")
+                                    .font(.system(size: 10))
+                                Text(option.displayName)
+                            }
+                        }
+                    }
+                } label: {
+                    Image(systemName: "line.3.horizontal.decrease")
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                        .font(.system(size: 14))
+                        .frame(width: 16, height: 16)
+                        .contentShape(Rectangle())
+                }
+                .menuIndicator(.hidden)
+                .menuStyle(.borderlessButton)
+                .fixedSize()
+                .padding(.trailing, 12)
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 9)
+            .frame(height: 36)
             .background(
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                     .fill(

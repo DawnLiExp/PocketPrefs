@@ -84,7 +84,7 @@ struct RestoreListHeader: View {
             }
             
             if viewModel.selectedBackup != nil {
-                SearchFieldView(searchText: $searchText)
+                SearchFieldView(searchText: $searchText, viewModel: viewModel)
                 
                 HStack {
                     Toggle(isOn: Binding(
@@ -117,20 +117,25 @@ struct RestoreListHeader: View {
 
 struct SearchFieldView: View {
     @Binding var searchText: String
+    @ObservedObject var viewModel: RestoreListViewModel
     @FocusState private var isFocused: Bool
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
-        HStack {
+        HStack(spacing: 0) {
             Image(systemName: "magnifyingglass")
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .font(.system(size: 14))
-            
+                .padding(.leading, 12)
+                .padding(.trailing, 8)
+                
             TextField(NSLocalizedString("Search_Placeholder", comment: ""), text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
                 .focused($isFocused)
                 .font(DesignConstants.Typography.body)
-            
+                
+            Spacer(minLength: 8)
+                
             if !searchText.isEmpty {
                 Button(action: {
                     searchText = ""
@@ -140,10 +145,36 @@ struct SearchFieldView: View {
                         .font(.system(size: 14))
                 }
                 .buttonStyle(PlainButtonStyle())
+                .padding(.trailing, 8)
             }
+                
+            // MARK: - Modified Menu
+
+            Menu {
+                ForEach(SortOption.allCases, id: \.self) { option in
+                    Button {
+                        viewModel.setSortOption(option)
+                    } label: {
+                        HStack {
+                            Image(systemName: viewModel.currentSortOption == option ? "circle.fill" : "circle")
+                                .font(.system(size: 10))
+                            Text(option.displayName)
+                        }
+                    }
+                }
+            } label: {
+                Image(systemName: "line.3.horizontal.decrease")
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    .font(.system(size: 14))
+                    .frame(width: 16, height: 16)
+                    .contentShape(Rectangle())
+            }
+            .menuIndicator(.hidden)
+            .menuStyle(.borderlessButton)
+            .fixedSize()
+            .padding(.trailing, 12)
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 9)
+        .frame(height: 36)
         .background(
             RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                 .fill(

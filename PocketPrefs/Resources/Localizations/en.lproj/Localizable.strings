@@ -119,6 +119,11 @@
 "Search_No_Results" = "No apps found for \"%@\"";
 "Search_Try_Different_Keyword" = "Try a different keyword";
 
+/* Sort Options */
+"Sort_Name_Ascending" = "Name (A-Z)";
+"Sort_Name_Descending" = "Name (Z-A)";
+"Sort_Date_Added" = "Recently Added";
+
 /* Import/Export Feature */
 "Import_Button" = "Import";
 "Export_All_Button" = "Export All";

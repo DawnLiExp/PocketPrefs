@@ -119,6 +119,11 @@
 "Search_No_Results" = "未找到包含\"%@\"的应用";
 "Search_Try_Different_Keyword" = "尝试使用不同的关键词";
 
+/* Sort Options */
+"Sort_Name_Ascending" = "名称（A-Z）";
+"Sort_Name_Descending" = "名称（Z-A）";
+"Sort_Date_Added" = "最近添加";
+
 /* Import/Export Feature */
 "Import_Button" = "导入";
 "Export_All_Button" = "导出全部";

@@ -27,6 +27,7 @@
 		FC74CB462E85915F00F33BD4 /* CustomBackupPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */; };
 		FC79F8962E9F61CD00BA0B12 /* WindowBackgroundView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC79F8952E9F61CA00BA0B12 /* WindowBackgroundView.swift */; };
 		FC79F8982E9F61DD00BA0B12 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC79F8972E9F61DA00BA0B12 /* AppDelegate.swift */; };
+		FC81D0632EE308CF00B15BF2 /* SortOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC81D0622EE308CD00B15BF2 /* SortOption.swift */; };
 		FC8D8DCA2E90F06100AB8773 /* SettingsEventPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */; };
 		FC93001A2E8ED59A00194E89 /* ProgressReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9300192E8ED59800194E89 /* ProgressReporting.swift */; };
 		FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED942E7EF4D600764A17 /* PathPickerView.swift */; };
@@ -83,6 +84,7 @@
 		FC74CB452E85915D00F33BD4 /* CustomBackupPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomBackupPicker.swift; sourceTree = "<group>"; };
 		FC79F8952E9F61CA00BA0B12 /* WindowBackgroundView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowBackgroundView.swift; sourceTree = "<group>"; };
 		FC79F8972E9F61DA00BA0B12 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		FC81D0622EE308CD00B15BF2 /* SortOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SortOption.swift; sourceTree = "<group>"; };
 		FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsEventPublisher.swift; sourceTree = "<group>"; };
 		FC9300192E8ED59800194E89 /* ProgressReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressReporting.swift; sourceTree = "<group>"; };
 		FC9C90FB2E94739200811BCA /* CoordinatorEventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinatorEventPublisher.swift; sourceTree = "<group>"; };
@@ -197,6 +199,7 @@
 				FC195B4D2E7EB80B00258310 /* AppConfig.swift */,
 				FC195B4E2E7EB80B00258310 /* AppError.swift */,
 				FC195B4F2E7EB80B00258310 /* BackupModels.swift */,
+				FC81D0622EE308CD00B15BF2 /* SortOption.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -478,6 +481,7 @@
 				FCD9907C2E7EC53600C7087A /* BackupService.swift in Sources */,
 				FCD9907D2E7EC53600C7087A /* FileOperationService.swift in Sources */,
 				FCF4B5B32E8D6F38008DA739 /* PreferencesManager.swift in Sources */,
+				FC81D0632EE308CF00B15BF2 /* SortOption.swift in Sources */,
 				FC0567BA2E9474C800958677 /* CoordinatorEventPublisher.swift in Sources */,
 				FC8D8DCA2E90F06100AB8773 /* SettingsEventPublisher.swift in Sources */,
 				FCD9907E2E7EC53600C7087A /* RestoreService.swift in Sources */,

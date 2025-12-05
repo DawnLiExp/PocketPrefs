@@ -2,7 +2,7 @@
 //  AppListViewModel.swift
 //  PocketPrefs
 //
-//  Backup app list state management
+//  Backup app list state management with sorting
 //
 
 import Foundation
@@ -18,6 +18,7 @@ final class AppListViewModel: ObservableObject {
     @Published var filteredApps: [AppConfig] = []
     @Published var cachedAllSelected = false
     @Published var installedCount = 0
+    @Published var currentSortOption: SortOption = .nameAscending
     
     // MARK: - Dependencies
     
@@ -79,6 +80,12 @@ final class AppListViewModel: ObservableObject {
         }
     }
     
+    /// Set sort option
+    func setSortOption(_ option: SortOption) {
+        currentSortOption = option
+        updateFilteredApps(source: apps, searchTerm: searchText)
+    }
+    
     /// Toggle selection for specific app
     func toggleSelection(for app: AppConfig) {
         coordinator?.toggleSelection(for: app)
@@ -111,14 +118,17 @@ final class AppListViewModel: ObservableObject {
     // MARK: - Private Implementation
     
     private func updateFilteredApps(source: [AppConfig], searchTerm: String) {
-        if searchTerm.isEmpty {
-            filteredApps = source
+        let filtered: [AppConfig] = if searchTerm.isEmpty {
+            source
         } else {
-            filteredApps = source.filter { app in
+            source.filter { app in
                 app.name.localizedCaseInsensitiveContains(searchTerm) ||
                     app.bundleId.localizedCaseInsensitiveContains(searchTerm)
             }
         }
+        
+        // Apply sorting
+        filteredApps = currentSortOption.apply(to: filtered)
     }
     
     private func updateCachedState(apps: [AppConfig]) {

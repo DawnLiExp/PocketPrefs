@@ -2,7 +2,7 @@
 //  RestoreListViewModel.swift
 //  PocketPrefs
 //
-//  Restore backup list state management
+//  Restore backup list state management with sorting
 //
 
 import Foundation
@@ -21,6 +21,7 @@ final class RestoreListViewModel: ObservableObject {
     @Published var cachedAllSelected = false
     @Published var cachedSelectedCount = 0
     @Published var cachedTotalCount = 0
+    @Published var currentSortOption: SortOption = .nameAscending
     
     // MARK: - Dependencies
     
@@ -95,6 +96,12 @@ final class RestoreListViewModel: ObservableObject {
             updateFilteredApps()
             updateCachedState()
         }
+    }
+    
+    /// Set sort option
+    func setSortOption(_ option: SortOption) {
+        currentSortOption = option
+        updateFilteredApps()
     }
     
     func toggleSelection(for app: BackupAppInfo) {
@@ -173,14 +180,17 @@ final class RestoreListViewModel: ObservableObject {
             return
         }
         
-        if searchText.isEmpty {
-            filteredApps = backup.apps
+        let filtered: [BackupAppInfo] = if searchText.isEmpty {
+            backup.apps
         } else {
-            filteredApps = backup.apps.filter { app in
+            backup.apps.filter { app in
                 app.name.localizedCaseInsensitiveContains(searchText) ||
                     app.bundleId.localizedCaseInsensitiveContains(searchText)
             }
         }
+        
+        // Apply sorting
+        filteredApps = currentSortOption.apply(to: filtered)
     }
     
     private func updateCachedState() {
