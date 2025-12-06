@@ -60,9 +60,10 @@ struct AppConfig: Identifiable, Codable, Sendable, Equatable {
     var isInstalled: Bool = true
     var category: AppCategory = .development
     var isUserAdded: Bool = false
+    var createdAt: Date = .init()
 
     enum CodingKeys: String, CodingKey {
-        case name, bundleId, configPaths, category, isUserAdded
+        case name, bundleId, configPaths, category, isUserAdded, createdAt
     }
 
     static func == (lhs: AppConfig, rhs: AppConfig) -> Bool {
@@ -86,7 +87,8 @@ extension AppConfig {
                 "~/.gitconfig",
                 "~/.gitignore_global"
             ],
-            category: .terminal
+            category: .terminal,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
@@ -96,14 +98,16 @@ extension AppConfig {
                 "~/.zshrc",
                 "~/.oh-my-zsh/custom"
             ],
-            category: .terminal
+            category: .terminal,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
             name: "SSH",
             bundleId: "ssh",
             configPaths: ["~/.ssh/config"],
-            category: .terminal
+            category: .terminal,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
@@ -113,14 +117,16 @@ extension AppConfig {
                 "~/Library/Preferences/com.hegenberg.bettertouchtool-setapp.plist",
                 "~/Library/Application Support/BetterTouchTool/"
             ],
-            category: .utility
+            category: .utility,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
             name: "Calibre",
             bundleId: "net.kovidgoyal.calibre",
             configPaths: ["~/Library/Preferences/calibre"],
-            category: .reading
+            category: .reading,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
@@ -131,7 +137,8 @@ extension AppConfig {
                 "~/Library/Preferences/com.colliderli.iina.plist",
                 "~/Library/Application Support/com.colliderli.iina/input_conf"
             ],
-            category: .media
+            category: .media,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
@@ -141,7 +148,8 @@ extension AppConfig {
                 "~/Library/Application Support/Input Source Pro",
                 "~/Library/Preferences/com.runjuu.Input-Source-Pro.plist"
             ],
-            category: .utility
+            category: .utility,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
@@ -151,14 +159,16 @@ extension AppConfig {
                 "~/.config/karabiner",
                 "~/Library/Preferences/org.pqrs.Karabiner-Elements.Settings.plist"
             ],
-            category: .utility
+            category: .utility,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
             name: "Me2Comic",
             bundleId: "me2.comic.me2comic",
             configPaths: ["~/Library/Preferences/me2.comic.me2comic.plist"],
-            category: .graphicsDesign
+            category: .graphicsDesign,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
@@ -168,7 +178,8 @@ extension AppConfig {
                 "~/Library/Application Support/PopClip/Extensions",
                 "~/Library/Preferences/com.pilotmoon.popclip.plist"
             ],
-            category: .productivity
+            category: .productivity,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
@@ -178,14 +189,16 @@ extension AppConfig {
                 "~/Library/Containers/com.reederapp.5.macOS/Data/Library/Application Support/users.json",
                 "~/Library/Containers/com.reederapp.5.macOS/Data/Library/Preferences/com.reederapp.5.macOS.plist"
             ],
-            category: .reading
+            category: .reading,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
             name: "squirrel",
             bundleId: "im.rime.inputmethod.Squirrel",
             configPaths: ["~/Library/Rime"],
-            category: .utility
+            category: .utility,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
@@ -198,7 +211,8 @@ extension AppConfig {
                 "~/Library/Application Support/Code/User/settings.json",
                 "~/.vscode/extensions"
             ],
-            category: .development
+            category: .development,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
@@ -208,7 +222,8 @@ extension AppConfig {
                 "~/.warp",
                 "~/Library/Preferences/dev.warp.Warp-Stable.plist"
             ],
-            category: .terminal
+            category: .terminal,
+            createdAt: Date(timeIntervalSince1970: 0)
         ),
 
         AppConfig(
@@ -218,7 +233,8 @@ extension AppConfig {
                 "~/.config/zed/settings.json",
                 "~/.config/zed/keymap.json"
             ],
-            category: .development
+            category: .development,
+            createdAt: Date(timeIntervalSince1970: 0)
         )
     ]
 }

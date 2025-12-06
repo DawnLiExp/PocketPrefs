@@ -85,7 +85,16 @@ final class UserConfigStore: ObservableObject {
         
         do {
             let data = try Data(contentsOf: storageURL)
-            customApps = try JSONDecoder().decode([AppConfig].self, from: data)
+            var apps = try JSONDecoder().decode([AppConfig].self, from: data)
+            
+            // Ensure all user-added apps have createdAt set
+            for index in apps.indices where apps[index].isUserAdded {
+                if apps[index].createdAt == Date(timeIntervalSince1970: 0) {
+                    apps[index].createdAt = Date()
+                }
+            }
+            
+            customApps = apps
             logger.info("Loaded \(self.customApps.count) custom apps")
         } catch {
             logger.error("Failed to load custom apps: \(error.localizedDescription)")
@@ -110,6 +119,8 @@ final class UserConfigStore: ObservableObject {
         var newApp = app
         newApp.isUserAdded = true
         newApp.category = .custom
+        newApp.createdAt = Date()
+        
         customApps.append(newApp)
         save()
         broadcast(.appAdded(newApp))
@@ -145,6 +156,10 @@ final class UserConfigStore: ObservableObject {
             var modifiedApp = app
             modifiedApp.isUserAdded = true
             modifiedApp.category = .custom
+            // Preserve existing createdAt if available, otherwise set current time
+            if modifiedApp.createdAt == Date(timeIntervalSince1970: 0) {
+                modifiedApp.createdAt = Date()
+            }
             return modifiedApp
         }
         save()

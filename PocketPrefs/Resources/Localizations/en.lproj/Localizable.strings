@@ -122,7 +122,7 @@
 /* Sort Options */
 "Sort_Name_Ascending" = "Name (A-Z)";
 "Sort_Name_Descending" = "Name (Z-A)";
-"Sort_Date_Added" = "Recently Added";
+"Sort_Date_Added" = "Date Added";
 
 /* Import/Export Feature */
 "Import_Button" = "Import";

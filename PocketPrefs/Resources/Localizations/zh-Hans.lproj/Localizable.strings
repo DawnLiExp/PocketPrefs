@@ -122,7 +122,7 @@
 /* Sort Options */
 "Sort_Name_Ascending" = "名称（A-Z）";
 "Sort_Name_Descending" = "名称（Z-A）";
-"Sort_Date_Added" = "最近添加";
+"Sort_Date_Added" = "添加日期";
 
 /* Import/Export Feature */
 "Import_Button" = "导入";
