@@ -2,7 +2,7 @@
 //  AppListViewModel.swift
 //  PocketPrefs
 //
-//  Backup app list state management with sorting
+//  Backup app list state management with sorting and persistence
 //
 
 import Foundation
@@ -18,7 +18,18 @@ final class AppListViewModel: ObservableObject {
     @Published var filteredApps: [AppConfig] = []
     @Published var cachedAllSelected = false
     @Published var installedCount = 0
-    @Published var currentSortOption: SortOption = .nameAscending
+    
+    // MARK: - Persistent Sort Option
+    
+    @AppStorage("backupSortOption") private var sortOptionRawValue: String = SortOption.nameAscending.rawValue
+    
+    var currentSortOption: SortOption {
+        get { SortOption(rawValue: sortOptionRawValue) ?? .nameAscending }
+        set {
+            sortOptionRawValue = newValue.rawValue
+            updateFilteredApps(source: apps, searchTerm: searchText)
+        }
+    }
     
     // MARK: - Dependencies
     

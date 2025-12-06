@@ -2,7 +2,7 @@
 //  RestoreListViewModel.swift
 //  PocketPrefs
 //
-//  Restore backup list state management with sorting
+//  Restore backup list state management with sorting and persistence
 //
 
 import Foundation
@@ -21,7 +21,24 @@ final class RestoreListViewModel: ObservableObject {
     @Published var cachedAllSelected = false
     @Published var cachedSelectedCount = 0
     @Published var cachedTotalCount = 0
-    @Published var currentSortOption: SortOption = .nameAscending
+    
+    // MARK: - Persistent Sort Option
+    
+    @AppStorage("restoreSortOption") private var sortOptionRawValue: String = SortOption.nameAscending.rawValue
+    
+    var currentSortOption: SortOption {
+        get {
+            let option = SortOption(rawValue: sortOptionRawValue) ?? .nameAscending
+            // Ensure it's a supported option for restore list
+            return supportedSortOptions.contains(option) ? option : .nameAscending
+        }
+        set {
+            // Only allow supported options
+            guard supportedSortOptions.contains(newValue) else { return }
+            sortOptionRawValue = newValue.rawValue
+            updateFilteredApps()
+        }
+    }
     
     // MARK: - Public Properties
     

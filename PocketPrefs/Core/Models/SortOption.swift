@@ -2,12 +2,12 @@
 //  SortOption.swift
 //  PocketPrefs
 //
-//  Sort options for app lists
+//  Sort options for app lists with persistence support
 //
 
 import Foundation
 
-enum SortOption: String, CaseIterable, Sendable {
+enum SortOption: String, CaseIterable, Sendable, Codable {
     case nameAscending = "name_asc"
     case nameDescending = "name_desc"
     case dateAddedDescending = "date_added_desc"
