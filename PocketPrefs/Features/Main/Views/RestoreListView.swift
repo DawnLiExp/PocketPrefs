@@ -156,7 +156,7 @@ struct SearchFieldView: View {
                         viewModel.setSortOption(option)
                     } label: {
                         HStack {
-                            Image(systemName: viewModel.currentSortOption == option ? "circle.fill" : "circle")
+                            Image(systemName: viewModel.currentSortOption == option ? "checkmark.circle" : "circle")
                                 .font(.system(size: 10))
                             Text(option.displayName)
                         }
