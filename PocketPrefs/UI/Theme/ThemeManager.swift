@@ -102,12 +102,23 @@ enum DesignConstants {
     enum Layout {
         static let sidebarWidth: CGFloat = 70
 
-        static let listWidth: CGFloat = 270
+        /// Adaptive list width (270pt on macOS 15, 280pt on macOS 26+)
+        static var listWidth: CGFloat {
+            SystemVersionDetector.listWidth
+        }
+        
         static let minWindowWidth: CGFloat = 820
         static let minWindowHeight: CGFloat = 590
 
-        static let cornerRadius: CGFloat = 12
-        static let smallCornerRadius: CGFloat = 8
+        /// Adaptive corner radius for main UI elements (12pt on macOS 15, 14pt on macOS 26+)
+        static var cornerRadius: CGFloat {
+            SystemVersionDetector.cornerRadius
+        }
+        
+        /// Adaptive small corner radius (8pt on macOS 15, 10pt on macOS 26+)
+        static var smallCornerRadius: CGFloat {
+            SystemVersionDetector.smallCornerRadius
+        }
 
         static let spacing: CGFloat = 16
         static let smallSpacing: CGFloat = 8

@@ -17,6 +17,7 @@
 		FC195B7B2E7EB80B00258310 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = FC195B532E7EB80B00258310 /* Localizable.strings */; };
 		FC33DF562E8716CA007C47E5 /* ConcurrencyUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC33DF552E8716C8007C47E5 /* ConcurrencyUtilities.swift */; };
 		FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */; };
+		FC48E5142EE4969A000954F9 /* SystemVersionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC48E5132EE49698000954F9 /* SystemVersionDetector.swift */; };
 		FC55C07A2E9A1D2900B5BBDC /* PreferencesComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC55C0792E9A1D2800B5BBDC /* PreferencesComponents.swift */; };
 		FC55C07C2E9A1D5500B5BBDC /* CustomAppsComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC55C07B2E9A1D5300B5BBDC /* CustomAppsComponents.swift */; };
 		FC55C07E2E9A1D5F00B5BBDC /* SharedComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC55C07D2E9A1D5D00B5BBDC /* SharedComponents.swift */; };
@@ -74,6 +75,7 @@
 		FC195B552E7EB80B00258310 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FC33DF552E8716C8007C47E5 /* ConcurrencyUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcurrencyUtilities.swift; sourceTree = "<group>"; };
 		FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCheckboxToggleStyle.swift; sourceTree = "<group>"; };
+		FC48E5132EE49698000954F9 /* SystemVersionDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemVersionDetector.swift; sourceTree = "<group>"; };
 		FC55C0792E9A1D2800B5BBDC /* PreferencesComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PreferencesComponents.swift; sourceTree = "<group>"; };
 		FC55C07B2E9A1D5300B5BBDC /* CustomAppsComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomAppsComponents.swift; sourceTree = "<group>"; };
 		FC55C07D2E9A1D5D00B5BBDC /* SharedComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SharedComponents.swift; sourceTree = "<group>"; };
@@ -309,9 +311,10 @@
 		FC615D742E92AB3600DB964D /* Utilities */ = {
 			isa = PBXGroup;
 			children = (
-				FC9C90FB2E94739200811BCA /* CoordinatorEventPublisher.swift */,
 				FC33DF552E8716C8007C47E5 /* ConcurrencyUtilities.swift */,
+				FC9C90FB2E94739200811BCA /* CoordinatorEventPublisher.swift */,
 				FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */,
+				FC48E5132EE49698000954F9 /* SystemVersionDetector.swift */,
 				FC9300192E8ED59800194E89 /* ProgressReporting.swift */,
 			);
 			path = Utilities;
@@ -469,6 +472,7 @@
 				FCD990B82E7EDEEB00C7087A /* SettingsView.swift in Sources */,
 				FC33DF562E8716CA007C47E5 /* ConcurrencyUtilities.swift in Sources */,
 				FCD990752E7EC53600C7087A /* CommonComponents.swift in Sources */,
+				FC48E5142EE4969A000954F9 /* SystemVersionDetector.swift in Sources */,
 				FCD990C02E7EDF1D00C7087A /* UserConfigStore.swift in Sources */,
 				FCD990772E7EC53600C7087A /* RestoreListView.swift in Sources */,
 				FCBABED72E96553400A45538 /* UserInfoView.swift in Sources */,
@@ -686,6 +690,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.me2.PocketPrefs;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx26.1;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 			};
@@ -725,6 +730,7 @@
 				PRODUCT_BUNDLE_IDENTIFIER = com.me2.PocketPrefs;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				REGISTER_APP_GROUPS = YES;
+				SDKROOT = macosx26.1;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 6.0;
 			};

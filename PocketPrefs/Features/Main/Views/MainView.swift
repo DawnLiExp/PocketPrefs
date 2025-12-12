@@ -18,9 +18,13 @@ struct MainView: View {
     @StateObject private var mainViewModel: MainViewModel
     
     private enum Layout {
-        static let unifiedSpacing: CGFloat = 10
-        static let sidebarGap: CGFloat = 0
-    }
+            static let unifiedSpacing: CGFloat = 10
+            
+            /// Adaptive sidebar gap (0pt on macOS 15, 7pt on macOS 26+)
+            static var sidebarGap: CGFloat {
+                SystemVersionDetector.sidebarGap
+            }
+        }
     
     enum AppMode: String, CaseIterable {
         case backup
