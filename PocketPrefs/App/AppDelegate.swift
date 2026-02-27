@@ -42,6 +42,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             height: DesignConstants.Layout.minWindowHeight,
         )
         
+        window.tabbingMode = .disallowed
         window.collectionBehavior = [.fullScreenPrimary]
         window.animationBehavior = .documentWindow
     }
