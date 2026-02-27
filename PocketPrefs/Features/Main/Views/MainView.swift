@@ -9,7 +9,7 @@ import SwiftUI
 
 struct MainView: View {
     @StateObject private var coordinator = MainCoordinator()
-    @StateObject private var themeManager = ThemeManager.shared
+    @State private var themeManager = ThemeManager.shared
     @State private var currentMode: AppMode = .backup
     @State private var selectedApp: AppConfig?
     @State private var showingRestorePicker = false
@@ -18,13 +18,13 @@ struct MainView: View {
     @StateObject private var mainViewModel: MainViewModel
     
     private enum Layout {
-            static let unifiedSpacing: CGFloat = 10
+        static let unifiedSpacing: CGFloat = 10
             
-            /// Adaptive sidebar gap (0pt on macOS 15, 7pt on macOS 26+)
-            static var sidebarGap: CGFloat {
-                SystemVersionDetector.sidebarGap
-            }
+        /// Adaptive sidebar gap (0pt on macOS 15, 7pt on macOS 26+)
+        static var sidebarGap: CGFloat {
+            SystemVersionDetector.sidebarGap
         }
+    }
     
     enum AppMode: String, CaseIterable {
         case backup
@@ -72,7 +72,6 @@ struct MainView: View {
     
     // MARK: - Layout Components
     
-    @ViewBuilder
     private var contentContainer: some View {
         HStack(spacing: Layout.sidebarGap) {
             enhancedSidebar
@@ -86,13 +85,11 @@ struct MainView: View {
         .ignoresSafeArea(.all, edges: .top)
     }
     
-    @ViewBuilder
     private var enhancedSidebar: some View {
         SidebarView(currentMode: $currentMode)
             .frame(maxHeight: .infinity)
     }
     
-    @ViewBuilder
     private var floatingContentArea: some View {
         HStack(spacing: 0) {
             listView

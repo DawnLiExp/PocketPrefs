@@ -10,8 +10,8 @@ import SwiftUI
 
 struct PreferencesView: View {
     @StateObject private var preferencesManager = PreferencesManager.shared
-    @StateObject private var themeManager = ThemeManager.shared
-    @ObservedObject private var languageManager = LanguageManager.shared
+    @State private var themeManager = ThemeManager.shared
+    private var languageManager = LanguageManager.shared
     @State private var showingDirectoryPicker = false
     @State private var showingRestartAlert = false
     @State private var pendingLanguage: AppLanguage?

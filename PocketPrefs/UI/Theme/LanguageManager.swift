@@ -11,15 +11,16 @@ import SwiftUI
 
 // MARK: - Language Manager
 
+@Observable
 @MainActor
-final class LanguageManager: ObservableObject {
+final class LanguageManager {
     static let shared = LanguageManager()
     
     private let logger = Logger(subsystem: "com.pocketprefs", category: "LanguageManager")
     private static let languageKey = "PocketPrefsLanguage"
     private static let appleLanguagesKey = "AppleLanguages"
     
-    @Published var currentLanguage: AppLanguage
+    var currentLanguage: AppLanguage
     
     private init() {
         if let stored = UserDefaults.standard.string(forKey: Self.languageKey),

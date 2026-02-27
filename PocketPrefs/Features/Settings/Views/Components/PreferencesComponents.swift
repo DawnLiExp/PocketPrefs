@@ -11,10 +11,11 @@ import SwiftUI
 // MARK: - Appearance Section
 
 struct AppearanceSection: View {
-    @ObservedObject var themeManager: ThemeManager
+    var themeManager: ThemeManager
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
+        @Bindable var themeManager = themeManager
         VStack(alignment: .leading, spacing: 16) {
             Text(NSLocalizedString("Settings_Appearance", comment: ""))
                 .font(DesignConstants.Typography.headline)
@@ -51,7 +52,7 @@ struct AppearanceSection: View {
 // MARK: - Language Section
 
 struct LanguageSection: View {
-    @ObservedObject var languageManager: LanguageManager
+    var languageManager: LanguageManager
     let onLanguageChange: (AppLanguage) -> Void
     @State private var selectedLanguage: AppLanguage
     @Environment(\.colorScheme) var colorScheme

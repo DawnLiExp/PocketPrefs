@@ -9,12 +9,13 @@ import SwiftUI
 
 // MARK: - Enhanced Theme Manager
 
+@Observable
 @MainActor
-class ThemeManager: ObservableObject {
+class ThemeManager {
     static let shared = ThemeManager()
 
-    @Published var currentTheme: Theme = .system
-    @AppStorage("preferredTheme") private var storedTheme: String = "system"
+    var currentTheme: Theme = .system
+    @ObservationIgnored @AppStorage("preferredTheme") private var storedTheme: String = "system"
 
     private init() {
         loadTheme()
@@ -106,7 +107,7 @@ enum DesignConstants {
         static var listWidth: CGFloat {
             SystemVersionDetector.listWidth
         }
-        
+
         static let minWindowWidth: CGFloat = 820
         static let minWindowHeight: CGFloat = 590
 
@@ -114,7 +115,7 @@ enum DesignConstants {
         static var cornerRadius: CGFloat {
             SystemVersionDetector.cornerRadius
         }
-        
+
         /// Adaptive small corner radius (8pt on macOS 15, 10pt on macOS 26+)
         static var smallCornerRadius: CGFloat {
             SystemVersionDetector.smallCornerRadius

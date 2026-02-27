@@ -10,7 +10,7 @@ import SwiftUI
 
 @main
 struct PocketPrefsApp: App {
-    @StateObject private var themeManager = ThemeManager.shared
+    @State private var themeManager = ThemeManager.shared
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
     private let logger = Logger(subsystem: "com.pocketprefs", category: "App")
@@ -32,7 +32,6 @@ struct PocketPrefsApp: App {
                     .ignoresSafeArea(.all)
 
                 MainView()
-                    .environmentObject(themeManager)
             }
             .task {
                 logger.info("PocketPrefs initializing")
