@@ -7,20 +7,23 @@
 
 import AppKit
 import Foundation
+import Observation
 import os.log
 
+@Observable
 @MainActor
-final class CustomAppManager: ObservableObject {
-    @Published var customApps: [AppConfig] = []
-    @Published var selectedApp: AppConfig?
-    @Published var selectedAppIds: Set<UUID> = []
-    @Published var isAddingApp = false
-    @Published var editingApp: AppConfig?
+final class CustomAppManager {
+    var customApps: [AppConfig] = []
+    var selectedApp: AppConfig?
+    var selectedAppIds: Set<UUID> = []
+    var isAddingApp = false
+    var editingApp: AppConfig?
     
     private let logger = Logger(subsystem: "com.pocketprefs", category: "CustomAppManager")
     let userStore = UserConfigStore.shared
     private let fileOps = FileOperationService.shared
-    private var eventTask: Task<Void, Never>?
+    @ObservationIgnored
+    private nonisolated(unsafe) var eventTask: Task<Void, Never>?
     
     init() {
         loadCustomApps()

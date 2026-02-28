@@ -15,7 +15,7 @@ struct CustomAppListItem: View {
     let isDetailSelected: Bool
     let onToggleSelection: () -> Void
     let onSelectForDetail: () -> Void
-    @ObservedObject var manager: CustomAppManager
+    var manager: CustomAppManager
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
     
@@ -84,7 +84,7 @@ struct CustomAppListItem: View {
 
 struct CustomAppDetailView: View {
     let app: AppConfig
-    @ObservedObject var manager: CustomAppManager
+    var manager: CustomAppManager
     @State private var editingName = false
     @State private var tempName = ""
     @Environment(\.colorScheme) var colorScheme
@@ -188,7 +188,7 @@ struct CustomAppDetailView: View {
 
 struct PathPickerViewWrapper: View {
     let appId: UUID
-    @ObservedObject var manager: CustomAppManager
+    var manager: CustomAppManager
     
     private var currentApp: AppConfig? {
         manager.customApps.first(where: { $0.id == appId })
@@ -226,7 +226,7 @@ struct AddAppSheet: View {
     @State private var showingAppPicker = false
     @State private var isLoadingAppInfo = false
     @State private var successMessage = ""
-    @StateObject private var appInfoReader = AppInfoReaderWrapper()
+    @State private var appInfoReader = AppInfoReaderWrapper()
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -370,16 +370,17 @@ struct AddAppSheet: View {
 
 // MARK: - AppInfoReader Wrapper
 
+@Observable
 @MainActor
-final class AppInfoReaderWrapper: ObservableObject {
+final class AppInfoReaderWrapper {
     let reader = AppInfoReader()
 }
 
 // MARK: - Import/Export Toolbar
 
 struct ImportExportToolbar: View {
-    @ObservedObject var importExportManager: ImportExportManager
-    @ObservedObject var customAppManager: CustomAppManager
+    var importExportManager: ImportExportManager
+    var customAppManager: CustomAppManager
     @State private var isExporting = false
     @State private var isImporting = false
     @Environment(\.colorScheme) var colorScheme

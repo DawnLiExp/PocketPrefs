@@ -11,7 +11,7 @@ import os.log
 import UniformTypeIdentifiers
 
 @MainActor
-final class ImportExportManager: ObservableObject {
+final class ImportExportManager {
     private let logger = Logger(subsystem: "com.pocketprefs", category: "ImportExport")
     private let userStore = UserConfigStore.shared
     private let encoder = JSONEncoder()
