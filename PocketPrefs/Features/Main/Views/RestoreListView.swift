@@ -8,28 +8,30 @@
 import SwiftUI
 
 struct RestoreListView: View {
-    @ObservedObject var coordinator: MainCoordinator
+    var coordinator: MainCoordinator
     @Binding var selectedApp: AppConfig?
-    
-    @StateObject private var viewModel: RestoreListViewModel
+
+    @State private var viewModel: RestoreListViewModel
     @State private var selectedBackupApp: BackupAppInfo?
     @Environment(\.colorScheme) var colorScheme
-    
+
     init(coordinator: MainCoordinator, selectedApp: Binding<AppConfig?>) {
         self.coordinator = coordinator
         self._selectedApp = selectedApp
-        self._viewModel = StateObject(wrappedValue: RestoreListViewModel(coordinator: coordinator))
+        self._viewModel = State(wrappedValue: RestoreListViewModel(coordinator: coordinator))
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             RestoreListHeader(
                 coordinator: coordinator,
                 searchText: $viewModel.searchText,
                 viewModel: viewModel,
+                cachedSelectedCount: viewModel.cachedSelectedCount,
+                cachedTotalCount: viewModel.cachedTotalCount,
             )
             .padding(.bottom, 6)
-            
+
             // Only the scrollable list content needs to be non-draggable
             NonDraggableView {
                 RestoreListContent(
@@ -59,20 +61,22 @@ struct RestoreListView: View {
 // MARK: - Header Components
 
 struct RestoreListHeader: View {
-    @ObservedObject var coordinator: MainCoordinator
+    var coordinator: MainCoordinator
     @Binding var searchText: String
-    @ObservedObject var viewModel: RestoreListViewModel
+    @Bindable var viewModel: RestoreListViewModel
+    let cachedSelectedCount: Int
+    let cachedTotalCount: Int
     @Environment(\.colorScheme) var colorScheme
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 13) {
             Text(NSLocalizedString("Restore_Backup_Title", comment: ""))
                 .font(DesignConstants.Typography.title)
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
-            
+
             HStack(spacing: 13) {
                 CustomBackupPicker(coordinator: coordinator)
-                
+
                 RefreshButton(
                     isRefreshing: $viewModel.isRefreshing,
                     action: {
@@ -82,10 +86,10 @@ struct RestoreListHeader: View {
                     },
                 )
             }
-            
+
             if viewModel.selectedBackup != nil {
                 SearchFieldView(searchText: $searchText, viewModel: viewModel)
-                
+
                 HStack {
                     Toggle(isOn: Binding(
                         get: { viewModel.cachedAllSelected },
@@ -95,13 +99,13 @@ struct RestoreListHeader: View {
                             .font(DesignConstants.Typography.body)
                     }
                     .toggleStyle(CustomCheckboxToggleStyle())
-                    
+
                     Spacer()
-                    
+
                     Text(String(
                         format: NSLocalizedString("Selected_Count", comment: ""),
-                        viewModel.cachedSelectedCount,
-                        viewModel.cachedTotalCount,
+                        cachedSelectedCount,
+                        cachedTotalCount,
                     ))
                     .font(DesignConstants.Typography.caption)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
@@ -117,10 +121,10 @@ struct RestoreListHeader: View {
 
 struct SearchFieldView: View {
     @Binding var searchText: String
-    @ObservedObject var viewModel: RestoreListViewModel
+    var viewModel: RestoreListViewModel
     @FocusState private var isFocused: Bool
     @Environment(\.colorScheme) var colorScheme
-    
+
     var body: some View {
         HStack(spacing: 0) {
             Image(systemName: "magnifyingglass")
@@ -128,14 +132,14 @@ struct SearchFieldView: View {
                 .font(.system(size: 14))
                 .padding(.leading, 12)
                 .padding(.trailing, 8)
-                
+
             TextField(NSLocalizedString("Search_Placeholder", comment: ""), text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
                 .focused($isFocused)
                 .font(DesignConstants.Typography.body)
-                
+
             Spacer(minLength: 8)
-                
+
             if !searchText.isEmpty {
                 Button(action: {
                     searchText = ""
@@ -147,7 +151,7 @@ struct SearchFieldView: View {
                 .buttonStyle(PlainButtonStyle())
                 .padding(.trailing, 8)
             }
-                
+
             // MARK: - Modified Menu
 
             Menu {
@@ -196,13 +200,13 @@ struct RefreshButton: View {
     @Binding var isRefreshing: Bool
     let action: () -> Void
     @Environment(\.colorScheme) var colorScheme
-    
+
     var body: some View {
         Button(action: action) {
             ZStack {
                 Color.clear
                     .contentShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
-                
+
                 Image(systemName: "arrow.clockwise")
                     .font(.system(size: 14, weight: .medium))
                     .foregroundColor(Color.App.primary.color(for: colorScheme))
@@ -226,11 +230,11 @@ struct RefreshButton: View {
 // MARK: - Content Area
 
 struct RestoreListContent: View {
-    @ObservedObject var coordinator: MainCoordinator
+    var coordinator: MainCoordinator
     @Binding var selectedBackupApp: BackupAppInfo?
-    @ObservedObject var viewModel: RestoreListViewModel
+    var viewModel: RestoreListViewModel
     @Environment(\.colorScheme) var colorScheme
-    
+
     var body: some View {
         Group {
             if viewModel.selectedBackup != nil, !viewModel.availableBackups.isEmpty {
@@ -269,7 +273,7 @@ struct RestoreListContent: View {
 struct SearchEmptyState: View {
     let searchText: String
     @Environment(\.colorScheme) var colorScheme
-    
+
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
@@ -290,7 +294,7 @@ struct SearchEmptyState: View {
 
 struct RestoreEmptyState: View {
     @Environment(\.colorScheme) var colorScheme
-    
+
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
@@ -314,17 +318,14 @@ struct RestoreEmptyState: View {
 struct RestoreAppItem: View {
     let app: BackupAppInfo
     let isSelected: Bool
-    @ObservedObject var coordinator: MainCoordinator
-    @ObservedObject var viewModel: RestoreListViewModel
+    var coordinator: MainCoordinator
+    var viewModel: RestoreListViewModel
     let onTap: () -> Void
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
-    
-    private var isChecked: Bool {
-        guard let backup = viewModel.selectedBackup else { return false }
-        return backup.apps.first(where: { $0.id == app.id })?.isSelected ?? false
-    }
-    
+
+    private var isChecked: Bool { app.isSelected }
+
     var body: some View {
         HStack(spacing: 5) {
             Toggle("", isOn: Binding(
@@ -332,7 +333,7 @@ struct RestoreAppItem: View {
                 set: { _ in viewModel.toggleSelection(for: app) },
             ))
             .toggleStyle(CustomCheckboxToggleStyle())
-            
+
             Group {
                 let icon = coordinator.getIcon(for: app)
                 Image(nsImage: icon)
@@ -341,13 +342,13 @@ struct RestoreAppItem: View {
                     .frame(width: 32, height: 32)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
             }
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(app.name)
                         .font(DesignConstants.Typography.headline)
                         .foregroundColor(Color.App.primary.color(for: colorScheme))
-                    
+
                     if !app.isCurrentlyInstalled {
                         StatusBadge(
                             text: NSLocalizedString("Restore_App_Status_Not_Installed", comment: ""),
@@ -362,14 +363,14 @@ struct RestoreAppItem: View {
                         )
                     }
                 }
-                
+
                 Text(String(format: NSLocalizedString("Restore_App_Config_Files_Count", comment: ""), app.configPaths.count))
                     .font(DesignConstants.Typography.caption)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
-            
+
             Spacer()
-            
+
             Image(systemName: "chevron.right")
                 .font(.system(size: 12))
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))

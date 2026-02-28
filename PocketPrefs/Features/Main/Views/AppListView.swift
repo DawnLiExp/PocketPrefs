@@ -8,14 +8,14 @@
 import SwiftUI
 
 struct AppListView: View {
-    @ObservedObject var coordinator: MainCoordinator
-    @ObservedObject var mainViewModel: MainViewModel
+    var coordinator: MainCoordinator
+    var mainViewModel: MainViewModel
     @Binding var selectedApp: AppConfig?
     let currentMode: MainView.AppMode
-    
-    @StateObject private var viewModel: AppListViewModel
+
+    @State private var viewModel: AppListViewModel
     @Environment(\.colorScheme) var colorScheme
-    
+
     init(
         coordinator: MainCoordinator,
         mainViewModel: MainViewModel,
@@ -26,9 +26,9 @@ struct AppListView: View {
         self.mainViewModel = mainViewModel
         self._selectedApp = selectedApp
         self.currentMode = currentMode
-        self._viewModel = StateObject(wrappedValue: AppListViewModel(coordinator: coordinator))
+        self._viewModel = State(wrappedValue: AppListViewModel(coordinator: coordinator))
     }
-    
+
     var body: some View {
         VStack(spacing: 0) {
             AppListHeader(
@@ -36,8 +36,10 @@ struct AppListView: View {
                 coordinator: coordinator,
                 mainViewModel: mainViewModel,
                 viewModel: viewModel,
+                selectedCount: viewModel.cachedSelectedCount,
+                totalCount: viewModel.apps.count,
             )
-            
+
             // Only the scrollable list content needs to be non-draggable
             NonDraggableView {
                 if viewModel.filteredApps.isEmpty, !viewModel.searchText.isEmpty {
@@ -80,16 +82,18 @@ struct AppListView: View {
 
 struct AppListHeader: View {
     @Binding var searchText: String
-    @ObservedObject var coordinator: MainCoordinator
-    @ObservedObject var mainViewModel: MainViewModel
-    @ObservedObject var viewModel: AppListViewModel
+    var coordinator: MainCoordinator
+    var mainViewModel: MainViewModel
+    @Bindable var viewModel: AppListViewModel
+    let selectedCount: Int
+    let totalCount: Int
     @Environment(\.colorScheme) var colorScheme
     @FocusState private var isSearchFocused: Bool
-    
+
     private var hasAvailableBackups: Bool {
         !coordinator.currentBackups.isEmpty
     }
-    
+
     var body: some View {
         VStack(alignment: .leading, spacing: 13) {
             // Search field with sort button
@@ -99,7 +103,7 @@ struct AppListHeader: View {
                     .font(.system(size: 14))
                     .padding(.leading, 12)
                     .padding(.trailing, 8)
-                    
+
                 TextField(
                     NSLocalizedString("Search_Placeholder", comment: ""),
                     text: $searchText,
@@ -107,9 +111,9 @@ struct AppListHeader: View {
                 .textFieldStyle(PlainTextFieldStyle())
                 .focused($isSearchFocused)
                 .font(DesignConstants.Typography.body)
-                    
+
                 Spacer(minLength: 8)
-                    
+
                 if !searchText.isEmpty {
                     Button(action: { searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
@@ -119,7 +123,7 @@ struct AppListHeader: View {
                     .buttonStyle(PlainButtonStyle())
                     .padding(.trailing, 8)
                 }
-                    
+
                 // MARK: - Modified Menu
 
                 Menu {
@@ -161,7 +165,7 @@ struct AppListHeader: View {
                     ),
             )
             .animation(.easeInOut(duration: 0.15), value: isSearchFocused)
-            
+
             HStack(spacing: 16) {
                 Toggle(isOn: Binding(
                     get: { viewModel.cachedAllSelected },
@@ -172,25 +176,25 @@ struct AppListHeader: View {
                         .fixedSize(horizontal: true, vertical: false)
                 }
                 .toggleStyle(CustomCheckboxToggleStyle())
-                
+
                 IncrementalModeToggle(
                     mainViewModel: mainViewModel,
                     hasAvailableBackups: hasAvailableBackups,
                 )
-                
+
                 Spacer()
-                
+
                 Text(String(
                     format: NSLocalizedString("Selected_Count", comment: ""),
-                    viewModel.apps.count(where: { $0.isSelected }),
-                    viewModel.apps.count,
+                    selectedCount,
+                    totalCount,
                 ))
                 .font(DesignConstants.Typography.caption)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .fixedSize(horizontal: true, vertical: false)
             }
             .padding(.bottom, mainViewModel.isIncrementalMode && hasAvailableBackups ? 0 : 0)
-            
+
             if mainViewModel.isIncrementalMode, hasAvailableBackups {
                 IncrementalBaseSelector(
                     mainViewModel: mainViewModel,
@@ -208,11 +212,11 @@ struct AppListHeader: View {
 }
 
 struct IncrementalModeToggle: View {
-    @ObservedObject var mainViewModel: MainViewModel
+    var mainViewModel: MainViewModel
     let hasAvailableBackups: Bool
     @State private var showingHelp = false
     @Environment(\.colorScheme) var colorScheme
-    
+
     var body: some View {
         HStack(spacing: 6) {
             Toggle(isOn: Binding(
@@ -229,7 +233,7 @@ struct IncrementalModeToggle: View {
             }
             .toggleStyle(CustomCheckboxToggleStyle())
             .disabled(!hasAvailableBackups)
-            
+
             Button(action: { showingHelp.toggle() }) {
                 Image(systemName: "questionmark.circle")
                     .font(.system(size: 14))
@@ -245,7 +249,7 @@ struct IncrementalModeToggle: View {
 
 struct IncrementalModeHelpPopover: View {
     @Environment(\.colorScheme) var colorScheme
-    
+
     var body: some View {
         Text(NSLocalizedString("Incremental_Mode_Help_Description", comment: ""))
             .font(DesignConstants.Typography.body)
@@ -257,18 +261,18 @@ struct IncrementalModeHelpPopover: View {
 }
 
 struct IncrementalBaseSelector: View {
-    @ObservedObject var mainViewModel: MainViewModel
-    @ObservedObject var coordinator: MainCoordinator
+    var mainViewModel: MainViewModel
+    var coordinator: MainCoordinator
     @Binding var isRefreshing: Bool
     @Environment(\.colorScheme) var colorScheme
     @State private var localRefreshing = false
-    
+
     var body: some View {
         HStack(spacing: 8) {
             Text(NSLocalizedString("Select_Base_Backup_Label", comment: ""))
                 .font(DesignConstants.Typography.body)
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
-            
+
             Menu {
                 ForEach(coordinator.currentBackups) { backup in
                     Button {
@@ -294,7 +298,7 @@ struct IncrementalBaseSelector: View {
             }
             .menuStyle(.borderlessButton)
             .fixedSize(horizontal: false, vertical: true)
-            
+
             Button(action: {
                 Task { @MainActor in
                     await refreshBackups()
@@ -318,15 +322,15 @@ struct IncrementalBaseSelector: View {
             .disabled(localRefreshing)
         }
     }
-    
+
     @MainActor
     private func refreshBackups() async {
         localRefreshing = true
-        
+
         try? await Task.sleep(nanoseconds: 200_000_000)
-        
+
         await coordinator.scanBackups()
-        
+
         localRefreshing = false
     }
 }
@@ -336,7 +340,7 @@ struct IncrementalBaseSelector: View {
 struct BackupSearchEmptyState: View {
     let searchText: String
     @Environment(\.colorScheme) var colorScheme
-    
+
     var body: some View {
         VStack(spacing: 16) {
             Spacer()
@@ -364,14 +368,12 @@ struct AppListItem: View {
     let viewModel: AppListViewModel
     let currentMode: MainView.AppMode
     let onTap: () -> Void
-    
+
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
-    
-    private var isChecked: Bool {
-        viewModel.apps.first(where: { $0.id == app.id })?.isSelected ?? false
-    }
-    
+
+    private var isChecked: Bool { app.isSelected }
+
     var body: some View {
         HStack(spacing: 5) {
             Toggle("", isOn: Binding(
@@ -380,7 +382,7 @@ struct AppListItem: View {
             ))
             .toggleStyle(CustomCheckboxToggleStyle())
             .disabled(currentMode == .backup ? !app.isInstalled : false)
-            
+
             Group {
                 let icon = coordinator.getIcon(for: app)
                 Image(nsImage: icon)
@@ -389,13 +391,13 @@ struct AppListItem: View {
                     .frame(width: 32, height: 32)
                     .clipShape(RoundedRectangle(cornerRadius: 6))
             }
-            
+
             VStack(alignment: .leading, spacing: 4) {
                 HStack {
                     Text(app.name)
                         .font(DesignConstants.Typography.headline)
                         .foregroundColor(app.isInstalled || currentMode == .restore ? Color.App.primary.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
-                    
+
                     if currentMode == .backup, !app.isInstalled {
                         StatusBadge(
                             text: NSLocalizedString("AppList_App_Status_Not_Installed", comment: ""),
@@ -404,14 +406,14 @@ struct AppListItem: View {
                         )
                     }
                 }
-                
+
                 Text(String(format: NSLocalizedString("AppList_App_Config_Paths_Count", comment: ""), app.configPaths.count))
                     .font(DesignConstants.Typography.caption)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
-            
+
             Spacer()
-            
+
             Image(systemName: "chevron.right")
                 .font(.system(size: 12))
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
