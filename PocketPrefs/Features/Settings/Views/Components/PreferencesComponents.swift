@@ -108,7 +108,7 @@ struct LanguageSection: View {
 // MARK: - Backup Location Section
 
 struct BackupLocationSection: View {
-    @ObservedObject var preferencesManager: PreferencesManager
+    var preferencesManager: PreferencesManager
     @Binding var showingDirectoryPicker: Bool
     @Environment(\.colorScheme) var colorScheme
     
