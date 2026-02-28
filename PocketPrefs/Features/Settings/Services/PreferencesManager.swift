@@ -18,8 +18,9 @@ enum PreferencesEvent: Sendable {
 
 // MARK: - Preferences Manager
 
+@Observable
 @MainActor
-final class PreferencesManager: ObservableObject {
+final class PreferencesManager {
     enum DirectoryStatus: Equatable, Sendable {
         case unknown
         case valid
@@ -32,16 +33,16 @@ final class PreferencesManager: ObservableObject {
     private let logger = Logger(subsystem: "com.pocketprefs", category: "PreferencesManager")
     private static let defaultBackupPath = NSHomeDirectory() + "/Documents/PocketPrefsBackups"
     
-    @AppStorage("backupDirectory") private var storedBackupDirectory: String = ""
-    @Published var backupDirectory: String = ""
-    @Published var directoryStatus: DirectoryStatus = .unknown
+    @ObservationIgnored @AppStorage("backupDirectory") private var storedBackupDirectory: String = ""
+    var backupDirectory: String = ""
+    var directoryStatus: DirectoryStatus = .unknown
     
-    private var continuation: AsyncStream<PreferencesEvent>.Continuation?
-    let events: AsyncStream<PreferencesEvent>
+    @ObservationIgnored private nonisolated let continuation: AsyncStream<PreferencesEvent>.Continuation
+    @ObservationIgnored nonisolated let events: AsyncStream<PreferencesEvent>
     
     private init() {
         let (stream, continuation) = AsyncStream<PreferencesEvent>.makeStream(
-            bufferingPolicy: .bufferingNewest(1),
+            bufferingPolicy: .bufferingNewest(1)
         )
         self.events = stream
         self.continuation = continuation
@@ -59,7 +60,7 @@ final class PreferencesManager: ObservableObject {
     }
     
     deinit {
-        continuation?.finish()
+        continuation.finish()
     }
     
     // MARK: - Public API
@@ -72,7 +73,7 @@ final class PreferencesManager: ObservableObject {
         await validateAndCreateDirectory()
         
         if case .valid = directoryStatus {
-            continuation?.yield(.directoryChanged(path: expandedPath))
+            continuation.yield(.directoryChanged(path: expandedPath))
             logger.info("Backup directory changed: \(expandedPath)")
         }
     }
@@ -83,7 +84,7 @@ final class PreferencesManager: ObservableObject {
     
     func validateAndCreateDirectory() async {
         directoryStatus = .creating
-        continuation?.yield(.statusUpdated(.creating))
+        continuation.yield(.statusUpdated(.creating))
         
         let fileManager = FileManager.default
         var isDirectory: ObjCBool = false
@@ -94,7 +95,7 @@ final class PreferencesManager: ObservableObject {
                 : .invalid(reason: NSLocalizedString("Preferences_Error_Not_Directory", comment: ""))
             
             directoryStatus = newStatus
-            continuation?.yield(.statusUpdated(newStatus))
+            continuation.yield(.statusUpdated(newStatus))
             
             if case .valid = newStatus {
                 logger.info("Directory validated: \(self.backupDirectory)")
@@ -109,12 +110,12 @@ final class PreferencesManager: ObservableObject {
                     attributes: nil,
                 )
                 directoryStatus = .valid
-                continuation?.yield(.statusUpdated(.valid))
+                continuation.yield(.statusUpdated(.valid))
                 logger.info("Directory created: \(self.backupDirectory)")
             } catch {
                 let newStatus = DirectoryStatus.invalid(reason: error.localizedDescription)
                 directoryStatus = newStatus
-                continuation?.yield(.statusUpdated(newStatus))
+                continuation.yield(.statusUpdated(newStatus))
                 logger.error("Failed to create directory: \(error)")
             }
         }

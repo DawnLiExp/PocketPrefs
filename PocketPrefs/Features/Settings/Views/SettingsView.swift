@@ -8,9 +8,9 @@
 import SwiftUI
 
 struct SettingsView: View {
-    @StateObject private var customAppManager = CustomAppManager()
-    @StateObject private var importExportManager = ImportExportManager()
-    @StateObject private var searchDebouncer = SearchDebouncer()
+    @State private var customAppManager = CustomAppManager()
+    @State private var importExportManager = ImportExportManager()
+    @State private var searchDebouncer = SearchDebouncer()
     @State private var selectedTab: SettingsTab = .customApps
     @State private var searchText = ""
     @State private var showingAddAppSheet = false
@@ -136,9 +136,10 @@ struct SettingsView: View {
 
 // MARK: - Search Debouncer
 
+@Observable
 @MainActor
-final class SearchDebouncer: ObservableObject {
-    @Published private(set) var filteredApps: [AppConfig] = []
+final class SearchDebouncer {
+    private(set) var filteredApps: [AppConfig] = []
     
     private var searchTask: Task<Void, Never>?
     private let debounceDelay: Duration = .milliseconds(300)
@@ -255,8 +256,8 @@ struct TabButton: View {
 // MARK: - Custom Apps Content
 
 struct CustomAppsContent: View {
-    @ObservedObject var customAppManager: CustomAppManager
-    @ObservedObject var importExportManager: ImportExportManager
+    var customAppManager: CustomAppManager
+    var importExportManager: ImportExportManager
     let filteredApps: [AppConfig]
     @Binding var searchText: String
     @Binding var showingAddAppSheet: Bool

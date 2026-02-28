@@ -9,7 +9,7 @@ import AppKit
 import SwiftUI
 
 struct PreferencesView: View {
-    @StateObject private var preferencesManager = PreferencesManager.shared
+    @State private var preferencesManager = PreferencesManager.shared
     @State private var themeManager = ThemeManager.shared
     private var languageManager = LanguageManager.shared
     @State private var showingDirectoryPicker = false

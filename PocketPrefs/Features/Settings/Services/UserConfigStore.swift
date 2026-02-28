@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import Observation
 import os.log
 
 // MARK: - Change Events
@@ -19,15 +20,17 @@ enum UserConfigEvent: Sendable {
 
 // MARK: - User Config Store
 
+@Observable
 @MainActor
-final class UserConfigStore: ObservableObject {
+final class UserConfigStore {
     static let shared = UserConfigStore()
     
-    @Published var customApps: [AppConfig] = []
+    private(set) var customApps: [AppConfig] = []
     
     private let logger = Logger(subsystem: "com.pocketprefs", category: "UserConfigStore")
     private let storageURL: URL
-    private var continuations: [UUID: AsyncStream<UserConfigEvent>.Continuation] = [:]
+    @ObservationIgnored
+    private nonisolated(unsafe) var continuations: [UUID: AsyncStream<UserConfigEvent>.Continuation] = [:]
     
     private init() {
         let appSupport = FileManager.default.urls(

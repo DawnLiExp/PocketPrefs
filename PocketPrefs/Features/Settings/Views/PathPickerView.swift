@@ -10,12 +10,12 @@ import UniformTypeIdentifiers
 
 struct PathPickerView: View {
     @Binding var paths: [String]
-    @ObservedObject var manager: CustomAppManager
+    var manager: CustomAppManager
     @State private var showingPicker = false
     @State private var editingPathIndex: Int?
     @State private var editingPathText = ""
     @State private var pathSelectionType: PathSelectionType = .directory
-    @StateObject private var pathValidator = PathValidator()
+    @State private var pathValidator = PathValidator()
     @Environment(\.colorScheme) var colorScheme
     
     enum PathSelectionType {
@@ -160,8 +160,9 @@ struct PathPickerView: View {
 
 // MARK: - Path Validator
 
+@Observable
 @MainActor
-final class PathValidator: ObservableObject {
+final class PathValidator {
     private var cache: [String: PathValidation] = [:]
     
     struct PathValidation {
@@ -329,5 +330,7 @@ struct PathEditSheet: View {
 // MARK: - Int Extension for Identifiable
 
 extension Int: @retroactive Identifiable {
-    public var id: Int { self }
+    public var id: Int {
+        self
+    }
 }
