@@ -11,10 +11,10 @@ import SwiftUI
 
 struct AppDetailView: View {
     let app: AppConfig
-    @ObservedObject var coordinator: MainCoordinator
+    var coordinator: MainCoordinator
     let currentMode: MainView.AppMode
     @Binding var showingRestorePicker: Bool
-    @ObservedObject var viewModel: DetailViewModel
+    var viewModel: DetailViewModel
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
@@ -56,8 +56,8 @@ struct AppDetailView: View {
 // MARK: - BackupPlaceholderView
 
 struct BackupPlaceholderView: View {
-    @ObservedObject var coordinator: MainCoordinator
-    @ObservedObject var viewModel: DetailViewModel
+    var coordinator: MainCoordinator
+    var viewModel: DetailViewModel
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
@@ -74,7 +74,7 @@ struct BackupPlaceholderView: View {
                     Text(NSLocalizedString("Detail_Placeholder_Select_App", comment: ""))
                         .font(DesignConstants.Typography.headline)
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                        .breathingPulseAnimation() // .fadeInScaleAnimation / .slideInAnimation / .breathingPulseAnimation
+                        .breathingPulseAnimation()
                 }
 
                 Spacer()
