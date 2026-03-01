@@ -10,28 +10,33 @@ import os.log
 import SwiftUI
 
 @MainActor
-final class MainCoordinator: ObservableObject {
+@Observable
+final class MainCoordinator {
     // MARK: - Internal State
     
     private var apps: [AppConfig] = []
     
     // MARK: - Published State
     
-    @Published private(set) var availableBackups: [BackupInfo] = []
-    @Published private(set) var selectedBackup: BackupInfo?
+    private(set) var availableBackups: [BackupInfo] = []
+    private(set) var selectedBackup: BackupInfo?
+    
+    // MARK: - Icon Refresh
+    
+    var iconRefreshTrigger = UUID()
     
     // MARK: - Services
     
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "MainCoordinator")
-    private let iconService = IconService.shared
-    private let backupService = BackupService()
-    private let restoreService = RestoreService()
-    private let fileOps = FileOperationService.shared
-    private let userStore = UserConfigStore.shared
+    @ObservationIgnored private let logger = Logger(subsystem: "com.pocketprefs", category: "MainCoordinator")
+    @ObservationIgnored private let iconService = IconService.shared
+    @ObservationIgnored private let backupService = BackupService()
+    @ObservationIgnored private let restoreService = RestoreService()
+    @ObservationIgnored private let fileOps = FileOperationService.shared
+    @ObservationIgnored private let userStore = UserConfigStore.shared
     
     // MARK: - Tasks Management
     
-    private var tasks: [Task<Void, Never>] = []
+    @ObservationIgnored private var tasks: [Task<Void, Never>] = []
     
     // MARK: - Initialization
     
@@ -121,7 +126,7 @@ final class MainCoordinator: ObservableObject {
             if !loadedIcons.isEmpty {
                 logger.debug("Batch icon update: \(loadedIcons.count) icons loaded")
                 loadedIcons.removeAll()
-                objectWillChange.send()
+                iconRefreshTrigger = UUID()
             }
         }
     }

@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CustomBackupPicker: View {
-    @ObservedObject var coordinator: MainCoordinator
+    var coordinator: MainCoordinator
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {

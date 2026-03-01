@@ -124,7 +124,7 @@ struct AppListHeader: View {
                     .padding(.trailing, 8)
                 }
 
-                // MARK: - Modified Menu
+                // MARK: - Sort Menu
 
                 Menu {
                     ForEach(SortOption.allCases, id: \.self) { option in
@@ -193,7 +193,6 @@ struct AppListHeader: View {
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .fixedSize(horizontal: true, vertical: false)
             }
-            .padding(.bottom, mainViewModel.isIncrementalMode && hasAvailableBackups ? 0 : 0)
 
             if mainViewModel.isIncrementalMode, hasAvailableBackups {
                 IncrementalBaseSelector(
@@ -212,21 +211,14 @@ struct AppListHeader: View {
 }
 
 struct IncrementalModeToggle: View {
-    var mainViewModel: MainViewModel
+    @Bindable var mainViewModel: MainViewModel
     let hasAvailableBackups: Bool
     @State private var showingHelp = false
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         HStack(spacing: 6) {
-            Toggle(isOn: Binding(
-                get: { mainViewModel.isIncrementalMode },
-                set: { newValue in
-                    if hasAvailableBackups {
-                        mainViewModel.isIncrementalMode = newValue
-                    }
-                },
-            )) {
+            Toggle(isOn: $mainViewModel.isIncrementalMode) {
                 Text(NSLocalizedString("Incremental_Mode", comment: ""))
                     .font(DesignConstants.Typography.body)
                     .fixedSize(horizontal: false, vertical: true)
@@ -326,11 +318,8 @@ struct IncrementalBaseSelector: View {
     @MainActor
     private func refreshBackups() async {
         localRefreshing = true
-
         try? await Task.sleep(nanoseconds: 200_000_000)
-
         await coordinator.scanBackups()
-
         localRefreshing = false
     }
 }
@@ -372,7 +361,9 @@ struct AppListItem: View {
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
 
-    private var isChecked: Bool { app.isSelected }
+    private var isChecked: Bool {
+        app.isSelected
+    }
 
     var body: some View {
         HStack(spacing: 5) {

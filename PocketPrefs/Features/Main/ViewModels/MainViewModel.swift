@@ -10,31 +10,32 @@ import os.log
 import SwiftUI
 
 @MainActor
-final class MainViewModel: ObservableObject {
+@Observable
+final class MainViewModel {
     // MARK: - Operation State
     
-    @Published var isProcessing = false
-    @Published var statusMessage = ""
-    @Published var currentProgress: Double = 0.0
-    @Published var statusMessageHistory: [String] = []
+    var isProcessing = false
+    var statusMessage = ""
+    var currentProgress: Double = 0.0
+    var statusMessageHistory: [String] = []
     
     // MARK: - Incremental Backup State
     
-    @Published var isIncrementalMode = false
-    @Published var incrementalBaseBackup: BackupInfo?
+    var isIncrementalMode = false
+    var incrementalBaseBackup: BackupInfo?
     
     // MARK: - Dependencies
     
-    private weak var coordinator: MainCoordinator?
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "MainViewModel")
+    let coordinator: MainCoordinator
+    @ObservationIgnored private let logger = Logger(subsystem: "com.pocketprefs", category: "MainViewModel")
     
-    private var coordinatorEventTask: Task<Void, Never>?
-    private var operationEventTask: Task<Void, Never>?
+    @ObservationIgnored private var coordinatorEventTask: Task<Void, Never>?
+    @ObservationIgnored private var operationEventTask: Task<Void, Never>?
     
     // MARK: - Initialization
     
-    init(coordinator: MainCoordinator) {
-        self.coordinator = coordinator
+    init() {
+        self.coordinator = MainCoordinator()
         subscribeToCoordinatorEvents()
         subscribeToOperationEvents()
     }
@@ -92,8 +93,6 @@ final class MainViewModel: ObservableObject {
     }
     
     private func handleOperationEvent(_ event: OperationEvent) async {
-        guard let coordinator else { return }
-        
         switch event {
         case .performBackup:
             await coordinator.performBackupOperation(
@@ -114,7 +113,6 @@ final class MainViewModel: ObservableObject {
     // MARK: - State Updates
     
     private func handleBackupsUpdate() {
-        guard let coordinator else { return }
         let availableBackups = coordinator.currentBackups
         
         if let currentBase = incrementalBaseBackup,
@@ -149,7 +147,7 @@ final class MainViewModel: ObservableObject {
     /// Select base backup for incremental operations
     func selectIncrementalBase(_ backup: BackupInfo) {
         incrementalBaseBackup = backup
-        coordinator?.selectIncrementalBase(backup)
+        coordinator.selectIncrementalBase(backup)
     }
     
     /// Request backup operation

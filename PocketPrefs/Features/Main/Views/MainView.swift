@@ -8,14 +8,12 @@
 import SwiftUI
 
 struct MainView: View {
-    @StateObject private var coordinator = MainCoordinator()
+    @State private var mainViewModel = MainViewModel()
     @State private var themeManager = ThemeManager.shared
     @State private var currentMode: AppMode = .backup
     @State private var selectedApp: AppConfig?
     @State private var showingRestorePicker = false
     @Environment(\.colorScheme) var colorScheme
-    
-    @StateObject private var mainViewModel: MainViewModel
     
     private enum Layout {
         static let unifiedSpacing: CGFloat = 10
@@ -47,12 +45,6 @@ struct MainView: View {
                 return "clock.arrow.trianglehead.2.counterclockwise.rotate.90"
             }
         }
-    }
-    
-    init() {
-        let coordinator = MainCoordinator()
-        _coordinator = StateObject(wrappedValue: coordinator)
-        _mainViewModel = StateObject(wrappedValue: MainViewModel(coordinator: coordinator))
     }
     
     var body: some View {
@@ -117,7 +109,7 @@ struct MainView: View {
 
             DetailContainerView(
                 selectedApp: selectedApp,
-                coordinator: coordinator,
+                coordinator: mainViewModel.coordinator,
                 mainViewModel: mainViewModel,
                 currentMode: currentMode,
                 showingRestorePicker: $showingRestorePicker,
@@ -131,14 +123,14 @@ struct MainView: View {
         switch currentMode {
         case .backup:
             AppListView(
-                coordinator: coordinator,
+                coordinator: mainViewModel.coordinator,
                 mainViewModel: mainViewModel,
                 selectedApp: $selectedApp,
                 currentMode: currentMode,
             )
         case .restore:
             RestoreListView(
-                coordinator: coordinator,
+                coordinator: mainViewModel.coordinator,
                 selectedApp: $selectedApp,
             )
         }
