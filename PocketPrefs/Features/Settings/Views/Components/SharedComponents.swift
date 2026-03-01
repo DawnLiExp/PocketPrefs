@@ -15,7 +15,7 @@ struct SettingsTitleBar: View {
     
     var body: some View {
         HStack {
-            Text(NSLocalizedString("Settings_Title", comment: ""))
+            Text("Settings_Title")
                 .font(DesignConstants.Typography.title)
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
             
@@ -50,7 +50,7 @@ struct SettingsToolbar: View {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 
-                TextField(NSLocalizedString("Search_Placeholder", comment: "Search apps..."), text: $searchText)
+                TextField("Search_Placeholder", text: $searchText)
                     .textFieldStyle(.plain)
                 
                 if !searchText.isEmpty {
@@ -68,7 +68,7 @@ struct SettingsToolbar: View {
             // Action buttons
             HStack {
                 Button(action: onAddApp) {
-                    Label(NSLocalizedString("Settings_Add_App", comment: ""),
+                    Label("Settings_Add_App",
                           systemImage: "plus")
                         .font(DesignConstants.Typography.body)
                 }
@@ -76,8 +76,7 @@ struct SettingsToolbar: View {
                 
                 if selectedCount > 0 {
                     Button(action: onDeleteSelected) {
-                        Label(String(format: NSLocalizedString("Settings_Delete_Selected", comment: ""),
-                                     selectedCount),
+                        Label(String(localized: "Settings_Delete_Selected", defaultValue: "Delete \(selectedCount) Selected"),
                               systemImage: "trash")
                             .font(DesignConstants.Typography.body)
                     }
@@ -101,14 +100,14 @@ struct SettingsToolbar: View {
                         }
                     },
                 )) {
-                    Text(NSLocalizedString("Select_All", comment: ""))
+                    Text("Select_All")
                         .font(DesignConstants.Typography.body)
                 }
                 .toggleStyle(.checkbox)
                 
                 Spacer()
                 
-                Text(String(format: NSLocalizedString("Selected_Count", comment: ""), customAppManager.selectedAppIds.count, customAppManager.customApps.count))
+                Text(String(localized: "Selected_Count", defaultValue: "\(customAppManager.selectedAppIds.count) of \(customAppManager.customApps.count) selected"))
                     .font(DesignConstants.Typography.caption)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
@@ -131,14 +130,14 @@ struct EmptyAppsListView: View {
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
             
             Text(searchActive ?
-                String(format: NSLocalizedString("Search_No_Results", comment: ""), searchText) :
-                NSLocalizedString("Settings_No_Custom_Apps", comment: ""))
+                String(localized: "Search_No_Results", defaultValue: "No results for \"\(searchText)\"") :
+                String(localized: "Settings_No_Custom_Apps", defaultValue: "No custom apps added"))
                 .font(DesignConstants.Typography.headline)
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
             
             Text(searchActive ?
-                NSLocalizedString("Search_Try_Different_Keyword", comment: "") :
-                NSLocalizedString("Settings_Add_First_App_Hint", comment: ""))
+                "Search_Try_Different_Keyword" :
+                "Settings_Add_First_App_Hint")
                 .font(DesignConstants.Typography.caption)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .multilineTextAlignment(.center)
@@ -156,7 +155,7 @@ struct EmptyDetailView: View {
                 .font(.system(size: 48))
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
             
-            Text(NSLocalizedString("Settings_Select_App_To_Configure", comment: ""))
+            Text("Settings_Select_App_To_Configure")
                 .font(DesignConstants.Typography.headline)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
         }

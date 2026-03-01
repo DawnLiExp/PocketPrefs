@@ -22,13 +22,13 @@ enum AppInfoError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .invalidAppBundle:
-            return NSLocalizedString("AppInfo_Error_Invalid_Bundle", comment: "")
+            return String(localized: "AppInfo_Error_Invalid_Bundle", defaultValue: "Invalid application bundle")
         case .infoPlistNotFound:
-            return NSLocalizedString("AppInfo_Error_Plist_Not_Found", comment: "")
+            return String(localized: "AppInfo_Error_Plist_Not_Found", defaultValue: "Info.plist not found in application")
         case .missingRequiredKeys:
-            return NSLocalizedString("AppInfo_Error_Missing_Keys", comment: "")
+            return String(localized: "AppInfo_Error_Missing_Keys", defaultValue: "Required information missing in application")
         case .readFailed(let error):
-            return String(format: NSLocalizedString("AppInfo_Error_Read_Failed", comment: ""), error.localizedDescription)
+            return String(localized: "AppInfo_Error_Read_Failed", defaultValue: "Failed to read application info: \(error.localizedDescription)")
         }
     }
 }

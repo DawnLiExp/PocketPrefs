@@ -59,13 +59,12 @@ struct BackupResult: Sendable {
 
     var statusMessage: String {
         if isCompleteSuccess {
-            return String(format: NSLocalizedString("Backup_Success_Message", comment: ""), successCount)
+            return String(localized: "Backup_Success_Message", defaultValue: "✅ Backup complete! Successfully backed up \(successCount) app configurations")
         } else if failedApps.isEmpty && successCount == 0 {
-            return NSLocalizedString("Backup_No_Apps_Processed", comment: "")
+            return String(localized: "Backup_No_Apps_Processed", defaultValue: "No app configurations were backed up")
         } else {
             let failedNames = failedApps.map { $0.name }.joined(separator: ", ")
-            return String(format: NSLocalizedString("Backup_Partial_Success_Message", comment: ""),
-                          successCount, failedNames)
+            return String(localized: "Backup_Partial_Success_Message", defaultValue: "⚠️ Backup complete. Success: \(successCount), Failed: \(failedNames)")
         }
     }
 }
@@ -83,13 +82,12 @@ struct RestoreResult: Sendable {
 
     var statusMessage: String {
         if isCompleteSuccess {
-            return String(format: NSLocalizedString("Restore_Success_Message", comment: ""), successCount)
+            return String(localized: "Restore_Success_Message", defaultValue: "✅ Restore complete! Successfully restored \(successCount) app configurations")
         } else if failedApps.isEmpty && successCount == 0 {
-            return NSLocalizedString("Restore_No_Apps_Processed", comment: "")
+            return String(localized: "Restore_No_Apps_Processed", defaultValue: "No app configurations were restored")
         } else {
             let failedNames = failedApps.map { $0.name }.joined(separator: ", ")
-            return String(format: NSLocalizedString("Restore_Partial_Success_Message", comment: ""),
-                          successCount, failedNames)
+            return String(localized: "Restore_Partial_Success_Message", defaultValue: "⚠️ Restore complete. Success: \(successCount), Failed: \(failedNames)")
         }
     }
 }

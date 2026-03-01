@@ -14,7 +14,7 @@ struct CustomBackupPicker: View {
     var body: some View {
         Group {
             if coordinator.availableBackups.isEmpty {
-                Text(NSLocalizedString("No_Backups_Found", comment: "No backups available"))
+                Text("No_Backups_Found")
                     .font(DesignConstants.Typography.body)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -30,7 +30,7 @@ struct CustomBackupPicker: View {
                     )
             } else {
                 HStack(spacing: 8) {
-                    Text(NSLocalizedString("Select_Backup_Label", comment: ""))
+                    Text("Select_Backup_Label")
                         .font(DesignConstants.Typography.body)
                         .foregroundColor(Color.App.primary.color(for: colorScheme))
 
@@ -43,7 +43,7 @@ struct CustomBackupPicker: View {
                             }
                         }
                     } label: {
-                        Text(coordinator.currentSelectedBackup?.formattedName ?? NSLocalizedString("Restore_Select_Backup", comment: ""))
+                        Text(coordinator.currentSelectedBackup?.formattedName ?? String(localized: "Restore_Select_Backup", defaultValue: "Select a backup"))
                             .font(DesignConstants.Typography.body)
                             .foregroundColor(Color.App.primary.color(for: colorScheme))
                             .padding(.horizontal, 12)

@@ -27,7 +27,7 @@ struct PathPickerView: View {
         VStack(alignment: .leading, spacing: 12) {
             // Header
             HStack {
-                Label(NSLocalizedString("Settings_Config_Paths", comment: ""),
+                Label("Settings_Config_Paths",
                       systemImage: "folder.badge.gearshape")
                     .font(DesignConstants.Typography.headline)
                     .foregroundColor(Color.App.primary.color(for: colorScheme))
@@ -40,7 +40,7 @@ struct PathPickerView: View {
                         pathSelectionType = .directory
                         showingPicker = true
                     }) {
-                        Label(NSLocalizedString("Settings_Add_Directory", comment: ""),
+                        Label("Settings_Add_Directory",
                               systemImage: "folder.badge.plus")
                     }
                     
@@ -48,14 +48,14 @@ struct PathPickerView: View {
                         pathSelectionType = .file
                         showingPicker = true
                     }) {
-                        Label(NSLocalizedString("Settings_Add_File", comment: ""),
+                        Label("Settings_Add_File",
                               systemImage: "doc.badge.plus")
                     }
                     
                     Divider()
                     
                     Button(action: addManualPath) {
-                        Label(NSLocalizedString("Settings_Add_Path_Manually", comment: ""),
+                        Label("Settings_Add_Path_Manually",
                               systemImage: "text.cursor")
                     }
                 } label: {
@@ -256,7 +256,7 @@ struct PathItemView: View {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 12))
                     .foregroundColor(Color.App.warning.color(for: colorScheme))
-                    .help(NSLocalizedString("Settings_Path_Not_Found", comment: ""))
+                    .help("Settings_Path_Not_Found")
             }
         }
         .padding(.horizontal, 12)
@@ -282,11 +282,11 @@ struct EmptyPathsView: View {
                 .font(.system(size: 32))
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
             
-            Text(NSLocalizedString("Settings_No_Paths_Added", comment: ""))
+            Text("Settings_No_Paths_Added")
                 .font(DesignConstants.Typography.body)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
             
-            Text(NSLocalizedString("Settings_Add_Path_Hint", comment: ""))
+            Text("Settings_Add_Path_Hint")
                 .font(DesignConstants.Typography.caption)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .multilineTextAlignment(.center)
@@ -304,19 +304,19 @@ struct PathEditSheet: View {
     
     var body: some View {
         VStack(spacing: 20) {
-            Text(NSLocalizedString("Settings_Edit_Path", comment: ""))
+            Text("Settings_Edit_Path")
                 .font(DesignConstants.Typography.title)
             
-            TextField(NSLocalizedString("Settings_Path_Placeholder", comment: ""),
+            TextField("Settings_Path_Placeholder",
                       text: $pathText)
                 .textFieldStyle(.roundedBorder)
                 .frame(width: 400)
             
             HStack(spacing: 12) {
-                Button(NSLocalizedString("Common_Cancel", comment: ""), action: onCancel)
+                Button("Common_Cancel", action: onCancel)
                     .buttonStyle(SecondaryButtonStyle())
                 
-                Button(NSLocalizedString("Common_Save", comment: ""), action: onSave)
+                Button("Common_Save", action: onSave)
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(pathText.isEmpty)
             }

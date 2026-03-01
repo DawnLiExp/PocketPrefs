@@ -43,9 +43,9 @@ enum Theme: String, CaseIterable {
 
     var displayName: String {
         switch self {
-        case .system: return NSLocalizedString("Theme_Follow_System", comment: "")
-        case .light: return NSLocalizedString("Theme_Light", comment: "")
-        case .dark: return NSLocalizedString("Theme_Dark", comment: "")
+        case .system: return String(localized: "Theme_Follow_System", defaultValue: "Follow System")
+        case .light: return String(localized: "Theme_Light", defaultValue: "Light")
+        case .dark: return String(localized: "Theme_Dark", defaultValue: "Dark")
         }
     }
 

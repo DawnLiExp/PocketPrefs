@@ -1,12 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {
-
-    },
-    "%lld%%" : {
-
-    },
     "AppInfo_Error_Invalid_Bundle" : {
       "localizations" : {
         "en" : {
@@ -608,7 +602,14 @@
       }
     },
     "Error" : {
-
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "错误"
+          }
+        }
+      }
     },
     "Error_Select_Backup_Failed" : {
       "extractionState" : "manual",
@@ -1162,7 +1163,14 @@
       }
     },
     "Loading application info..." : {
-
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在加载应用信息…"
+          }
+        }
+      }
     },
     "MainView_Mode_Backup" : {
       "localizations" : {
@@ -1443,7 +1451,21 @@
       }
     },
     "Restore_Select_Backup" : {
-
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Select a backup"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "选择备份"
+          }
+        }
+      }
     },
     "Restore_Starting" : {
       "comment" : "Restore Operations",

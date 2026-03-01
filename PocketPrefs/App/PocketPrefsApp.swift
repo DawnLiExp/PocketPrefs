@@ -43,7 +43,7 @@ struct PocketPrefsApp: App {
             CommandGroup(replacing: .newItem, addition: {})
 
             CommandGroup(after: .toolbar) {
-                Menu(NSLocalizedString("Menu_Theme", comment: "")) {
+                Menu(String(localized: "Menu_Theme", defaultValue: "Theme")) { // Changed to String(localized:)
                     ForEach(Theme.allCases, id: \.self) { theme in
                         Button(action: {
                             changeTheme(to: theme)

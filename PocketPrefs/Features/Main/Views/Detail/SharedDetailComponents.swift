@@ -36,13 +36,13 @@ struct AppDetailHeader: View {
                 if currentMode == .backup {
                     if app.isInstalled {
                         StatusBadge(
-                            text: NSLocalizedString("Detail_App_Status_Installed", comment: ""),
-                            color: Color.App.success.color(for: colorScheme),
+                            text: String(localized: "Detail_App_Status_Installed", defaultValue: "Installed"),
+                            color: Color.App.success.color(for: colorScheme)
                         )
                     } else {
                         StatusBadge(
-                            text: NSLocalizedString("Detail_App_Status_Not_Installed", comment: ""),
-                            color: Color.App.warning.color(for: colorScheme),
+                            text: String(localized: "Detail_App_Status_Not_Installed", defaultValue: "Not Installed"),
+                            color: Color.App.warning.color(for: colorScheme)
                         )
                     }
                 }
@@ -94,7 +94,7 @@ struct ConfigPathItem: View {
                     )
             }
             .buttonStyle(.plain)
-            .help(NSLocalizedString("Show_In_Finder", comment: ""))
+            .help("Show_In_Finder")
         }
         .padding(12)
         .cardEffect(isSelected: false)

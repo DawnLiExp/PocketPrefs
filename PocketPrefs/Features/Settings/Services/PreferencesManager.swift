@@ -92,7 +92,7 @@ final class PreferencesManager {
         if fileManager.fileExists(atPath: backupDirectory, isDirectory: &isDirectory) {
             let newStatus: DirectoryStatus = isDirectory.boolValue
                 ? .valid
-                : .invalid(reason: NSLocalizedString("Preferences_Error_Not_Directory", comment: ""))
+                : .invalid(reason: String(localized: "Preferences_Error_Not_Directory", defaultValue: "Path is not a directory"))
             
             directoryStatus = newStatus
             continuation.yield(.statusUpdated(newStatus))
@@ -107,7 +107,7 @@ final class PreferencesManager {
                 try fileManager.createDirectory(
                     atPath: backupDirectory,
                     withIntermediateDirectories: true,
-                    attributes: nil,
+                    attributes: nil
                 )
                 directoryStatus = .valid
                 continuation.yield(.statusUpdated(.valid))
