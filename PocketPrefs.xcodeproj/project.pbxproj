@@ -14,7 +14,6 @@
 		FC195B6C2E7EB80B00258310 /* BackupModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4F2E7EB80B00258310 /* BackupModels.swift */; };
 		FC195B772E7EB80B00258310 /* MainCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC195B4B2E7EB80B00258310 /* MainCoordinator.swift */; };
 		FC195B792E7EB80B00258310 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = FC195B552E7EB80B00258310 /* Assets.xcassets */; };
-		FC195B7B2E7EB80B00258310 /* Localizable.strings in Resources */ = {isa = PBXBuildFile; fileRef = FC195B532E7EB80B00258310 /* Localizable.strings */; };
 		FC33DF562E8716CA007C47E5 /* ConcurrencyUtilities.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC33DF552E8716C8007C47E5 /* ConcurrencyUtilities.swift */; };
 		FC433D2C2E853BF30036D585 /* CustomCheckboxToggleStyle.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */; };
 		FC48E5142EE4969A000954F9 /* SystemVersionDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC48E5132EE49698000954F9 /* SystemVersionDetector.swift */; };
@@ -31,6 +30,7 @@
 		FC81D0632EE308CF00B15BF2 /* SortOption.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC81D0622EE308CD00B15BF2 /* SortOption.swift */; };
 		FC8D8DCA2E90F06100AB8773 /* SettingsEventPublisher.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */; };
 		FC93001A2E8ED59A00194E89 /* ProgressReporting.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC9300192E8ED59800194E89 /* ProgressReporting.swift */; };
+		FC93789A2F54789A00010D24 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = FC9378992F54789900010D24 /* Localizable.xcstrings */; };
 		FCAFED952E7EF4D600764A17 /* PathPickerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCAFED942E7EF4D600764A17 /* PathPickerView.swift */; };
 		FCB96E482E97828600E87540 /* NonDraggableView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCB96E472E97828400E87540 /* NonDraggableView.swift */; };
 		FCBABED72E96553400A45538 /* UserInfoView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCBABED62E96553300A45538 /* UserInfoView.swift */; };
@@ -70,8 +70,6 @@
 		FC195B4D2E7EB80B00258310 /* AppConfig.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppConfig.swift; sourceTree = "<group>"; };
 		FC195B4E2E7EB80B00258310 /* AppError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppError.swift; sourceTree = "<group>"; };
 		FC195B4F2E7EB80B00258310 /* BackupModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BackupModels.swift; sourceTree = "<group>"; };
-		FC195B512E7EB80B00258310 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/Localizable.strings; sourceTree = "<group>"; };
-		FC195B522E7EB80B00258310 /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/Localizable.strings"; sourceTree = "<group>"; };
 		FC195B552E7EB80B00258310 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		FC33DF552E8716C8007C47E5 /* ConcurrencyUtilities.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConcurrencyUtilities.swift; sourceTree = "<group>"; };
 		FC433D2B2E853BF10036D585 /* CustomCheckboxToggleStyle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomCheckboxToggleStyle.swift; sourceTree = "<group>"; };
@@ -89,6 +87,7 @@
 		FC81D0622EE308CD00B15BF2 /* SortOption.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SortOption.swift; sourceTree = "<group>"; };
 		FC8D8DC92E90F05F00AB8773 /* SettingsEventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsEventPublisher.swift; sourceTree = "<group>"; };
 		FC9300192E8ED59800194E89 /* ProgressReporting.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProgressReporting.swift; sourceTree = "<group>"; };
+		FC9378992F54789900010D24 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		FC9C90FB2E94739200811BCA /* CoordinatorEventPublisher.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoordinatorEventPublisher.swift; sourceTree = "<group>"; };
 		FCAFED942E7EF4D600764A17 /* PathPickerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PathPickerView.swift; sourceTree = "<group>"; };
 		FCB96E472E97828400E87540 /* NonDraggableView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NonDraggableView.swift; sourceTree = "<group>"; };
@@ -161,7 +160,7 @@
 		FC195B802E7EC4FE00258310 /* Localizations */ = {
 			isa = PBXGroup;
 			children = (
-				FC195B532E7EB80B00258310 /* Localizable.strings */,
+				FC9378992F54789900010D24 /* Localizable.xcstrings */,
 			);
 			path = Localizations;
 			sourceTree = "<group>";
@@ -447,7 +446,7 @@
 			isa = PBXResourcesBuildPhase;
 			files = (
 				FC195B792E7EB80B00258310 /* Assets.xcassets in Resources */,
-				FC195B7B2E7EB80B00258310 /* Localizable.strings in Resources */,
+				FC93789A2F54789A00010D24 /* Localizable.xcstrings in Resources */,
 				FCD9907F2E7EC53600C7087A /* info.plist in Resources */,
 			);
 		};
@@ -512,18 +511,6 @@
 			);
 		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXVariantGroup section */
-		FC195B532E7EB80B00258310 /* Localizable.strings */ = {
-			isa = PBXVariantGroup;
-			children = (
-				FC195B512E7EB80B00258310 /* en */,
-				FC195B522E7EB80B00258310 /* zh-Hans */,
-			);
-			name = Localizable.strings;
-			sourceTree = "<group>";
-		};
-/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		FCF9C4F32E7ADA4200013E27 /* Debug configuration for PBXProject "PocketPrefs" */ = {
@@ -592,6 +579,7 @@
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
 			name = Debug;
@@ -655,6 +643,7 @@
 				SDKROOT = macosx;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_EMIT_LOC_STRINGS = YES;
 			};
 			name = Release;
 		};

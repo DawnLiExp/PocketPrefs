@@ -31,9 +31,9 @@ struct MainView: View {
         var displayName: String {
             switch self {
             case .backup:
-                return NSLocalizedString("MainView_Mode_Backup", comment: "")
+                return String(localized: "MainView_Mode_Backup")
             case .restore:
-                return NSLocalizedString("MainView_Mode_Restore", comment: "")
+                return String(localized: "MainView_Mode_Restore")
             }
         }
 

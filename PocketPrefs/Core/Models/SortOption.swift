@@ -15,11 +15,11 @@ enum SortOption: String, CaseIterable, Sendable, Codable {
     var displayName: String {
         switch self {
         case .nameAscending:
-            return NSLocalizedString("Sort_Name_Ascending", comment: "Name (A-Z)")
+            return String(localized: "Sort_Name_Ascending")
         case .nameDescending:
-            return NSLocalizedString("Sort_Name_Descending", comment: "Name (Z-A)")
+            return String(localized: "Sort_Name_Descending")
         case .dateAddedDescending:
-            return NSLocalizedString("Sort_Date_Added", comment: "Latest Added")
+            return String(localized: "Sort_Date_Added")
         }
     }
     

@@ -40,7 +40,7 @@ struct SidebarView: View {
             // Settings button with consistent styling
             SidebarIconButton(
                 icon: "gearshape.2",
-                title: NSLocalizedString("Sidebar_Settings", comment: ""),
+                title: String(localized: "Sidebar_Settings"),
                 isSelected: false,
             ) {
                 showingSettings = true
