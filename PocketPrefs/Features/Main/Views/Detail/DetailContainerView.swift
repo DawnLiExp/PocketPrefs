@@ -9,12 +9,12 @@ import SwiftUI
 
 struct DetailContainerView: View {
     let selectedApp: AppConfig?
-    @ObservedObject var coordinator: MainCoordinator
-    @ObservedObject var mainViewModel: MainViewModel
+    var coordinator: MainCoordinator
+    var mainViewModel: MainViewModel
     let currentMode: MainView.AppMode
     @Binding var showingRestorePicker: Bool
 
-    @StateObject private var viewModel: DetailViewModel
+    @State private var viewModel: DetailViewModel
 
     init(
         selectedApp: AppConfig?,
@@ -28,7 +28,7 @@ struct DetailContainerView: View {
         self.mainViewModel = mainViewModel
         self.currentMode = currentMode
         self._showingRestorePicker = showingRestorePicker
-        self._viewModel = StateObject(wrappedValue: DetailViewModel(mainViewModel: mainViewModel))
+        self._viewModel = State(wrappedValue: DetailViewModel(mainViewModel: mainViewModel))
     }
 
     var body: some View {
