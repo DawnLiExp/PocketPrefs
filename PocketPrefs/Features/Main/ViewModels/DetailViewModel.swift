@@ -12,10 +12,18 @@ import SwiftUI
 @MainActor
 @Observable
 final class DetailViewModel {
-    // MARK: - State
+    // MARK: - Cached Backup Selection State
+    // Stored properties so @Observable correctly tracks changes for view re-renders.
+    // Derived from coordinator state via direct event subscription.
 
-    private(set) var apps: [AppConfig] = []
-    private(set) var selectedBackup: BackupInfo?
+    var hasValidBackupSelection: Bool = false
+
+    // MARK: - Cached Restore Selection State
+
+    var selectedBackup: BackupInfo? = nil
+    var selectedRestoreAppsCount: Int = 0
+    var uninstalledSelectedCount: Int = 0
+    var hasSelectedRestoreApps: Bool = false
 
     // MARK: - Dependencies
 
@@ -28,6 +36,8 @@ final class DetailViewModel {
 
     init(mainViewModel: MainViewModel) {
         self.mainViewModel = mainViewModel
+        // Sync initial state from coordinator
+        syncFromCoordinator(mainViewModel.coordinator)
         subscribeToEvents()
     }
 
@@ -41,47 +51,56 @@ final class DetailViewModel {
         eventTask?.cancel()
         eventTask = Task { [weak self] in
             guard let self else { return }
-            let eventStream = CoordinatorEventPublisher.shared.subscribe()
+            let stream = CoordinatorEventPublisher.shared.subscribe()
 
-            for await event in eventStream {
+            for await event in stream {
                 guard !Task.isCancelled else { break }
-
-                switch event {
-                case .appsUpdated(let updatedApps):
-                    self.apps = updatedApps
-                case .selectedBackupUpdated(let backup):
-                    self.selectedBackup = backup
-                case .backupsUpdated:
-                    // @Observable tracks selectedBackup automatically;
-                    // touch it to propagate any indirect backup state changes
-                    self.selectedBackup = self.selectedBackup
-                default:
-                    break
-                }
+                self.handleCoordinatorEvent(event)
             }
         }
     }
 
-    // MARK: - Computed Properties
+    private func handleCoordinatorEvent(_ event: CoordinatorEvent) {
+        switch event {
+        case .appsUpdated(let apps):
+            hasValidBackupSelection = apps.contains { $0.isSelected && $0.isInstalled }
 
-    /// Check if valid backup selection exists
-    var hasValidBackupSelection: Bool {
-        !apps.filter { $0.isSelected && $0.isInstalled }.isEmpty
+        case .selectedBackupUpdated(let backup):
+            selectedBackup = backup
+            updateRestoreState(from: backup)
+
+        case .backupsUpdated:
+            // selectedBackup is kept in sync via selectedBackupUpdated
+            break
+
+        case .operationStarted, .operationCompleted:
+            break
+        }
     }
 
-    /// Count selected apps in current backup
-    var selectedRestoreAppsCount: Int {
-        selectedBackup?.apps.count(where: { $0.isSelected }) ?? 0
+    // MARK: - Private Helpers
+
+    private func syncFromCoordinator(_ coordinator: MainCoordinator) {
+        let apps = coordinator.currentApps
+        hasValidBackupSelection = apps.contains { $0.isSelected && $0.isInstalled }
+
+        let backup = coordinator.currentSelectedBackup
+        selectedBackup = backup
+        updateRestoreState(from: backup)
     }
 
-    /// Count uninstalled selected apps in current backup
-    var uninstalledSelectedCount: Int {
-        selectedBackup?.apps.count(where: { !$0.isCurrentlyInstalled && $0.isSelected }) ?? 0
-    }
+    private func updateRestoreState(from backup: BackupInfo?) {
+        guard let backup else {
+            selectedRestoreAppsCount = 0
+            uninstalledSelectedCount = 0
+            hasSelectedRestoreApps = false
+            return
+        }
 
-    /// Check if current backup has selected apps for restore
-    var hasSelectedRestoreApps: Bool {
-        selectedRestoreAppsCount > 0
+        let selected = backup.apps.filter(\.isSelected)
+        selectedRestoreAppsCount = selected.count
+        uninstalledSelectedCount = selected.filter { !$0.isCurrentlyInstalled }.count
+        hasSelectedRestoreApps = !selected.isEmpty
     }
 
     // MARK: - Actions
