@@ -42,8 +42,7 @@ struct CustomAppListItem: View {
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
                     
                     if !app.configPaths.isEmpty {
-                        Text(String(format: NSLocalizedString("Settings_Paths_Count", comment: ""),
-                                    app.configPaths.count))
+                        Text(String(localized: "Settings_Paths_Count", defaultValue: "\(app.configPaths.count) paths"))
                             .font(DesignConstants.Typography.caption)
                             .foregroundColor(Color.App.accent.color(for: colorScheme))
                     }
@@ -99,13 +98,13 @@ struct CustomAppDetailView: View {
                 VStack(alignment: .leading, spacing: 20) {
                     // App Info Section
                     VStack(alignment: .leading, spacing: 16) {
-                        Text(NSLocalizedString("Settings_App_Information", comment: ""))
+                        Text("Settings_App_Information")
                             .font(DesignConstants.Typography.title)
                             .foregroundColor(Color.App.primary.color(for: colorScheme))
                         
                         // App Name
                         HStack {
-                            Text(NSLocalizedString("Settings_App_Name", comment: ""))
+                            Text("Settings_App_Name")
                                 .font(DesignConstants.Typography.headline)
                                 .frame(width: 100, alignment: .leading)
                             
@@ -140,7 +139,7 @@ struct CustomAppDetailView: View {
                         
                         // Bundle ID
                         HStack {
-                            Text(NSLocalizedString("Settings_Bundle_ID", comment: ""))
+                            Text("Settings_Bundle_ID")
                                 .font(DesignConstants.Typography.headline)
                                 .frame(width: 100, alignment: .leading)
                             
@@ -231,7 +230,7 @@ struct AddAppSheet: View {
     
     var body: some View {
         VStack(spacing: 24) {
-            Text(NSLocalizedString("Settings_Add_New_App", comment: ""))
+            Text("Settings_Add_New_App")
                 .font(DesignConstants.Typography.title)
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
             
@@ -239,7 +238,7 @@ struct AddAppSheet: View {
             Button(action: { showingAppPicker = true }) {
                 HStack {
                     Image(systemName: "folder.badge.gearshape")
-                    Text(NSLocalizedString("Settings_Select_From_App", comment: ""))
+                    Text("Settings_Select_From_App")
                 }
                 .font(DesignConstants.Typography.headline)
                 .frame(maxWidth: .infinity)
@@ -247,7 +246,7 @@ struct AddAppSheet: View {
             .buttonStyle(SecondaryButtonStyle())
             .disabled(isLoadingAppInfo)
             
-            Text(NSLocalizedString("Settings_Select_App_Hint", comment: ""))
+            Text("Settings_Select_App_Hint")
                 .font(DesignConstants.Typography.caption)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
             
@@ -255,22 +254,22 @@ struct AddAppSheet: View {
             
             VStack(alignment: .leading, spacing: 16) {
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(NSLocalizedString("Settings_App_Name", comment: ""))
+                    Text(String(localized: "Settings_App_Name"))
                         .font(DesignConstants.Typography.headline)
-                    TextField(NSLocalizedString("Settings_App_Name_Placeholder", comment: ""),
+                    TextField(String(localized: "Settings_App_Name_Placeholder"),
                               text: $appName)
                         .textFieldStyle(.roundedBorder)
                         .disabled(isLoadingAppInfo)
                 }
                 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(NSLocalizedString("Settings_Bundle_ID", comment: ""))
+                    Text(String(localized: "Settings_Bundle_ID"))
                         .font(DesignConstants.Typography.headline)
-                    TextField(NSLocalizedString("Settings_Bundle_ID_Placeholder", comment: ""),
+                    TextField(String(localized: "Settings_Bundle_ID_Placeholder"),
                               text: $bundleId)
                         .textFieldStyle(.roundedBorder)
                         .disabled(isLoadingAppInfo)
-                    Text(NSLocalizedString("Settings_Bundle_ID_Hint", comment: ""))
+                    Text("Settings_Bundle_ID_Hint")
                         .font(DesignConstants.Typography.caption)
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
@@ -307,12 +306,12 @@ struct AddAppSheet: View {
             }
             
             HStack(spacing: 12) {
-                Button(NSLocalizedString("Common_Cancel", comment: ""), action: onCancel)
+                Button(String(localized: "Common_Cancel"), action: onCancel)
                     .buttonStyle(SecondaryButtonStyle())
                     .keyboardShortcut(.cancelAction)
                     .disabled(isLoadingAppInfo)
                 
-                Button(NSLocalizedString("Settings_Add_App", comment: ""), action: onAdd)
+                Button(String(localized: "Settings_Add_App"), action: onAdd)
                     .buttonStyle(SecondaryButtonStyle())
                     .disabled(appName.isEmpty || bundleId.isEmpty || isLoadingAppInfo)
                     .keyboardShortcut(.defaultAction)
@@ -348,10 +347,7 @@ struct AddAppSheet: View {
                 
                 appName = appInfo.name
                 bundleId = appInfo.bundleId
-                successMessage = String(
-                    format: NSLocalizedString("AppInfo_Success_Message", comment: ""),
-                    appURL.deletingPathExtension().lastPathComponent,
-                )
+                successMessage = String(localized: "AppInfo_Success_Message", defaultValue: "Loaded info from \(appURL.deletingPathExtension().lastPathComponent)")
                 
                 try? await Task.sleep(for: .seconds(1))
                 successMessage = ""
@@ -387,20 +383,17 @@ struct ImportExportToolbar: View {
     
     private var exportButtonLabel: String {
         if !customAppManager.selectedAppIds.isEmpty {
-            return NSLocalizedString("Export_Selected", comment: "")
+            return String(localized: "Export_Selected")
         } else {
-            return NSLocalizedString("Export_All", comment: "")
+            return String(localized: "Export_All")
         }
     }
 
     private var exportTooltip: String {
         if !customAppManager.selectedAppIds.isEmpty {
-            return String(
-                format: NSLocalizedString("Export_Selected_Tooltip_Count", comment: ""),
-                customAppManager.selectedAppIds.count,
-            )
+            return String(localized: "Export_Selected_Tooltip_Count", defaultValue: "Export \(customAppManager.selectedAppIds.count) selected app configuration(s) to a file")
         } else {
-            return NSLocalizedString("Export_All_Tooltip", comment: "")
+            return String(localized: "Export_All_Tooltip")
         }
     }
     
@@ -414,14 +407,14 @@ struct ImportExportToolbar: View {
                 }
             }) {
                 Label(
-                    NSLocalizedString("Import_Button", comment: ""),
+                    "Import_Button",
                     systemImage: "square.and.arrow.down",
                 )
                 .font(DesignConstants.Typography.caption)
             }
             .buttonStyle(.bordered)
             .disabled(isImporting || isExporting)
-            .help(NSLocalizedString("Import_Tooltip", comment: ""))
+            .help(Text("Import_Tooltip"))
             
             Button(action: {
                 isExporting = true
@@ -443,27 +436,17 @@ struct ImportExportToolbar: View {
             if !customAppManager.customApps.isEmpty {
                 HStack(spacing: 4) {
                     if !customAppManager.selectedAppIds.isEmpty {
-                        Text(
-                            String(
-                                format: NSLocalizedString("Selected_Count_Simple", comment: ""),
-                                customAppManager.selectedAppIds.count,
-                            ),
-                        )
-                        .font(DesignConstants.Typography.caption)
-                        .foregroundColor(Color.App.accent.color(for: colorScheme))
+                        Text(String(localized: "Selected_Count_Simple", defaultValue: "\(customAppManager.selectedAppIds.count) selected"))
+                            .font(DesignConstants.Typography.caption)
+                            .foregroundColor(Color.App.accent.color(for: colorScheme))
                         
-                        Text("•")
+                        Text(verbatim: "•")
                             .foregroundColor(Color.App.secondary.color(for: colorScheme))
                     }
                     
-                    Text(
-                        String(
-                            format: NSLocalizedString("Settings_Apps_Count", comment: ""),
-                            customAppManager.customApps.count,
-                        ),
-                    )
-                    .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    Text(String(localized: "Settings_Apps_Count", defaultValue: "\(customAppManager.customApps.count) apps"))
+                        .font(DesignConstants.Typography.caption)
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
             }
         }

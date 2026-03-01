@@ -40,7 +40,7 @@ struct AppDetailView: View {
 
                 Button(action: { viewModel.performBackup() }) {
                     Label(
-                        NSLocalizedString("Detail_Action_Backup_Selected", comment: ""),
+                        "Detail_Action_Backup_Selected",
                         systemImage: "arrow.up.circle.fill",
                     )
                 }
@@ -71,7 +71,7 @@ struct BackupPlaceholderView: View {
                         .foregroundColor(Color.App.accent.color(for: colorScheme).opacity(0.7))
                         .fadeInScaleAnimation()
 
-                    Text(NSLocalizedString("Detail_Placeholder_Select_App", comment: ""))
+                    Text("Detail_Placeholder_Select_App")
                         .font(DesignConstants.Typography.headline)
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
                         .breathingPulseAnimation()
@@ -84,7 +84,7 @@ struct BackupPlaceholderView: View {
                         HStack {
                             Image(systemName: "arrow.up.circle.fill")
                                 .font(.system(size: 20))
-                            Text(NSLocalizedString("Detail_Placeholder_Quick_Backup_All_Selected", comment: ""))
+                            Text("Detail_Placeholder_Quick_Backup_All_Selected")
                         }
                         .frame(maxWidth: .infinity)
                     }

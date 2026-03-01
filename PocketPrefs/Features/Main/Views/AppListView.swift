@@ -105,7 +105,7 @@ struct AppListHeader: View {
                     .padding(.trailing, 8)
 
                 TextField(
-                    NSLocalizedString("Search_Placeholder", comment: ""),
+                    "Search_Placeholder",
                     text: $searchText,
                 )
                 .textFieldStyle(PlainTextFieldStyle())
@@ -171,7 +171,7 @@ struct AppListHeader: View {
                     get: { viewModel.cachedAllSelected },
                     set: { _ in viewModel.toggleSelectAll() },
                 )) {
-                    Text(NSLocalizedString("Select_All", comment: ""))
+                    Text("Select_All")
                         .font(DesignConstants.Typography.body)
                         .fixedSize(horizontal: true, vertical: false)
                 }
@@ -184,11 +184,7 @@ struct AppListHeader: View {
 
                 Spacer()
 
-                Text(String(
-                    format: NSLocalizedString("Selected_Count", comment: ""),
-                    selectedCount,
-                    totalCount,
-                ))
+                Text(String(localized: "Selected_Count", defaultValue: "Selected \(selectedCount) / \(totalCount)"))
                 .font(DesignConstants.Typography.caption)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .fixedSize(horizontal: true, vertical: false)
@@ -219,7 +215,7 @@ struct IncrementalModeToggle: View {
     var body: some View {
         HStack(spacing: 6) {
             Toggle(isOn: $mainViewModel.isIncrementalMode) {
-                Text(NSLocalizedString("Incremental_Mode", comment: ""))
+                Text("Incremental_Mode")
                     .font(DesignConstants.Typography.body)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -243,7 +239,7 @@ struct IncrementalModeHelpPopover: View {
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
-        Text(NSLocalizedString("Incremental_Mode_Help_Description", comment: ""))
+        Text("Incremental_Mode_Help_Description")
             .font(DesignConstants.Typography.body)
             .foregroundColor(Color.App.secondary.color(for: colorScheme))
             .multilineTextAlignment(.leading)
@@ -261,7 +257,7 @@ struct IncrementalBaseSelector: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Text(NSLocalizedString("Select_Base_Backup_Label", comment: ""))
+            Text("Select_Base_Backup_Label")
                 .font(DesignConstants.Typography.body)
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
 
@@ -336,10 +332,10 @@ struct BackupSearchEmptyState: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 48))
                 .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.5))
-            Text(String(format: NSLocalizedString("Search_No_Results", comment: ""), searchText))
+            Text(String(localized: "Search_No_Results", defaultValue: "No apps found for \"\(searchText)\""))
                 .font(DesignConstants.Typography.headline)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
-            Text(NSLocalizedString("Search_Try_Different_Keyword", comment: ""))
+            Text("Search_Try_Different_Keyword")
                 .font(DesignConstants.Typography.body)
                 .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.8))
             Spacer()
@@ -391,14 +387,14 @@ struct AppListItem: View {
 
                     if currentMode == .backup, !app.isInstalled {
                         StatusBadge(
-                            text: NSLocalizedString("AppList_App_Status_Not_Installed", comment: ""),
+                            text: String(localized: "AppList_App_Status_Not_Installed", defaultValue: "Not Installed"),
                             color: Color.App.notInstalled.color(for: colorScheme),
                             style: .compact,
                         )
                     }
                 }
 
-                Text(String(format: NSLocalizedString("AppList_App_Config_Paths_Count", comment: ""), app.configPaths.count))
+                Text(String(localized: "AppList_App_Config_Paths_Count", defaultValue: "\(app.configPaths.count) config paths"))
                     .font(DesignConstants.Typography.caption)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }

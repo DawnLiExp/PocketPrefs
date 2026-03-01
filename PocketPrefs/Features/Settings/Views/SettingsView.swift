@@ -27,9 +27,9 @@ struct SettingsView: View {
         var title: String {
             switch self {
             case .customApps:
-                return NSLocalizedString("Settings_Tab_Custom_Apps", comment: "")
+                return String(localized: "Settings_Tab_Custom_Apps")
             case .preferences:
-                return NSLocalizedString("Settings_Tab_Preferences", comment: "")
+                return String(localized: "Settings_Tab_Preferences")
             }
         }
         
@@ -102,17 +102,17 @@ struct SettingsView: View {
     
     private func addNewApp() {
         guard !newAppName.isEmpty, !newAppBundleId.isEmpty else {
-            validationError = NSLocalizedString("Settings_Validation_Empty_Fields", comment: "")
+            validationError = String(localized: "Settings_Validation_Empty_Fields")
             return
         }
         
         guard customAppManager.isValidBundleId(newAppBundleId) else {
-            validationError = NSLocalizedString("Settings_Validation_Invalid_BundleId", comment: "")
+            validationError = String(localized: "Settings_Validation_Invalid_BundleId")
             return
         }
         
         guard !customAppManager.userStore.bundleIdExists(newAppBundleId) else {
-            validationError = NSLocalizedString("Settings_Validation_Duplicate_BundleId", comment: "")
+            validationError = String(localized: "Settings_Validation_Duplicate_BundleId")
             return
         }
         
@@ -340,14 +340,11 @@ struct CustomAppsContent: View {
         guard !customAppManager.selectedAppIds.isEmpty else { return }
         
         let alert = NSAlert()
-        alert.messageText = NSLocalizedString("Settings_Delete_Confirmation_Title", comment: "")
-        alert.informativeText = String(
-            format: NSLocalizedString("Settings_Delete_Confirmation_Message", comment: ""),
-            customAppManager.selectedAppIds.count,
-        )
+        alert.messageText = String(localized: "Settings_Delete_Confirmation_Title")
+        alert.informativeText = String(localized: "Settings_Delete_Confirmation_Message", defaultValue: "Are you sure you want to delete \(customAppManager.selectedAppIds.count) selected app(s)?")
         alert.alertStyle = .warning
-        alert.addButton(withTitle: NSLocalizedString("Common_Delete", comment: ""))
-        alert.addButton(withTitle: NSLocalizedString("Common_Cancel", comment: ""))
+        alert.addButton(withTitle: String(localized: "Common_Delete"))
+        alert.addButton(withTitle: String(localized: "Common_Cancel"))
         
         if alert.runModal() == .alertFirstButtonReturn {
             customAppManager.removeSelectedApps()

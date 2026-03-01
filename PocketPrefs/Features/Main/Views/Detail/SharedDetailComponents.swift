@@ -48,7 +48,7 @@ struct AppDetailHeader: View {
                 }
             }
             
-            Text(String(format: NSLocalizedString("AppList_App_Config_Paths_Count", comment: ""), app.configPaths.count))
+            Text(String(localized: "AppList_App_Config_Paths_Count", defaultValue: "\(app.configPaths.count) config paths"))
                 .font(DesignConstants.Typography.body)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
         }

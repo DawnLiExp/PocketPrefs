@@ -151,7 +151,7 @@ actor RestoreService {
             completed: completed,
             total: total,
             message: String(
-                format: NSLocalizedString("Restore_Progress_Message", comment: ""),
+                format: String(localized: "Restore_Progress_Message", defaultValue: "Restoring \(appName)..."),
                 appName,
             ),
         )

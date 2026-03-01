@@ -279,7 +279,7 @@ final class MainCoordinator {
         
         await onProgress(ProgressUpdate(
             fraction: 0.0,
-            message: NSLocalizedString("Backup_Starting", comment: ""),
+            message: String(localized: "Backup_Starting", defaultValue: "Starting configuration backup..."),
         ))
         
         let result = await backupService.performBackup(
@@ -310,7 +310,7 @@ final class MainCoordinator {
         
         await onProgress(ProgressUpdate(
             fraction: 0.0,
-            message: NSLocalizedString("Restore_Starting", comment: ""),
+            message: String(localized: "Restore_Starting", defaultValue: "Starting configuration restore..."),
         ))
         
         let result = await restoreService.performRestore(

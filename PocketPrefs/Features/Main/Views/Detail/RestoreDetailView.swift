@@ -49,10 +49,7 @@ struct RestoreDetailContent: View {
                             Text(backup.formattedName)
                                 .font(DesignConstants.Typography.title)
 
-                            Text(String(
-                                format: NSLocalizedString("Detail_Restore_Backup_App_Count", comment: ""),
-                                backup.apps.count,
-                            ))
+                            Text(String(localized: "Detail_Restore_Backup_App_Count", defaultValue: "\(backup.apps.count) apps"))
                             .font(DesignConstants.Typography.caption)
                             .foregroundColor(Color.App.secondary.color(for: colorScheme))
                         }
@@ -62,10 +59,7 @@ struct RestoreDetailContent: View {
 
                     VStack(alignment: .leading, spacing: 8) {
                         Label(
-                            String(
-                                format: NSLocalizedString("Detail_Restore_Selected_Apps_Count", comment: ""),
-                                viewModel.selectedRestoreAppsCount,
-                            ),
+                            String(localized: "Detail_Restore_Selected_Apps_Count", defaultValue: "\(viewModel.selectedRestoreAppsCount) apps selected"),
                             systemImage: "checkmark.circle.fill",
                         )
                         .font(DesignConstants.Typography.body)
@@ -76,10 +70,7 @@ struct RestoreDetailContent: View {
                         )
 
                         Label(
-                            String(
-                                format: NSLocalizedString("Detail_Restore_Uninstalled_Apps_Count", comment: ""),
-                                viewModel.uninstalledSelectedCount,
-                            ),
+                            String(localized: "Detail_Restore_Uninstalled_Apps_Count", defaultValue: "\(viewModel.uninstalledSelectedCount) uninstalled apps"),
                             systemImage: "exclamationmark.triangle.fill",
                         )
                         .font(DesignConstants.Typography.body)
@@ -95,7 +86,7 @@ struct RestoreDetailContent: View {
                 if viewModel.hasSelectedRestoreApps {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 8) {
-                            Text(NSLocalizedString("Detail_Restore_Will_Restore_Apps", comment: ""))
+                            Text("Detail_Restore_Will_Restore_Apps")
                                 .font(DesignConstants.Typography.headline)
                                 .padding(.bottom, 8)
 
@@ -114,7 +105,7 @@ struct RestoreDetailContent: View {
                                         .font(DesignConstants.Typography.body)
 
                                     if !app.isCurrentlyInstalled {
-                                        Text(NSLocalizedString("Detail_Restore_App_Not_Installed_Badge", comment: ""))
+                                        Text("Detail_Restore_App_Not_Installed_Badge")
                                             .font(DesignConstants.Typography.caption)
                                             .foregroundColor(Color.App.warning.color(for: colorScheme))
                                     }
@@ -133,7 +124,7 @@ struct RestoreDetailContent: View {
                             .font(.system(size: 48))
                             .foregroundColor(Color.App.accent.color(for: colorScheme).opacity(0.6))
 
-                        Text(NSLocalizedString("Detail_Restore_No_Apps_Selected", comment: ""))
+                        Text("Detail_Restore_No_Apps_Selected")
                             .font(DesignConstants.Typography.headline)
                             .foregroundColor(Color.App.secondary.color(for: colorScheme))
                     }
@@ -147,7 +138,7 @@ struct RestoreDetailContent: View {
 
                     Button(action: { viewModel.performRestore() }) {
                         Label(
-                            NSLocalizedString("Detail_Restore_Action_Restore_Selected", comment: ""),
+                            "Detail_Restore_Action_Restore_Selected",
                             systemImage: "arrow.down.circle.fill",
                         )
                     }
@@ -173,7 +164,7 @@ struct RestoreEmptyDetail: View {
                 .font(.system(size: 108))
                 .foregroundColor(Color.App.accent.color(for: colorScheme).opacity(0.7))
 
-            Text(NSLocalizedString("Detail_Restore_Placeholder_Select_Backup", comment: ""))
+            Text("Detail_Restore_Placeholder_Select_Backup")
                 .font(DesignConstants.Typography.headline)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
         }

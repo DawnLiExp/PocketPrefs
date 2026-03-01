@@ -17,14 +17,14 @@ struct AppearanceSection: View {
     var body: some View {
         @Bindable var themeManager = themeManager
         VStack(alignment: .leading, spacing: 16) {
-            Text(NSLocalizedString("Settings_Appearance", comment: ""))
+            Text("Settings_Appearance")
                 .font(DesignConstants.Typography.headline)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 .padding(.horizontal, 4)
             
             HStack {
                 Label(
-                    NSLocalizedString("Menu_Theme", comment: ""),
+                    "Menu_Theme",
                     systemImage: "paintpalette",
                 )
                 .font(DesignConstants.Typography.body)
@@ -66,11 +66,11 @@ struct LanguageSection: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
             HStack(spacing: 8) {
-                Text(NSLocalizedString("Settings_Language", comment: ""))
+                Text("Settings_Language")
                     .font(DesignConstants.Typography.headline)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 
-                Text(NSLocalizedString("Settings_Language_Restart_Hint", comment: ""))
+                Text("Settings_Language_Restart_Hint")
                     .font(DesignConstants.Typography.caption)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme).opacity(0.7))
             }
@@ -78,7 +78,7 @@ struct LanguageSection: View {
             
             HStack {
                 Label(
-                    NSLocalizedString("Settings_Language", comment: ""),
+                    "Settings_Language",
                     systemImage: "globe",
                 )
                 .font(DesignConstants.Typography.body)
@@ -116,7 +116,7 @@ struct BackupLocationSection: View {
         VStack(alignment: .leading, spacing: 12) {
             HStack {
                 Label(
-                    NSLocalizedString("Preferences_Backup_Location", comment: ""),
+                    "Preferences_Backup_Location",
                     systemImage: "folder.badge.gearshape",
                 )
                 .font(DesignConstants.Typography.body)
@@ -141,7 +141,7 @@ struct BackupLocationSection: View {
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
                 .buttonStyle(.plain)
-                .help(NSLocalizedString("Show_In_Finder", comment: ""))
+                .help(Text("Show_In_Finder"))
             }
             .padding(12)
             .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.5))
@@ -159,7 +159,7 @@ struct BackupLocationSection: View {
             
             Button(action: { showingDirectoryPicker = true }) {
                 Label(
-                    NSLocalizedString("Preferences_Choose_Directory", comment: ""),
+                    "Preferences_Choose_Directory",
                     systemImage: "folder.badge.plus",
                 )
                 .font(DesignConstants.Typography.headline)

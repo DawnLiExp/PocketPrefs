@@ -24,7 +24,7 @@ struct PreferencesView: View {
             VStack(alignment: .leading, spacing: 24) {
                 // General Section
                 VStack(alignment: .leading, spacing: 16) {
-                    Text(NSLocalizedString("Preferences_General", comment: ""))
+                    Text("Preferences_General")
                         .font(DesignConstants.Typography.headline)
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
                         .padding(.horizontal, 4)
@@ -56,19 +56,19 @@ struct PreferencesView: View {
             }
         }
         .alert(
-            NSLocalizedString("Language_Restart_Title", comment: ""),
+            String(localized: "Language_Restart_Title"),
             isPresented: $showingRestartAlert,
         ) {
-            Button(NSLocalizedString("Language_Restart_Now", comment: "")) {
+            Button(String(localized: "Language_Restart_Now")) {
                 Task {
                     await restartForLanguageChange()
                 }
             }
-            Button(NSLocalizedString("Language_Restart_Later", comment: ""), role: .cancel) {
+            Button(String(localized: "Language_Restart_Later"), role: .cancel) {
                 saveLanguageWithoutRestart()
             }
         } message: {
-            Text(NSLocalizedString("Language_Restart_Message", comment: ""))
+            Text("Language_Restart_Message")
         }
         .alert(
             "Error",

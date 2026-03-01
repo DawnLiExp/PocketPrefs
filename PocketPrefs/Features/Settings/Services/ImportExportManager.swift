@@ -30,10 +30,10 @@ final class ImportExportManager {
         
         if let selectedIds, !selectedIds.isEmpty {
             appsToExport = userStore.customApps.filter { selectedIds.contains($0.id) }
-            exportTypeMessage = String(format: NSLocalizedString("Export_Selected_Message", comment: ""), appsToExport.count)
+            exportTypeMessage = String(localized: "Export_Selected_Message", defaultValue: "Export \(appsToExport.count) selected apps configuration")
         } else {
             appsToExport = userStore.customApps
-            exportTypeMessage = NSLocalizedString("Export_All_Message", comment: "")
+            exportTypeMessage = String(localized: "Export_All_Message")
         }
         
         guard !appsToExport.isEmpty else {
@@ -44,7 +44,7 @@ final class ImportExportManager {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.json]
         panel.nameFieldStringValue = "PocketPrefs_CustomApps_\(dateString()).json"
-        panel.title = NSLocalizedString("Export_Title", comment: "")
+        panel.title = String(localized: "Export_Title")
         panel.message = exportTypeMessage
         
         let response = await panel.beginSheetModal(for: NSApp.keyWindow!)
@@ -69,13 +69,12 @@ final class ImportExportManager {
             
             logger.info("Successfully exported \(apps.count) custom apps")
             await showSuccessAlert(
-                message: String(format: NSLocalizedString("Export_Success", comment: ""),
-                                apps.count),
+                message: String(localized: "Export_Success", defaultValue: "Successfully exported \(apps.count) app configuration(s)"),
             )
         } catch {
             logger.error("Export failed: \(error)")
             await showErrorAlert(
-                message: NSLocalizedString("Export_Failed", comment: ""),
+                message: String(localized: "Export_Failed"),
                 informativeText: error.localizedDescription,
             )
         }
@@ -87,8 +86,8 @@ final class ImportExportManager {
         let panel = NSOpenPanel()
         panel.allowedContentTypes = [.json]
         panel.allowsMultipleSelection = false
-        panel.title = NSLocalizedString("Import_Title", comment: "")
-        panel.message = NSLocalizedString("Import_Message", comment: "")
+        panel.title = String(localized: "Import_Title")
+        panel.message = String(localized: "Import_Message")
         
         let response = await panel.beginSheetModal(for: NSApp.keyWindow!)
         guard response == .OK, let url = panel.url else {
@@ -132,7 +131,7 @@ final class ImportExportManager {
         } catch {
             logger.error("Import failed: \(error)")
             let errorMessage = error is ImportError ? error.localizedDescription :
-                NSLocalizedString("Import_Failed", comment: "")
+                String(localized: "Import_Failed")
             await showErrorAlert(
                 message: errorMessage,
                 informativeText: error.localizedDescription,
@@ -206,26 +205,20 @@ final class ImportExportManager {
     private func showImportConfirmation(newApps: [AppConfig], existingApps: [AppConfig]) async -> Bool {
         await withCheckedContinuation { continuation in
             let alert = NSAlert()
-            alert.messageText = NSLocalizedString("Import_Confirmation_Title", comment: "")
+            alert.messageText = String(localized: "Import_Confirmation_Title")
             
             let existingBundleIds = Set(existingApps.map(\.bundleId))
             let newCount = newApps.count(where: { !existingBundleIds.contains($0.bundleId) })
             let updateCount = newApps.count(where: { existingBundleIds.contains($0.bundleId) })
             
-            var detailMessage = String(
-                format: NSLocalizedString("Import_Confirmation_Message", comment: ""),
-                newApps.count,
-                newCount,
-                updateCount,
-            )
+            var detailMessage = String(localized: "Import_Confirmation_Message", defaultValue: "Found \(newApps.count) apps to import:\n• \(newCount) new apps will be added\n• \(updateCount) existing apps will be replaced")
             
             // Add details about apps with paths
             let appsWithPaths = newApps.filter { !$0.configPaths.isEmpty }
             if !appsWithPaths.isEmpty {
-                detailMessage += "\n\n" + NSLocalizedString("Import_Apps_With_Paths", comment: "")
+                detailMessage += "\n\n" + String(localized: "Import_Apps_With_Paths")
                 for app in appsWithPaths.prefix(5) {
-                    let pathCountFormat = NSLocalizedString("Import_Path_Count", comment: "")
-                    detailMessage += "\n• \(app.name): \(String(format: pathCountFormat, app.configPaths.count))"
+                    detailMessage += "\n• \(app.name): \(String(localized: "Import_Path_Count", defaultValue: "\(app.configPaths.count) path(s)"))"
                 }
                 if appsWithPaths.count > 5 {
                     detailMessage += "\n• ..."
@@ -234,23 +227,18 @@ final class ImportExportManager {
             
             alert.informativeText = detailMessage
             
-            alert.addButton(withTitle: NSLocalizedString("Import_Proceed", comment: ""))
-            alert.addButton(withTitle: NSLocalizedString("Common_Cancel", comment: ""))
+            alert.addButton(withTitle: String(localized: "Import_Proceed"))
+            alert.addButton(withTitle: String(localized: "Common_Cancel"))
             
             continuation.resume(returning: alert.runModal() == .alertFirstButtonReturn)
         }
     }
     
     private func showImportResult(_ result: MergeResult) async {
-        var message = String(
-            format: NSLocalizedString("Import_Result", comment: ""),
-            result.added,
-            result.updated,
-            result.skipped,
-        )
+        var message = String(localized: "Import_Result", defaultValue: "Import completed:\n• Added: \(result.added) apps\n• Replaced: \(result.updated) apps\n• Skipped: \(result.skipped) apps")
         
         if result.updated > 0 {
-            message += "\n\n" + NSLocalizedString("Import_Update_Complete", comment: "")
+            message += "\n\n" + String(localized: "Import_Update_Complete")
         }
         
         await showSuccessAlert(message: message)
@@ -259,7 +247,7 @@ final class ImportExportManager {
     private func showSuccessAlert(message: String) async {
         await withCheckedContinuation { continuation in
             let alert = NSAlert()
-            alert.messageText = NSLocalizedString("Success", comment: "")
+            alert.messageText = String(localized: "Success")
             alert.informativeText = message
             alert.alertStyle = .informational
             alert.runModal()
@@ -306,9 +294,9 @@ enum ImportError: LocalizedError {
     var errorDescription: String? {
         switch self {
         case .incompatibleVersion:
-            return NSLocalizedString("Import_Error_Version", comment: "")
+            return String(localized: "Import_Error_Version")
         case .invalidFormat:
-            return NSLocalizedString("Import_Error_Format", comment: "")
+            return String(localized: "Import_Error_Format")
         }
     }
 }

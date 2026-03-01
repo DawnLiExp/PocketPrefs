@@ -241,10 +241,7 @@ actor BackupService {
                 let progress = ProgressUpdate(
                     completed: completedApps,
                     total: totalApps,
-                    message: String(
-                        format: NSLocalizedString("Backup_Progress_Message", comment: ""),
-                        appName,
-                    ),
+                    message: String(localized: "Backup_Progress_Message", defaultValue: "Backing up \(appName)..."),
                 )
                 await onProgress?(progress)
             }

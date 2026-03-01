@@ -70,7 +70,7 @@ struct RestoreListHeader: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 13) {
-            Text(NSLocalizedString("Restore_Backup_Title", comment: ""))
+            Text("Restore_Backup_Title")
                 .font(DesignConstants.Typography.title)
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
 
@@ -95,18 +95,14 @@ struct RestoreListHeader: View {
                         get: { viewModel.cachedAllSelected },
                         set: { _ in viewModel.toggleSelectAll() },
                     )) {
-                        Text(NSLocalizedString("Select_All", comment: ""))
+                        Text("Select_All")
                             .font(DesignConstants.Typography.body)
                     }
                     .toggleStyle(CustomCheckboxToggleStyle())
 
                     Spacer()
 
-                    Text(String(
-                        format: NSLocalizedString("Selected_Count", comment: ""),
-                        cachedSelectedCount,
-                        cachedTotalCount,
-                    ))
+                    Text(String(localized: "Selected_Count", defaultValue: "Selected \(cachedSelectedCount) / \(cachedTotalCount)"))
                     .font(DesignConstants.Typography.caption)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
@@ -133,7 +129,7 @@ struct SearchFieldView: View {
                 .padding(.leading, 12)
                 .padding(.trailing, 8)
 
-            TextField(NSLocalizedString("Search_Placeholder", comment: ""), text: $searchText)
+            TextField("Search_Placeholder", text: $searchText)
                 .textFieldStyle(PlainTextFieldStyle())
                 .focused($isFocused)
                 .font(DesignConstants.Typography.body)
@@ -280,10 +276,10 @@ struct SearchEmptyState: View {
             Image(systemName: "magnifyingglass")
                 .font(.system(size: 48))
                 .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.5))
-            Text(String(format: NSLocalizedString("Search_No_Results", comment: ""), searchText))
+            Text(String(localized: "Search_No_Results", defaultValue: "No apps found for \"\(searchText)\""))
                 .font(DesignConstants.Typography.headline)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
-            Text(NSLocalizedString("Search_Try_Different_Keyword", comment: ""))
+            Text("Search_Try_Different_Keyword")
                 .font(DesignConstants.Typography.body)
                 .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.8))
             Spacer()
@@ -301,10 +297,10 @@ struct RestoreEmptyState: View {
             Image(systemName: "archivebox")
                 .font(.system(size: 48))
                 .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.5))
-            Text(NSLocalizedString("Restore_Empty_State_No_Backups", comment: ""))
+            Text("Restore_Empty_State_No_Backups")
                 .font(DesignConstants.Typography.headline)
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
-            Text(NSLocalizedString("Restore_Empty_State_Create_Backup_Prompt", comment: ""))
+            Text("Restore_Empty_State_Create_Backup_Prompt")
                 .font(DesignConstants.Typography.body)
                 .foregroundColor((Color.App.secondary.color(for: colorScheme)).opacity(0.8))
             Spacer()
@@ -351,20 +347,20 @@ struct RestoreAppItem: View {
 
                     if !app.isCurrentlyInstalled {
                         StatusBadge(
-                            text: NSLocalizedString("Restore_App_Status_Not_Installed", comment: ""),
+                            text: String(localized: "Restore_App_Status_Not_Installed", defaultValue: "Not Installed"),
                             color: Color.App.warning.color(for: colorScheme),
                             style: .compact,
                         )
                     } else {
                         StatusBadge(
-                            text: NSLocalizedString("Restore_App_Status_Installed", comment: ""),
+                            text: String(localized: "Restore_App_Status_Installed", defaultValue: "Installed"),
                             color: Color.App.success.color(for: colorScheme),
                             style: .compact,
                         )
                     }
                 }
 
-                Text(String(format: NSLocalizedString("Restore_App_Config_Files_Count", comment: ""), app.configPaths.count))
+                Text(String(localized: "Restore_App_Config_Files_Count", defaultValue: "\(app.configPaths.count) config files"))
                     .font(DesignConstants.Typography.caption)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
