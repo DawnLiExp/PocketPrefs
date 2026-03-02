@@ -324,10 +324,12 @@ struct RestoreAppItem: View {
 
     var body: some View {
         HStack(spacing: 5) {
-            Toggle("", isOn: Binding(
+            Toggle(isOn: Binding(
                 get: { isChecked },
                 set: { _ in viewModel.toggleSelection(for: app) },
-            ))
+            )) {
+                EmptyView()
+            }
             .toggleStyle(CustomCheckboxToggleStyle())
 
             Group {

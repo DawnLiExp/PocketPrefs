@@ -32,10 +32,12 @@ struct AppearanceSection: View {
                 
                 Spacer()
                 
-                Picker("", selection: $themeManager.currentTheme) {
+                Picker(selection: $themeManager.currentTheme) {
                     ForEach(Theme.allCases, id: \.self) { theme in
                         Text(theme.displayName).tag(theme)
                     }
+                } label: {
+                    EmptyView()
                 }
                 .pickerStyle(.radioGroup)
                 .horizontalRadioGroupLayout()
@@ -86,10 +88,12 @@ struct LanguageSection: View {
                 
                 Spacer()
                 
-                Picker("", selection: $selectedLanguage) {
+                Picker(selection: $selectedLanguage) {
                     ForEach(AppLanguage.allCases, id: \.self) { language in
                         Text(language.displayName).tag(language)
                     }
+                } label: {
+                    EmptyView()
                 }
                 .pickerStyle(.radioGroup)
                 .horizontalRadioGroupLayout()

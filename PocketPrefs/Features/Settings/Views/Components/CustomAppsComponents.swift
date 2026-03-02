@@ -26,10 +26,12 @@ struct CustomAppListItem: View {
     var body: some View {
         if let app {
             HStack(spacing: 12) {
-                Toggle("", isOn: Binding(
+                Toggle(isOn: Binding(
                     get: { isSelected },
                     set: { _ in onToggleSelection() },
-                ))
+                )) {
+                    EmptyView()
+                }
                 .toggleStyle(.checkbox)
                 
                 VStack(alignment: .leading, spacing: 4) {
@@ -110,7 +112,7 @@ struct CustomAppDetailView: View {
                             
                             if editingName {
                                 HStack {
-                                    TextField("", text: $tempName)
+                                    TextField(text: $tempName) { EmptyView() }
                                         .textFieldStyle(.roundedBorder)
                                     
                                     Button(action: { saveName(currentApp) }) {

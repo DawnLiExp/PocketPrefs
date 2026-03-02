@@ -75,8 +75,8 @@ struct PreferencesView: View {
             isPresented: .constant(languageChangeError != nil),
             presenting: languageChangeError,
         ) { _ in
-            Button("OK") {
-                languageChangeError = nil
+            Button { languageChangeError = nil } label: {
+                Text(verbatim: "OK")
             }
         } message: { error in
             Text(error.localizedDescription)
