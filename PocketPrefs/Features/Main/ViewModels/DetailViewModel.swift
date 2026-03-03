@@ -13,6 +13,7 @@ import SwiftUI
 @Observable
 final class DetailViewModel {
     // MARK: - Cached Backup Selection State
+
     // Stored properties so @Observable correctly tracks changes for view re-renders.
     // Derived from coordinator state via direct event subscription.
 
@@ -20,7 +21,7 @@ final class DetailViewModel {
 
     // MARK: - Cached Restore Selection State
 
-    var selectedBackup: BackupInfo? = nil
+    var selectedBackup: BackupInfo?
     var selectedRestoreAppsCount: Int = 0
     var uninstalledSelectedCount: Int = 0
     var hasSelectedRestoreApps: Bool = false
@@ -39,10 +40,6 @@ final class DetailViewModel {
         // Sync initial state from coordinator
         syncFromCoordinator(mainViewModel.coordinator)
         subscribeToEvents()
-    }
-
-    deinit {
-        eventTask?.cancel()
     }
 
     // MARK: - Event Subscription
@@ -99,7 +96,7 @@ final class DetailViewModel {
 
         let selected = backup.apps.filter(\.isSelected)
         selectedRestoreAppsCount = selected.count
-        uninstalledSelectedCount = selected.filter { !$0.isCurrentlyInstalled }.count
+        uninstalledSelectedCount = selected.count(where: { !$0.isCurrentlyInstalled })
         hasSelectedRestoreApps = !selected.isEmpty
     }
 

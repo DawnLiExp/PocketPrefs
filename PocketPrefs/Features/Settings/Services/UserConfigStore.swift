@@ -30,7 +30,7 @@ final class UserConfigStore {
     private let logger = Logger(subsystem: "com.pocketprefs", category: "UserConfigStore")
     private let storageURL: URL
     @ObservationIgnored
-    private nonisolated(unsafe) var continuations: [UUID: AsyncStream<UserConfigEvent>.Continuation] = [:]
+    private var continuations: [UUID: AsyncStream<UserConfigEvent>.Continuation] = [:]
     
     private init() {
         let appSupport = FileManager.default.urls(
@@ -46,10 +46,6 @@ final class UserConfigStore {
         
         storageURL = appDir.appendingPathComponent("custom_apps.json")
         loadCustomApps()
-    }
-    
-    deinit {
-        continuations.values.forEach { $0.finish() }
     }
     
     // MARK: - Event Broadcasting

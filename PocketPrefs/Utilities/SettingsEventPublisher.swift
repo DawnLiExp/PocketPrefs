@@ -25,11 +25,6 @@ final class SettingsEventPublisher {
     
     private init() {}
     
-    deinit {
-        let conts = continuations.values
-        conts.forEach { $0.finish() }
-    }
-    
     // MARK: - Subscription
     
     func subscribe() -> AsyncStream<SettingsEvent> {

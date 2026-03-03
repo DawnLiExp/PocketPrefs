@@ -40,11 +40,6 @@ final class MainViewModel {
         subscribeToOperationEvents()
     }
     
-    deinit {
-        coordinatorEventTask?.cancel()
-        operationEventTask?.cancel()
-    }
-    
     // MARK: - Event Subscriptions
     
     private func subscribeToCoordinatorEvents() {

@@ -23,15 +23,11 @@ final class CustomAppManager {
     let userStore = UserConfigStore.shared
     private let fileOps = FileOperationService.shared
     @ObservationIgnored
-    private nonisolated(unsafe) var eventTask: Task<Void, Never>?
+    private var eventTask: Task<Void, Never>?
     
     init() {
         loadCustomApps()
         subscribeToStoreEvents()
-    }
-    
-    deinit {
-        eventTask?.cancel()
     }
     
     // MARK: - Event Subscription

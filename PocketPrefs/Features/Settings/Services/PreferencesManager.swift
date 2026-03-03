@@ -58,11 +58,7 @@ final class PreferencesManager {
             await validateAndCreateDirectory()
         }
     }
-    
-    deinit {
-        continuation.finish()
-    }
-    
+
     // MARK: - Public API
     
     func setBackupDirectory(_ path: String) async {

@@ -49,15 +49,19 @@ final class MainCoordinator {
         subscribeToEvents()
     }
     
-    deinit {
-        tasks.forEach { $0.cancel() }
-    }
-    
     // MARK: - Public Accessors
     
-    var currentApps: [AppConfig] { apps }
-    var currentBackups: [BackupInfo] { availableBackups }
-    var currentSelectedBackup: BackupInfo? { selectedBackup }
+    var currentApps: [AppConfig] {
+        apps
+    }
+
+    var currentBackups: [BackupInfo] {
+        availableBackups
+    }
+
+    var currentSelectedBackup: BackupInfo? {
+        selectedBackup
+    }
     
     // MARK: - Event Subscriptions
     

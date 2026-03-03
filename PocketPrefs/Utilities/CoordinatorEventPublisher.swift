@@ -36,10 +36,6 @@ final class CoordinatorEventPublisher {
     
     private init() {}
     
-    deinit {
-        continuations.values.forEach { $0.finish() }
-    }
-    
     // MARK: - Subscription
     
     func subscribe() -> AsyncStream<CoordinatorEvent> {
@@ -79,10 +75,6 @@ final class OperationEventPublisher {
     private var continuations: [UUID: AsyncStream<OperationEvent>.Continuation] = [:]
     
     private init() {}
-    
-    deinit {
-        continuations.values.forEach { $0.finish() }
-    }
     
     // MARK: - Subscription
     
