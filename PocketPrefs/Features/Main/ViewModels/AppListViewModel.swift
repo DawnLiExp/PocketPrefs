@@ -23,16 +23,19 @@ final class AppListViewModel {
 
     // MARK: - Persistent Sort Option
 
-    @ObservationIgnored
-    @AppStorage("backupSortOption") private var sortOptionRawValue: String = SortOption.nameAscending.rawValue
-
-    var currentSortOption: SortOption {
-        get { SortOption(rawValue: sortOptionRawValue) ?? .nameAscending }
-        set {
-            sortOptionRawValue = newValue.rawValue
+    /// Observable stored property — @Observable macro tracks this for UI re-renders.
+    /// didSet syncs the new value to UserDefaults via @AppStorage.
+    var currentSortOption: SortOption = .nameAscending {
+        didSet {
+            guard oldValue != currentSortOption else { return }
+            sortOptionRawValue = currentSortOption.rawValue
             updateFilteredApps(source: apps, searchTerm: searchText)
         }
     }
+
+    /// Persistence only — @ObservationIgnored prevents macro conflicts with @AppStorage.
+    @ObservationIgnored
+    @AppStorage("backupSortOption") private var sortOptionRawValue: String = SortOption.nameAscending.rawValue
 
     // MARK: - Dependencies
 
@@ -48,6 +51,9 @@ final class AppListViewModel {
 
     init(coordinator: MainCoordinator) {
         self.coordinator = coordinator
+        // Restore persisted sort option without triggering didSet
+        let saved = UserDefaults.standard.string(forKey: "backupSortOption") ?? ""
+        self.currentSortOption = SortOption(rawValue: saved) ?? .nameAscending
         subscribeToEvents()
     }
 
@@ -94,10 +100,9 @@ final class AppListViewModel {
         }
     }
 
-    /// Set sort option
+    /// Set sort option — didSet handles persistence and list refresh.
     func setSortOption(_ option: SortOption) {
         currentSortOption = option
-        updateFilteredApps(source: apps, searchTerm: searchText)
     }
 
     /// Toggle selection for specific app

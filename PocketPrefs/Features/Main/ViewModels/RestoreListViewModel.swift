@@ -25,20 +25,23 @@ final class RestoreListViewModel {
 
     // MARK: - Persistent Sort Option
 
-    @ObservationIgnored
-    @AppStorage("restoreSortOption") private var sortOptionRawValue: String = SortOption.nameAscending.rawValue
-
-    var currentSortOption: SortOption {
-        get {
-            let option = SortOption(rawValue: sortOptionRawValue) ?? .nameAscending
-            return supportedSortOptions.contains(option) ? option : .nameAscending
-        }
-        set {
-            guard supportedSortOptions.contains(newValue) else { return }
-            sortOptionRawValue = newValue.rawValue
+    /// Observable stored property — @Observable macro tracks this for UI re-renders.
+    /// didSet syncs the new value to UserDefaults via @AppStorage.
+    var currentSortOption: SortOption = .nameAscending {
+        didSet {
+            guard oldValue != currentSortOption else { return }
+            guard supportedSortOptions.contains(currentSortOption) else {
+                currentSortOption = oldValue
+                return
+            }
+            sortOptionRawValue = currentSortOption.rawValue
             updateFilteredApps()
         }
     }
+
+    /// Persistence only — @ObservationIgnored prevents macro conflicts with @AppStorage.
+    @ObservationIgnored
+    @AppStorage("restoreSortOption") private var sortOptionRawValue: String = SortOption.nameAscending.rawValue
 
     // MARK: - Public Properties
 
@@ -61,6 +64,10 @@ final class RestoreListViewModel {
 
     init(coordinator: MainCoordinator) {
         self.coordinator = coordinator
+        // Restore persisted sort option without triggering didSet
+        let saved = UserDefaults.standard.string(forKey: "restoreSortOption") ?? ""
+        let restored = SortOption(rawValue: saved) ?? .nameAscending
+        self.currentSortOption = [SortOption.nameAscending, .nameDescending].contains(restored) ? restored : .nameAscending
         subscribeToEvents()
     }
 
@@ -121,11 +128,10 @@ final class RestoreListViewModel {
         }
     }
 
-    /// Set sort option - only allows supported options
+    /// Set sort option — didSet handles persistence and list refresh.
     func setSortOption(_ option: SortOption) {
         guard supportedSortOptions.contains(option) else { return }
         currentSortOption = option
-        updateFilteredApps()
     }
 
     func toggleSelection(for app: BackupAppInfo) {
