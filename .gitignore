@@ -33,5 +33,7 @@ Temporary Items
 .gitattributes
 
 debug.log*
-PocketPrefs-tree.md
+Tree.md
 /PocketPrefs/local
+/local
+AGENTS.md
