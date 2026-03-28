@@ -107,7 +107,7 @@ struct SettingsToolbar: View {
                 
                 Spacer()
                 
-                Text(String(localized: "Selected_Count", defaultValue: "\(customAppManager.selectedAppIds.count) of \(customAppManager.customApps.count) selected"))
+                Text(String(localized: "Settings_Selected_Count", defaultValue: "\(customAppManager.selectedAppIds.count) of \(customAppManager.customApps.count) selected"))
                     .font(DesignConstants.Typography.caption)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
@@ -130,7 +130,7 @@ struct EmptyAppsListView: View {
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
             
             Text(searchActive ?
-                String(localized: "Search_No_Results", defaultValue: "No results for \"\(searchText)\"") :
+                String(localized: "Settings_Search_No_Results", defaultValue: "No results for \"\(searchText)\"") :
                 String(localized: "Settings_No_Custom_Apps", defaultValue: "No custom apps added"))
                 .font(DesignConstants.Typography.headline)
                 .foregroundColor(Color.App.primary.color(for: colorScheme))

@@ -2135,6 +2135,23 @@
         }
       }
     },
+    "Settings_Search_No_Results" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "No results for \"%@\""
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未找到\"%@\"相关应用"
+          }
+        }
+      }
+    },
     "Settings_Select_App_Hint" : {
       "localizations" : {
         "en" : {
@@ -2180,6 +2197,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "从应用选择"
+          }
+        }
+      }
+    },
+    "Settings_Selected_Count" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "%1$lld of %2$lld selected"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "已选 %lld / %lld"
           }
         }
       }
