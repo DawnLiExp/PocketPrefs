@@ -52,8 +52,10 @@ struct SidebarView: View {
         .frame(width: DesignConstants.Layout.sidebarWidth)
         .frame(maxHeight: .infinity)
         .sheet(isPresented: $showingSettings) {
-            SettingsView()
-                .frame(width: 750, height: 500)
+            SettingsWindowView()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
+            showingSettings = true
         }
     }
     

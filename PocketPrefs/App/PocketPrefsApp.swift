@@ -42,6 +42,13 @@ struct PocketPrefsApp: App {
         .commands {
             CommandGroup(replacing: .newItem, addition: {})
 
+            CommandGroup(replacing: .appSettings) {
+                Button(String(localized: "Settings_Title", defaultValue: "Settings...")) {
+                    NotificationCenter.default.post(name: .openSettings, object: nil)
+                }
+                .keyboardShortcut(",", modifiers: .command)
+            }
+
             CommandGroup(after: .toolbar) {
                 Menu(String(localized: "Menu_Theme", defaultValue: "Theme")) { // Changed to String(localized:)
                     ForEach(Theme.allCases, id: \.self) { theme in
