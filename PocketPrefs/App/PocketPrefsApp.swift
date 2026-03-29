@@ -26,6 +26,8 @@ struct PocketPrefsApp: App {
     }
 
     var body: some Scene {
+        // MARK: - Main Window
+
         WindowGroup {
             ZStack {
                 WindowBackgroundView()
@@ -50,7 +52,7 @@ struct PocketPrefsApp: App {
             }
 
             CommandGroup(after: .toolbar) {
-                Menu(String(localized: "Menu_Theme", defaultValue: "Theme")) { // Changed to String(localized:)
+                Menu(String(localized: "Menu_Theme", defaultValue: "Theme")) {
                     ForEach(Theme.allCases, id: \.self) { theme in
                         Button(action: {
                             changeTheme(to: theme)
@@ -66,6 +68,21 @@ struct PocketPrefsApp: App {
                 }
             }
         }
+
+        // MARK: - Settings Window
+
+        //
+        // Independent secondary window — avoids the modal sheet blocking main window drag.
+        // openWindow(id: "settings", value: true) is deduplicated: same value brings the
+        // existing window to front rather than opening a second instance.
+        // Sync stays intact: all @Observable singletons are shared within the process;
+        // onDisappear in SettingsWindowView still fires SettingsEventPublisher.publishDidClose().
+
+        WindowGroup(id: "settings", for: Bool.self) { _ in
+            SettingsWindowView()
+        }
+        .windowResizability(.contentSize)
+        .defaultPosition(.center)
     }
 
     @MainActor

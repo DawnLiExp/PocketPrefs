@@ -9,16 +9,17 @@ import SwiftUI
 
 struct SidebarView: View {
     @Binding var currentMode: MainView.AppMode
-    @State private var showingSettings = false
+    @Environment(\.openWindow) private var openWindow
     @Environment(\.colorScheme) var colorScheme
-    
+
     let modes: [MainView.AppMode] = [.backup, .restore]
-    
+
     var body: some View {
         VStack(spacing: 12) {
             // Top spacer for title bar area
             Spacer()
                 .frame(height: 20)
+
             // Mode selection buttons with enhanced visual hierarchy
             VStack(spacing: 8) {
                 ForEach(modes, id: \.self) { mode in
@@ -33,17 +34,17 @@ struct SidebarView: View {
                     }
                 }
             }
-            
+
             // Divider section
             dividerSection
-            
-            // Settings button with consistent styling
+
+            // Settings button
             SidebarIconButton(
                 icon: "gearshape.2",
                 title: String(localized: "Sidebar_Settings"),
                 isSelected: false,
             ) {
-                showingSettings = true
+                openSettings()
             }
 
             Spacer()
@@ -51,20 +52,22 @@ struct SidebarView: View {
         .padding(.vertical, 12)
         .frame(width: DesignConstants.Layout.sidebarWidth)
         .frame(maxHeight: .infinity)
-        .sheet(isPresented: $showingSettings) {
-            SettingsWindowView()
-        }
         .onReceive(NotificationCenter.default.publisher(for: .openSettings)) { _ in
-            showingSettings = true
+            openSettings()
         }
     }
-    
-    @ViewBuilder
+
+    private func openSettings() {
+        // IMPORTANT: value: true provides deduplication — openWindow brings the existing
+        // settings window to front instead of creating a second instance.
+        openWindow(id: "settings", value: true)
+    }
+
     private var dividerSection: some View {
         VStack(spacing: 0) {
             Spacer()
                 .frame(height: 16)
-            
+
             Rectangle()
                 .fill(
                     Color.App.lightSeparator
@@ -73,7 +76,7 @@ struct SidebarView: View {
                 )
                 .frame(height: 0.5)
                 .padding(.horizontal, 18)
-            
+
             Spacer()
                 .frame(height: 16)
         }
@@ -87,15 +90,15 @@ struct SidebarIconButton: View {
     let title: String
     let isSelected: Bool
     let action: () -> Void
-    
+
     @State private var isHovered = false
     @State private var isPressing = false
     @Environment(\.colorScheme) private var colorScheme
-    
+
     // Enhanced visual state management
     private var iconColor: Color {
         let baseColor = Color.App.accent.color(for: colorScheme)
-        
+
         if isSelected {
             return baseColor
         } else if isHovered {
@@ -104,10 +107,10 @@ struct SidebarIconButton: View {
             return baseColor.opacity(0.45)
         }
     }
-    
+
     private var textColor: Color {
         let baseColor = Color.App.primaryText.color(for: colorScheme)
-        
+
         if isSelected {
             return baseColor
         } else if isHovered {
@@ -116,7 +119,7 @@ struct SidebarIconButton: View {
             return baseColor.opacity(0.55)
         }
     }
-    
+
     private var backgroundOpacity: Double {
         if isSelected {
             return 0.12
@@ -126,7 +129,7 @@ struct SidebarIconButton: View {
             return 0.0
         }
     }
-    
+
     var body: some View {
         Button(action: action) {
             VStack(spacing: 6) {
@@ -158,8 +161,7 @@ struct SidebarIconButton: View {
             },
         )
     }
-    
-    @ViewBuilder
+
     private var iconView: some View {
         Image(systemName: icon)
             .font(.system(size: 22, weight: .medium))
@@ -171,8 +173,7 @@ struct SidebarIconButton: View {
                 y: 1,
             )
     }
-    
-    @ViewBuilder
+
     private var textView: some View {
         Text(title)
             .font(.system(size: 11, weight: .medium))
@@ -187,7 +188,7 @@ struct SidebarIconButton: View {
 private struct PressEventsModifier: ViewModifier {
     let onPress: () -> Void
     let onRelease: () -> Void
-    
+
     func body(content: Content) -> some View {
         content
             .simultaneousGesture(
