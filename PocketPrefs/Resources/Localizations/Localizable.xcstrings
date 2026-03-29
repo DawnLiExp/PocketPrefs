@@ -1306,6 +1306,16 @@
         }
       }
     },
+    "PresetApps_List_Placeholder" : {
+      "localizations" : {
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "搜索预设应用..."
+          }
+        }
+      }
+    },
     "Restore_App_Config_Files_Count" : {
       "localizations" : {
         "en" : {
@@ -1994,6 +2004,23 @@
         }
       }
     },
+    "Settings_Done" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Done"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "完成"
+          }
+        }
+      }
+    },
     "Settings_Edit_Path" : {
       "localizations" : {
         "en" : {
@@ -2135,6 +2162,23 @@
         }
       }
     },
+    "Settings_Preset_ComingSoon" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Preset App Management\nComing soon."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预设应用管理\n敬请期待。"
+          }
+        }
+      }
+    },
     "Settings_Search_No_Results" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {
@@ -2235,18 +2279,36 @@
         }
       }
     },
-    "Settings_Tab_Preferences" : {
+    "Settings_Tab_General" : {
+      "extractionState" : "extracted_with_value",
       "localizations" : {
         "en" : {
           "stringUnit" : {
-            "state" : "translated",
-            "value" : "Preferences"
+            "state" : "new",
+            "value" : "General"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "偏好设置"
+            "value" : "通用"
+          }
+        }
+      }
+    },
+    "Settings_Tab_Preset_Apps" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Preset Apps"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "预设应用"
           }
         }
       }

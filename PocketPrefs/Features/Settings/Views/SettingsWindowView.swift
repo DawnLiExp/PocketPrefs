@@ -58,18 +58,19 @@ struct SettingsWindowView: View {
         }
     }
     
-    @ViewBuilder
     private var contentView: some View {
         Group {
             switch selectedTab {
             case .general:
                 GeneralSettingsView()
             case .customApps:
-                Text("Custom Apps Placeholder")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                CustomAppsView(
+                    customAppManager: customAppManager,
+                    importExportManager: importExportManager
+                )
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
             case .presetApps:
-                Text("Preset Apps Placeholder")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                PresetAppsView()
             }
         }
         .id(selectedTab) // ID allows transition per tab
