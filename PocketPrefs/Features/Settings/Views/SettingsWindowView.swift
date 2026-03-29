@@ -63,8 +63,7 @@ struct SettingsWindowView: View {
         Group {
             switch selectedTab {
             case .general:
-                Text("General Settings Placeholder")
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                GeneralSettingsView()
             case .customApps:
                 Text("Custom Apps Placeholder")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
