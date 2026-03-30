@@ -120,6 +120,11 @@ final class AppListViewModel {
         }
     }
 
+    /// Delete app — routes to coordinator which handles preset vs custom logic.
+    func deleteApp(_ app: AppConfig) {
+        coordinator?.deleteApp(app)
+    }
+
     // MARK: - Event Handlers
 
     @ObservationIgnored private var lastAppsUpdate: Date?

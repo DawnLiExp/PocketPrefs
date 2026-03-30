@@ -14,6 +14,7 @@ struct AppListView: View {
     let currentMode: MainView.AppMode
 
     @State private var viewModel: AppListViewModel
+    @State private var appPendingDeletion: AppConfig?
     @Environment(\.colorScheme) var colorScheme
 
     init(
@@ -54,6 +55,7 @@ struct AppListView: View {
                                     coordinator: coordinator,
                                     viewModel: viewModel,
                                     currentMode: currentMode,
+                                    onDelete: { appPendingDeletion = app },
                                 ) {
                                     withAnimation(DesignConstants.Animation.quick) {
                                         selectedApp = app
@@ -75,6 +77,43 @@ struct AppListView: View {
         .onChange(of: viewModel.searchText) { _, newValue in
             viewModel.handleSearchChange(newValue)
         }
+        .alert(
+            deleteAlertTitle,
+            isPresented: Binding(
+                get: { appPendingDeletion != nil },
+                set: { if !$0 { appPendingDeletion = nil } }
+            ),
+            presenting: appPendingDeletion,
+        ) { app in
+            Button(
+                app.isUserAdded
+                    ? String(localized: "Common_Delete")
+                    : String(localized: "AppList_Delete_Preset_Confirm", defaultValue: "Remove"),
+                role: .destructive,
+            ) {
+                viewModel.deleteApp(app)
+                if selectedApp?.id == app.id { selectedApp = nil }
+                appPendingDeletion = nil
+            }
+            Button(String(localized: "Common_Cancel"), role: .cancel) {
+                appPendingDeletion = nil
+            }
+        } message: { app in
+            Text(
+                app.isUserAdded
+                    ? String(localized: "AppList_Delete_Custom_Alert_Message", defaultValue: "This will permanently delete this app configuration. This action cannot be undone.")
+                    : String(localized: "AppList_Delete_Preset_Alert_Message", defaultValue: "\(app.name) is a built-in preset. After removal, you can re-add it manually in Settings.")
+            )
+        }
+    }
+
+    // MARK: - Private Helpers
+
+    private var deleteAlertTitle: String {
+        guard let app = appPendingDeletion else { return "" }
+        return app.isUserAdded
+            ? String(localized: "AppList_Delete_Custom_Alert_Title", defaultValue: "Delete \"\(app.name)\"?")
+            : String(localized: "AppList_Delete_Preset_Alert_Title", defaultValue: "Remove \"\(app.name)\"?")
     }
 }
 
@@ -185,9 +224,9 @@ struct AppListHeader: View {
                 Spacer()
 
                 Text(String(localized: "Selected_Count", defaultValue: "Selected \(selectedCount) / \(totalCount)"))
-                .font(DesignConstants.Typography.caption)
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                .fixedSize(horizontal: true, vertical: false)
+                    .font(DesignConstants.Typography.caption)
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    .fixedSize(horizontal: true, vertical: false)
             }
 
             if mainViewModel.isIncrementalMode, hasAvailableBackups {
@@ -352,6 +391,7 @@ struct AppListItem: View {
     let coordinator: MainCoordinator
     let viewModel: AppListViewModel
     let currentMode: MainView.AppMode
+    let onDelete: () -> Void
     let onTap: () -> Void
 
     @State private var isHovered = false
@@ -414,6 +454,14 @@ struct AppListItem: View {
         .onHover { hovering in
             withAnimation(DesignConstants.Animation.quick) {
                 isHovered = hovering
+            }
+        }
+        .contextMenu {
+            Button(role: .destructive, action: onDelete) {
+                Label(
+                    String(localized: "AppList_Context_Menu_Delete", defaultValue: "Delete"),
+                    systemImage: "trash",
+                )
             }
         }
     }

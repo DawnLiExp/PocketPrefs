@@ -145,7 +145,9 @@ final class MainCoordinator {
     // MARK: - App Management
     
     func loadApps() async {
+        let deletedPresets = DeletedPresetStore.shared.deletedBundleIds
         var allApps = AppConfig.presetConfigs
+            .filter { !deletedPresets.contains($0.bundleId) }
         allApps.append(contentsOf: userStore.customApps)
         
         await withTaskGroup(of: (UUID, Bool).self) { group in
@@ -214,6 +216,20 @@ final class MainCoordinator {
     
     func selectIncrementalBase(_ backup: BackupInfo) {
         // Managed by MainViewModel
+    }
+    
+    // MARK: - App Deletion
+    
+    /// Precondition: called on @MainActor.
+    /// For custom apps, delegates to UserConfigStore which fires an event that triggers reload.
+    /// For preset apps, persists the deletion via DeletedPresetStore and triggers reload directly.
+    func deleteApp(_ app: AppConfig) {
+        if app.isUserAdded {
+            userStore.removeApps([app.id])
+        } else {
+            DeletedPresetStore.shared.markDeleted(app.bundleId)
+            Task { await loadApps() }
+        }
     }
     
     // MARK: - Selection Management
