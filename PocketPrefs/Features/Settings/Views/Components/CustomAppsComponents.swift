@@ -17,6 +17,7 @@ struct CustomAppListItem: View {
     let onSelectForDetail: () -> Void
     var manager: CustomAppManager
     @State private var isHovered = false
+    @State private var iconRefreshTrigger = UUID()
     @Environment(\.colorScheme) var colorScheme
     
     private var app: AppConfig? {
@@ -25,7 +26,7 @@ struct CustomAppListItem: View {
     
     var body: some View {
         if let app {
-            HStack(spacing: 12) {
+            HStack(spacing: 10) {
                 Toggle(isOn: Binding(
                     get: { isSelected },
                     set: { _ in onToggleSelection() },
@@ -33,6 +34,13 @@ struct CustomAppListItem: View {
                     EmptyView()
                 }
                 .toggleStyle(.checkbox)
+                
+                Image(nsImage: IconService.shared.getIcon(for: app.bundleId, category: app.category))
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 32, height: 32)
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .id(iconRefreshTrigger)
                 
                 VStack(alignment: .leading, spacing: 4) {
                     Text(app.name)
@@ -76,6 +84,14 @@ struct CustomAppListItem: View {
             .onTapGesture(perform: onSelectForDetail)
             .onHover { hovering in
                 isHovered = hovering
+            }
+            .task(id: app.bundleId) {
+                for await loadedBundleId in IconService.shared.events {
+                    if loadedBundleId == app.bundleId {
+                        iconRefreshTrigger = UUID()
+                        break
+                    }
+                }
             }
         }
     }
