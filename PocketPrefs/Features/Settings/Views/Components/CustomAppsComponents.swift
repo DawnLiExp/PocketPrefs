@@ -67,12 +67,10 @@ struct CustomAppListItem: View {
                 
                 Spacer()
                 
-                if isHovered || isDetailSelected {
-                    Image(systemName: "chevron.right")
-                        .font(.system(size: 12))
-                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                        .opacity(isDetailSelected ? 1 : 0.5)
-                }
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    .opacity(isDetailSelected ? 1 : (isHovered ? 0.5 : 0))
             }
             .padding(12)
             .background(
