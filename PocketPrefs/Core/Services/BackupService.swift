@@ -12,14 +12,14 @@ actor BackupService {
     private let logger = Logger(subsystem: "com.pocketprefs", category: "BackupService")
     private let fileOps = FileOperationService.shared
     
-    private enum Config {
+    enum Config {
         static let backupDateFormat = "yyyy-MM-dd_HH-mm-ss"
         static let backupPrefix = "Backup_"
         static let configFileName = "app_config.json"
     }
     
     /// Reusable date formatter for backup timestamps
-    private static let dateFormatter: DateFormatter = {
+    static let dateFormatter: DateFormatter = {
         let formatter = DateFormatter()
         formatter.dateFormat = Config.backupDateFormat
         formatter.locale = Locale(identifier: "en_US_POSIX")
@@ -420,9 +420,9 @@ actor BackupService {
         return "\(baseDir)/\(Config.backupPrefix)\(timestamp)"
     }
     
-    /// Sanitizes app name for safe filesystem usage
-    /// - Note: Handles macOS/Windows forbidden characters
-    private func sanitizeName(_ name: String) -> String {
+    /// Sanitizes app name for safe filesystem usage.
+    /// Handles macOS/Windows forbidden characters.
+    func sanitizeName(_ name: String) -> String {
         let invalidChars = CharacterSet(charactersIn: "/\\:*?\"<>|")
         return name.components(separatedBy: invalidChars).joined(separator: "_")
     }

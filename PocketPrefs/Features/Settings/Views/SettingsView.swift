@@ -10,6 +10,7 @@ import SwiftUI
 struct SettingsView: View {
     @State private var customAppManager = CustomAppManager()
     @State private var importExportManager = ImportExportManager()
+    @State private var backupManagementViewModel = BackupManagementViewModel()
     @State private var searchDebouncer = SearchDebouncer()
     @State private var selectedTab: SettingsTab = .customApps
     @State private var searchText = ""
@@ -23,22 +24,21 @@ struct SettingsView: View {
     enum SettingsTab: String, CaseIterable {
         case customApps
         case preferences
-        
+        case backups
+
         var title: String {
             switch self {
-            case .customApps:
-                return String(localized: "Settings_Tab_Custom_Apps")
-            case .preferences:
-                return String(localized: "Settings_Tab_Preferences")
+            case .customApps: return String(localized: "Settings_Tab_Custom_Apps")
+            case .preferences: return String(localized: "Settings_Tab_Preferences")
+            case .backups: return String(localized: "Settings_Tab_Backups")
             }
         }
         
         var icon: String {
             switch self {
-            case .customApps:
-                return "app.badge.fill"
-            case .preferences:
-                return "slider.horizontal.3"
+            case .customApps: return "app.badge.fill"
+            case .preferences: return "slider.horizontal.3"
+            case .backups: return "externaldrive.badge.timemachine"
             }
         }
     }
@@ -67,6 +67,9 @@ struct SettingsView: View {
                     
                 case .preferences:
                     PreferencesView()
+
+                case .backups:
+                    BackupManagementView(viewModel: backupManagementViewModel)
                 }
             }
             .frame(maxHeight: .infinity)

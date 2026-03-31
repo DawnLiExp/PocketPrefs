@@ -100,8 +100,9 @@ final class MainCoordinator {
             guard !Task.isCancelled else { break }
             
             if case .didClose = event {
-                logger.info("Settings closed - reloading apps")
+                logger.info("Settings closed - reloading apps and backups")
                 await loadApps()
+                await scanBackups()
             }
         }
     }
