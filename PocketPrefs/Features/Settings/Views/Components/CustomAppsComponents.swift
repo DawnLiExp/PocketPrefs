@@ -42,20 +42,27 @@ struct CustomAppListItem: View {
                     .clipShape(RoundedRectangle(cornerRadius: 6))
                     .id(iconRefreshTrigger)
                 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(app.name)
-                        .font(DesignConstants.Typography.headline)
-                        .foregroundColor(Color.App.primary.color(for: colorScheme))
+                VStack(alignment: .leading, spacing: 3) {
+                    HStack(alignment: .firstTextBaseline, spacing: 0) {
+                        Text(app.name)
+                            .font(DesignConstants.Typography.headline)
+                            .foregroundColor(Color.App.primary.color(for: colorScheme))
+                            .lineLimit(1)
+                        
+                        Spacer(minLength: 8)
+                        
+                        if !app.configPaths.isEmpty {
+                            Text(String(localized: "Settings_Paths_Count", defaultValue: "\(app.configPaths.count) paths"))
+                                .font(DesignConstants.Typography.caption)
+                                .foregroundColor(Color.App.accent.color(for: colorScheme))
+                        }
+                    }
                     
                     Text(app.bundleId)
                         .font(DesignConstants.Typography.caption)
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                    
-                    if !app.configPaths.isEmpty {
-                        Text(String(localized: "Settings_Paths_Count", defaultValue: "\(app.configPaths.count) paths"))
-                            .font(DesignConstants.Typography.caption)
-                            .foregroundColor(Color.App.accent.color(for: colorScheme))
-                    }
+                        .lineLimit(1)
+                        .truncationMode(.middle)
                 }
                 
                 Spacer()
