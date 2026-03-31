@@ -12,7 +12,7 @@ struct SettingsView: View {
     @State private var importExportManager = ImportExportManager()
     @State private var backupManagementViewModel = BackupManagementViewModel()
     @State private var searchDebouncer = SearchDebouncer()
-    @State private var selectedTab: SettingsTab = .customApps
+    @State private var selectedTab: SettingsTab = .preferences
     @State private var searchText = ""
     @State private var showingAddAppSheet = false
     @State private var newAppName = ""
@@ -22,8 +22,8 @@ struct SettingsView: View {
     @Environment(\.colorScheme) var colorScheme
     
     enum SettingsTab: String, CaseIterable {
-        case customApps
         case preferences
+        case customApps
         case backups
 
         var title: String {
@@ -53,6 +53,9 @@ struct SettingsView: View {
             // Content
             Group {
                 switch selectedTab {
+                case .preferences:
+                    PreferencesView()
+
                 case .customApps:
                     CustomAppsContent(
                         customAppManager: customAppManager,
@@ -62,12 +65,9 @@ struct SettingsView: View {
                         showingAddAppSheet: $showingAddAppSheet,
                         newAppName: $newAppName,
                         newAppBundleId: $newAppBundleId,
-                        validationError: $validationError,
+                        validationError: $validationError
                     )
                     
-                case .preferences:
-                    PreferencesView()
-
                 case .backups:
                     BackupManagementView(viewModel: backupManagementViewModel)
                 }
