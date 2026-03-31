@@ -446,7 +446,7 @@ struct AppListItem: View {
             Image(systemName: "chevron.right")
                 .font(.system(size: 12))
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                .opacity(isHovered ? 1 : 0)
+                .opacity(isSelected ? 1 : (isHovered ? 0.5 : 0))
         }
         .padding(11)
         .cardEffect(isSelected: isSelected)

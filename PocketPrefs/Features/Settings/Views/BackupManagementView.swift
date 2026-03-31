@@ -50,6 +50,7 @@ struct BackupListColumn: View {
             BackupListToolbar(viewModel: viewModel)
                 .frame(height: 44)
         }
+        .background(Color.App.background.color(for: colorScheme))
     }
 }
 
@@ -80,7 +81,6 @@ struct BackupListRow: View {
                         defaultValue: "\(backup.apps.count) apps"
                     ))
                     Text(verbatim: "·")
-                    // Use path as cache key — stable across reloads
                     Text(viewModel.backupSizeCache[backup.path] ?? "—")
                 }
                 .font(DesignConstants.Typography.caption)
@@ -90,26 +90,18 @@ struct BackupListRow: View {
             .contentShape(Rectangle())
             .onTapGesture { viewModel.selectDetailBackup(backup) }
 
-            if isHovered || viewModel.pendingDeleteBackupId == backup.id {
-                InlineDeleteButton(
-                    isPending: viewModel.pendingDeleteBackupId == backup.id,
-                    onTap: { Task { await viewModel.handleDeleteBackup(backup) } }
-                )
-            }
+            Image(systemName: "chevron.right")
+                .font(.system(size: 12))
+                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .opacity(viewModel.detailBackup?.id == backup.id ? 1 : (isHovered ? 0.5 : 0))
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 6)
-                .fill(
-                    viewModel.detailBackup?.id == backup.id
-                        ? Color.App.accent.color(for: colorScheme).opacity(0.08)
-                        : Color.clear
-                )
-        )
+        .cardEffect(isSelected: viewModel.detailBackup?.id == backup.id)
         .onHover { hovering in
-            isHovered = hovering
-            if !hovering { viewModel.resetPendingDeleteBackup() }
+            withAnimation(DesignConstants.Animation.quick) {
+                isHovered = hovering
+            }
         }
     }
 }
@@ -157,6 +149,8 @@ struct BackupListToolbar: View {
             .disabled(!viewModel.canBatchDelete || viewModel.isLoading)
         }
         .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
     }
 }
 
@@ -165,11 +159,10 @@ struct BackupListToolbar: View {
 struct BackupDetailColumn: View {
     @Bindable var viewModel: BackupManagementViewModel
     @Environment(\.colorScheme) var colorScheme
+    @State private var selectedAppId: UUID?
 
     var body: some View {
         Group {
-            // Show full spinner only on first load (no data yet) or during merge.
-            // Silent refresh when data already exists avoids jitter on tab re-entry.
             if (viewModel.isLoading && viewModel.backups.isEmpty) || viewModel.isMerging {
                 VStack(spacing: 12) {
                     SwiftUI.ProgressView()
@@ -187,7 +180,6 @@ struct BackupDetailColumn: View {
                 VStack(spacing: 0) {
                     BackupDetailHeader(
                         backup: backup,
-                        // Use path as cache key — stable across reloads
                         totalSize: viewModel.backupSizeCache[backup.path]
                     )
                     .padding(16)
@@ -199,9 +191,14 @@ struct BackupDetailColumn: View {
                             ForEach(backup.apps) { app in
                                 BackupAppRow(
                                     app: app,
-                                    // Use path as cache key — stable across reloads
                                     sizeString: viewModel.appSizeCache[app.path] ?? "—",
+                                    isSelected: selectedAppId == app.id,
                                     isPendingDelete: viewModel.pendingDeleteAppId == app.id,
+                                    onSelect: {
+                                        withAnimation(DesignConstants.Animation.quick) {
+                                            selectedAppId = app.id
+                                        }
+                                    },
                                     onDeleteTap: { Task { await viewModel.handleDeleteApp(app) } },
                                     onHoverOut: { viewModel.resetPendingDeleteApp() }
                                 )
@@ -209,6 +206,9 @@ struct BackupDetailColumn: View {
                         }
                         .padding(12)
                     }
+                }
+                .onChange(of: viewModel.detailBackup?.id) { _, _ in
+                    selectedAppId = nil
                 }
 
             } else {
@@ -257,7 +257,9 @@ struct BackupDetailHeader: View {
 struct BackupAppRow: View {
     let app: BackupAppInfo
     let sizeString: String
+    let isSelected: Bool
     let isPendingDelete: Bool
+    let onSelect: () -> Void
     let onDeleteTap: () -> Void
     let onHoverOut: () -> Void
 
@@ -283,18 +285,40 @@ struct BackupAppRow: View {
 
             Spacer()
 
-            if isHovered || isPendingDelete {
-                InlineDeleteButton(
-                    isPending: isPendingDelete,
-                    onTap: onDeleteTap
-                )
+            if isSelected {
+                HStack(spacing: 12) {
+                    Button(action: {
+                        #if os(macOS)
+                        NSWorkspace.shared.selectFile(app.path, inFileViewerRootedAtPath: "")
+                        #endif
+                    }) {
+                        Image(systemName: "magnifyingglass.circle")
+                            .font(.system(size: 16))
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    }
+                    .buttonStyle(.plain)
+
+                    InlineDeleteButton(
+                        isPending: isPendingDelete,
+                        onTap: onDeleteTap
+                    )
+                }
+            } else {
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12))
+                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    .opacity(isHovered ? 0.5 : 0)
             }
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .cardEffect(isSelected: false)
+        .cardEffect(isSelected: isSelected)
+        .contentShape(Rectangle())
+        .onTapGesture(perform: onSelect)
         .onHover { hovering in
-            isHovered = hovering
+            withAnimation(DesignConstants.Animation.quick) {
+                isHovered = hovering
+            }
             if !hovering { onHoverOut() }
         }
     }

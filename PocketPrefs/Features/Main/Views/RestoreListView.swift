@@ -103,8 +103,8 @@ struct RestoreListHeader: View {
                     Spacer()
 
                     Text(String(localized: "Selected_Count", defaultValue: "Selected \(cachedSelectedCount) / \(cachedTotalCount)"))
-                    .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                        .font(DesignConstants.Typography.caption)
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
             }
         }
@@ -320,7 +320,9 @@ struct RestoreAppItem: View {
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
 
-    private var isChecked: Bool { app.isSelected }
+    private var isChecked: Bool {
+        app.isSelected
+    }
 
     var body: some View {
         HStack(spacing: 5) {
@@ -372,7 +374,7 @@ struct RestoreAppItem: View {
             Image(systemName: "chevron.right")
                 .font(.system(size: 12))
                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                .opacity(isHovered ? 0.6 : 0)
+                .opacity(isSelected ? 1 : (isHovered ? 0.5 : 0))
         }
         .padding(11)
         .cardEffect(isSelected: isSelected)
