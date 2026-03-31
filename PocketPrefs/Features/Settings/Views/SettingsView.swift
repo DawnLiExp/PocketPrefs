@@ -45,12 +45,10 @@ struct SettingsView: View {
     
     var body: some View {
         VStack(spacing: 0) {
-            // Tab Bar
             SettingsTabBar(selectedTab: $selectedTab, onClose: { dismiss() })
             
             Divider()
             
-            // Content
             Group {
                 switch selectedTab {
                 case .preferences:
@@ -75,7 +73,7 @@ struct SettingsView: View {
             .frame(maxHeight: .infinity)
         }
         .frame(width: 750, height: 500)
-        .background(Color.App.background.color(for: colorScheme))
+        .background(Color.App.contentAreaBackground.color(for: colorScheme))
         .sheet(isPresented: $showingAddAppSheet) {
             AddAppSheet(
                 appName: $newAppName,
@@ -188,7 +186,6 @@ struct SettingsTabBar: View {
         HStack {
             Spacer()
             
-            // Centered Tabs
             HStack(spacing: 24) {
                 ForEach(SettingsView.SettingsTab.allCases, id: \.self) { tab in
                     TabButton(
@@ -201,7 +198,6 @@ struct SettingsTabBar: View {
             
             Spacer()
             
-            // Close Button
             Button(action: onClose) {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 20))
@@ -211,7 +207,7 @@ struct SettingsTabBar: View {
             .padding(.trailing, 16)
         }
         .padding(.vertical, 10)
-        .background(Color.App.secondaryBackground.color(for: colorScheme))
+        .background(Color.App.contentAreaBackground.color(for: colorScheme))
     }
 }
 
@@ -273,7 +269,6 @@ struct CustomAppsContent: View {
         HStack(spacing: 0) {
             // Left Panel - Apps List
             VStack(spacing: 0) {
-                // Toolbar
                 SettingsToolbar(
                     searchText: $searchText,
                     selectedCount: customAppManager.selectedAppIds.count,
@@ -284,7 +279,6 @@ struct CustomAppsContent: View {
                 
                 Divider()
                 
-                // Apps List
                 if filteredApps.isEmpty {
                     EmptyAppsListView(searchActive: !searchText.isEmpty, searchText: searchText)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -312,29 +306,29 @@ struct CustomAppsContent: View {
                 
                 Divider()
                 
-                // Bottom toolbar
                 ImportExportToolbar(
                     importExportManager: importExportManager,
                     customAppManager: customAppManager,
                 )
             }
             .frame(width: 320)
-            .background(Color.App.controlBackground.color(for: colorScheme))
+            .background(Color.App.background.color(for: colorScheme))
             
             Divider()
             
             // Right Panel - App Details
+            // contentAreaBackground 与窗口底色一致，形成干净的详情区域
             if let selectedApp = customAppManager.selectedApp {
                 CustomAppDetailView(
                     app: selectedApp,
                     manager: customAppManager,
                 )
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color.App.background.color(for: colorScheme))
+                .background(Color.App.contentAreaBackground.color(for: colorScheme))
             } else {
                 EmptyDetailView()
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color.App.background.color(for: colorScheme))
+                    .background(Color.App.contentAreaBackground.color(for: colorScheme))
             }
         }
     }

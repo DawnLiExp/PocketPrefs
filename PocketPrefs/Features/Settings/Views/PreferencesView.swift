@@ -45,7 +45,7 @@ struct PreferencesView: View {
             .padding(24)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .background(Color.App.background.color(for: colorScheme))
+        .background(Color.App.contentAreaBackground.color(for: colorScheme))
         .fileImporter(
             isPresented: $showingDirectoryPicker,
             allowedContentTypes: [.folder],

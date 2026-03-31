@@ -29,7 +29,7 @@ struct SettingsTitleBar: View {
             .buttonStyle(.plain)
         }
         .padding(16)
-        .background(Color.App.secondaryBackground.color(for: colorScheme))
+        .background(Color.App.contentAreaBackground.color(for: colorScheme))
     }
 }
 
@@ -41,44 +41,64 @@ struct SettingsToolbar: View {
     let onAddApp: () -> Void
     let onDeleteSelected: () -> Void
     let customAppManager: CustomAppManager
+    @FocusState private var isSearchFocused: Bool
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
         VStack(spacing: 12) {
-            // Search bar
-            HStack {
+            HStack(spacing: 0) {
                 Image(systemName: "magnifyingglass")
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                
+                    .font(.system(size: 14))
+                    .padding(.leading, 12)
+                    .padding(.trailing, 8)
+
                 TextField("Search_Placeholder", text: $searchText)
                     .textFieldStyle(.plain)
-                
+                    .focused($isSearchFocused)
+                    .font(DesignConstants.Typography.body)
+
+                Spacer(minLength: 8)
+
                 if !searchText.isEmpty {
                     Button(action: { searchText = "" }) {
                         Image(systemName: "xmark.circle.fill")
                             .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                            .font(.system(size: 14))
                     }
                     .buttonStyle(.plain)
+                    .padding(.trailing, 12)
                 }
             }
-            .padding(8)
-            .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.5))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            
+            .frame(height: 36)
+            .background(
+                RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                    .fill(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.7))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
+                    .stroke(
+                        Color.App.lightSeparator.color(for: colorScheme).opacity(0.7),
+                        lineWidth: 1.0
+                    )
+            )
+            .animation(.easeInOut(duration: 0.15), value: isSearchFocused)
+
             // Action buttons
             HStack {
                 Button(action: onAddApp) {
-                    Label("Settings_Add_App",
-                          systemImage: "plus")
+                    Label("Settings_Add_App", systemImage: "plus")
                         .font(DesignConstants.Typography.body)
                 }
                 .buttonStyle(.bordered)
                 
                 if selectedCount > 0 {
                     Button(action: onDeleteSelected) {
-                        Label(String(localized: "Settings_Delete_Selected", defaultValue: "Delete \(selectedCount) Selected"),
-                              systemImage: "trash")
-                            .font(DesignConstants.Typography.body)
+                        Label(
+                            String(localized: "Settings_Delete_Selected", defaultValue: "Delete \(selectedCount) Selected"),
+                            systemImage: "trash"
+                        )
+                        .font(DesignConstants.Typography.body)
                     }
                     .buttonStyle(.bordered)
                     .tint(Color.App.error.color(for: colorScheme))
@@ -89,12 +109,13 @@ struct SettingsToolbar: View {
             
             HStack {
                 Toggle(isOn: Binding(
-                    get: { !customAppManager.customApps.isEmpty && customAppManager.selectedAppIds.count == customAppManager.customApps.count },
+                    get: {
+                        !customAppManager.customApps.isEmpty &&
+                            customAppManager.selectedAppIds.count == customAppManager.customApps.count
+                    },
                     set: { newValue in
                         if newValue {
-                            Task {
-                                await customAppManager.selectAll()
-                            }
+                            Task { await customAppManager.selectAll() }
                         } else {
                             customAppManager.deselectAll()
                         }
@@ -103,7 +124,7 @@ struct SettingsToolbar: View {
                     Text("Select_All")
                         .font(DesignConstants.Typography.body)
                 }
-                .toggleStyle(.checkbox)
+                .toggleStyle(CustomCheckboxToggleStyle())
                 
                 Spacer()
                 

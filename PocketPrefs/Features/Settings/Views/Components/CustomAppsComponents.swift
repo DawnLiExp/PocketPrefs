@@ -33,7 +33,7 @@ struct CustomAppListItem: View {
                 )) {
                     EmptyView()
                 }
-                .toggleStyle(.checkbox)
+                .toggleStyle(CustomCheckboxToggleStyle())
                 
                 Image(nsImage: IconService.shared.getIcon(for: app.bundleId, category: app.category))
                     .resizable()
@@ -73,18 +73,7 @@ struct CustomAppListItem: View {
                     .opacity(isDetailSelected ? 1 : (isHovered ? 0.5 : 0))
             }
             .padding(12)
-            .background(
-                RoundedRectangle(cornerRadius: 6)
-                    .fill(isDetailSelected ?
-                        Color.App.accent.color(for: colorScheme).opacity(0.1) :
-                        Color.clear),
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 6)
-                    .stroke(isDetailSelected ?
-                        Color.App.accent.color(for: colorScheme).opacity(0.3) :
-                        Color.clear, lineWidth: 1),
-            )
+            .cardEffect(isSelected: isDetailSelected)
             .contentShape(Rectangle())
             .onTapGesture(perform: onSelectForDetail)
             .onHover { hovering in
@@ -257,7 +246,6 @@ struct AddAppSheet: View {
                 .font(DesignConstants.Typography.title)
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
             
-            // Auto-fill button
             Button(action: { showingAppPicker = true }) {
                 HStack {
                     Image(systemName: "folder.badge.gearshape")
