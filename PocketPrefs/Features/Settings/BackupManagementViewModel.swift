@@ -23,10 +23,10 @@ final class BackupManagementViewModel {
     /// Right-column detail target (independent from checkbox selection).
     var detailBackup: BackupInfo?
 
-    /// Inline delete confirmation for a single app row.
-    var pendingDeleteAppId: UUID?
+    /// Right-column app-level multi-selection (used for batch delete).
+    var selectedDetailAppIds: Set<UUID> = []
 
-    /// Inline delete confirmation for a backup row.
+    /// Inline delete confirmation for a backup row (left column).
     var pendingDeleteBackupId: UUID?
 
     // MARK: Size caches keyed by path (stable across reloads)
@@ -57,6 +57,10 @@ final class BackupManagementViewModel {
 
     var selectedCount: Int {
         selectedBackupIds.count
+    }
+
+    var selectedDetailCount: Int {
+        selectedDetailAppIds.count
     }
 
     // MARK: - Dependencies
@@ -93,8 +97,11 @@ final class BackupManagementViewModel {
             detailBackup = backups.first
         }
 
+        // ── App-level selection is invalidated on every reload ─────────────────
+        // BackupAppInfo.id is also a new UUID on every scan.
+        selectedDetailAppIds.removeAll()
+
         pendingDeleteBackupId = nil
-        pendingDeleteAppId = nil
         isLoading = false
 
         await computeBackupSizes()
@@ -120,7 +127,7 @@ final class BackupManagementViewModel {
         }
     }
 
-    // MARK: - Selection
+    // MARK: - Backup Selection (left column)
 
     func toggleBackupSelection(_ id: UUID) {
         if selectedBackupIds.contains(id) {
@@ -130,12 +137,26 @@ final class BackupManagementViewModel {
         }
     }
 
-    /// Switches the right-column detail view and resets both pending-delete states.
+    /// Switches the right-column detail view; resets both pending-delete and app selection.
     func selectDetailBackup(_ backup: BackupInfo) {
         detailBackup = backup
         pendingDeleteBackupId = nil
-        pendingDeleteAppId = nil
+        selectedDetailAppIds.removeAll()
         Task { await computeAppSizes(for: backup) }
+    }
+
+    // MARK: - App Selection (right column)
+
+    func toggleDetailAppSelection(_ id: UUID) {
+        if selectedDetailAppIds.contains(id) {
+            selectedDetailAppIds.remove(id)
+        } else {
+            selectedDetailAppIds.insert(id)
+        }
+    }
+
+    func clearDetailSelection() {
+        selectedDetailAppIds.removeAll()
     }
 
     // MARK: - Delete Backup (left-column inline two-step)
@@ -153,7 +174,6 @@ final class BackupManagementViewModel {
             }
         } else {
             pendingDeleteBackupId = backup.id
-            pendingDeleteAppId = nil
         }
     }
 
@@ -161,30 +181,40 @@ final class BackupManagementViewModel {
         pendingDeleteBackupId = nil
     }
 
-    // MARK: - Delete App (right-column inline two-step)
+    // MARK: - Batch Delete Apps (right-column, NSAlert confirmation)
 
-    func handleDeleteApp(_ app: BackupAppInfo) async {
-        if pendingDeleteAppId == app.id {
-            do {
-                try await managementService.deleteAppFromBackup(app)
-                appSizeCache.removeValue(forKey: app.path)
-                pendingDeleteAppId = nil
-                await loadBackups()
-            } catch {
-                logger.error("Delete app from backup failed: \(error)")
-                showErrorAlert(message: error.localizedDescription)
-            }
-        } else {
-            pendingDeleteAppId = app.id
-            pendingDeleteBackupId = nil
+    /// Precondition: `detailBackup` must be non-nil and `selectedDetailAppIds` must be non-empty.
+    func deleteSelectedDetailApps() async {
+        guard let backup = detailBackup else { return }
+        let toDelete = backup.apps.filter { selectedDetailAppIds.contains($0.id) }
+        guard !toDelete.isEmpty else { return }
+
+        let confirmed = await withCheckedContinuation { continuation in
+            let alert = NSAlert()
+            alert.messageText = String(localized: "Settings_Delete_Confirmation_Title")
+            alert.informativeText = String(
+                localized: "Backup_Management_Delete_Apps_Message",
+                defaultValue: "Delete \(toDelete.count) selected app backup(s) from this backup? This action cannot be undone."
+            )
+            alert.alertStyle = .warning
+            alert.addButton(withTitle: String(localized: "Common_Delete"))
+            alert.addButton(withTitle: String(localized: "Common_Cancel"))
+            continuation.resume(returning: alert.runModal() == .alertFirstButtonReturn)
         }
+
+        guard confirmed else { return }
+
+        isLoading = true
+        for app in toDelete {
+            try? await managementService.deleteAppFromBackup(app)
+            appSizeCache.removeValue(forKey: app.path)
+        }
+        selectedDetailAppIds.removeAll()
+        isLoading = false
+        await loadBackups()
     }
 
-    func resetPendingDeleteApp() {
-        pendingDeleteAppId = nil
-    }
-
-    // MARK: - Batch Delete (toolbar, NSAlert confirmation)
+    // MARK: - Batch Delete Backups (toolbar, NSAlert confirmation)
 
     func batchDeleteSelectedBackups() async {
         let toDelete = backups.filter { selectedBackupIds.contains($0.id) }

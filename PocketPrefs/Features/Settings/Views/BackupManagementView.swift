@@ -159,7 +159,9 @@ struct BackupListToolbar: View {
 struct BackupDetailColumn: View {
     @Bindable var viewModel: BackupManagementViewModel
     @Environment(\.colorScheme) var colorScheme
-    @State private var selectedAppId: UUID?
+
+    // Single-row highlight state (for Finder button), independent from multi-select checkboxes.
+    @State private var selectedRowId: UUID?
 
     var body: some View {
         Group {
@@ -192,23 +194,35 @@ struct BackupDetailColumn: View {
                                 BackupAppRow(
                                     app: app,
                                     sizeString: viewModel.appSizeCache[app.path] ?? "—",
-                                    isSelected: selectedAppId == app.id,
-                                    isPendingDelete: viewModel.pendingDeleteAppId == app.id,
-                                    onSelect: {
-                                        withAnimation(DesignConstants.Animation.quick) {
-                                            selectedAppId = app.id
-                                        }
+                                    isChecked: viewModel.selectedDetailAppIds.contains(app.id),
+                                    isRowSelected: selectedRowId == app.id,
+                                    onToggleCheck: {
+                                        viewModel.toggleDetailAppSelection(app.id)
                                     },
-                                    onDeleteTap: { Task { await viewModel.handleDeleteApp(app) } },
-                                    onHoverOut: { viewModel.resetPendingDeleteApp() }
+                                    onSelectRow: {
+                                        withAnimation(DesignConstants.Animation.quick) {
+                                            selectedRowId = app.id
+                                        }
+                                    }
                                 )
                             }
                         }
                         .padding(12)
                     }
+
+                    Divider()
+
+                    BackupDetailToolbar(
+                        selectedCount: viewModel.selectedDetailCount,
+                        isLoading: viewModel.isLoading,
+                        onDelete: { Task { await viewModel.deleteSelectedDetailApps() } },
+                        onClearSelection: { viewModel.clearDetailSelection() }
+                    )
+                    .frame(height: 44)
                 }
+                // Reset single-row highlight whenever the detail backup switches.
                 .onChange(of: viewModel.detailBackup?.id) { _, _ in
-                    selectedAppId = nil
+                    selectedRowId = nil
                 }
 
             } else {
@@ -252,24 +266,72 @@ struct BackupDetailHeader: View {
     }
 }
 
+// MARK: - Detail Toolbar (right column)
+
+struct BackupDetailToolbar: View {
+    let selectedCount: Int
+    let isLoading: Bool
+    let onDelete: () -> Void
+    let onClearSelection: () -> Void
+    @Environment(\.colorScheme) var colorScheme
+
+    var body: some View {
+        HStack(spacing: 8) {
+            // "Deselect All" only visible when items are checked — provides bulk-cancel UX.
+            if selectedCount > 0 {
+                Button(action: onClearSelection) {
+                    Text(String(localized: "Common_Deselect_All", defaultValue: "Deselect All"))
+                        .font(DesignConstants.Typography.caption)
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                }
+                .buttonStyle(.plain)
+            }
+
+            Spacer()
+
+            // Button text uses monospacedDigit to prevent width jitter on count change.
+            // No animation applied to this HStack; button state transitions are instant.
+            Button(
+                String(localized: "Settings_Delete_Selected", defaultValue: "Delete \(selectedCount) Selected"),
+                role: .destructive,
+                action: onDelete
+            )
+            .font(DesignConstants.Typography.headline.monospacedDigit())
+            .buttonStyle(.bordered)
+            .disabled(selectedCount == 0 || isLoading)
+        }
+        .padding(.horizontal, 10)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
+    }
+}
+
 // MARK: - App Row
 
 struct BackupAppRow: View {
     let app: BackupAppInfo
     let sizeString: String
-    let isSelected: Bool
-    let isPendingDelete: Bool
-    let onSelect: () -> Void
-    let onDeleteTap: () -> Void
-    let onHoverOut: () -> Void
+    /// Whether the checkbox is ticked (multi-select for batch delete).
+    let isChecked: Bool
+    /// Whether this row is the single-highlighted row (for Finder button).
+    let isRowSelected: Bool
+    let onToggleCheck: () -> Void
+    let onSelectRow: () -> Void
 
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         HStack(spacing: 10) {
-            let icon = IconService.shared.getIcon(for: app.bundleId, category: app.category)
-            Image(nsImage: icon)
+            // Checkbox tap is handled by Toggle internally and does NOT propagate
+            // to the row's onTapGesture below.
+            Toggle(isOn: Binding(
+                get: { isChecked },
+                set: { _ in onToggleCheck() }
+            )) { EmptyView() }
+                .toggleStyle(CustomCheckboxToggleStyle())
+
+            Image(nsImage: IconService.shared.getIcon(for: app.bundleId, category: app.category))
                 .resizable()
                 .aspectRatio(contentMode: .fit)
                 .frame(width: 32, height: 32)
@@ -278,6 +340,7 @@ struct BackupAppRow: View {
             VStack(alignment: .leading, spacing: 2) {
                 Text(app.name)
                     .font(DesignConstants.Typography.headline)
+                    .foregroundColor(Color.App.primary.color(for: colorScheme))
                 Text(sizeString)
                     .font(DesignConstants.Typography.caption)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
@@ -285,24 +348,15 @@ struct BackupAppRow: View {
 
             Spacer()
 
-            if isSelected {
-                HStack(spacing: 12) {
-                    Button(action: {
-                        #if os(macOS)
-                        NSWorkspace.shared.selectFile(app.path, inFileViewerRootedAtPath: "")
-                        #endif
-                    }) {
-                        Image(systemName: "magnifyingglass.circle")
-                            .font(.system(size: 16))
-                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                    }
-                    .buttonStyle(.plain)
-
-                    InlineDeleteButton(
-                        isPending: isPendingDelete,
-                        onTap: onDeleteTap
-                    )
+            if isRowSelected {
+                Button(action: {
+                    NSWorkspace.shared.selectFile(app.path, inFileViewerRootedAtPath: "")
+                }) {
+                    Image(systemName: "magnifyingglass.circle")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
+                .buttonStyle(.plain)
             } else {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12))
@@ -312,39 +366,15 @@ struct BackupAppRow: View {
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 8)
-        .cardEffect(isSelected: isSelected)
+        // cardEffect follows single-row highlight, not checkbox state.
+        .cardEffect(isSelected: isRowSelected)
         .contentShape(Rectangle())
-        .onTapGesture(perform: onSelect)
+        .onTapGesture(perform: onSelectRow)
         .onHover { hovering in
             withAnimation(DesignConstants.Animation.quick) {
                 isHovered = hovering
             }
-            if !hovering { onHoverOut() }
         }
-    }
-}
-
-// MARK: - Inline Delete Button (shared)
-
-struct InlineDeleteButton: View {
-    let isPending: Bool
-    let onTap: () -> Void
-    @Environment(\.colorScheme) var colorScheme
-
-    var body: some View {
-        Button(action: onTap) {
-            if isPending {
-                Text(String(localized: "Backup_Management_Delete_App_Confirm"))
-                    .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.error.color(for: colorScheme))
-            } else {
-                Image(systemName: "trash")
-                    .font(.system(size: 13))
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
-            }
-        }
-        .buttonStyle(.plain)
-        .animation(DesignConstants.Animation.quick, value: isPending)
     }
 }
 
