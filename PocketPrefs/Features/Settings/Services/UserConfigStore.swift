@@ -11,7 +11,7 @@ import os.log
 
 // MARK: - Change Events
 
-enum UserConfigEvent: Sendable {
+enum UserConfigEvent {
     case appAdded(AppConfig)
     case appUpdated(AppConfig)
     case appsRemoved(Set<UUID>)
@@ -45,6 +45,13 @@ final class UserConfigStore {
         )
         
         storageURL = appDir.appendingPathComponent("custom_apps.json")
+        loadCustomApps()
+    }
+
+    // IMPORTANT: For testing only. Injects storageURL so tests never touch
+    // the real Application Support directory and can be cleaned up after each run.
+    init(storageURL: URL) {
+        self.storageURL = storageURL
         loadCustomApps()
     }
     
