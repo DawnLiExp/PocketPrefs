@@ -25,6 +25,7 @@ struct BackupManagementView: View {
         .task {
             await viewModel.loadBackups()
         }
+        .bindAlert($viewModel.pendingAlert)
     }
 }
 
@@ -135,13 +136,13 @@ struct BackupListToolbar: View {
             }
 
             Button(String(localized: "Backup_Management_Merge_Button")) {
-                Task { await viewModel.performMerge() }
+                viewModel.performMerge()
             }
             .buttonStyle(ToolbarButtonStyle(isDestructive: false))
             .disabled(!viewModel.canMerge || viewModel.isMerging)
 
             Button(role: .destructive) {
-                Task { await viewModel.batchDeleteSelectedBackups() }
+                viewModel.batchDeleteSelectedBackups()
             } label: {
                 Image(systemName: "trash")
             }
@@ -215,7 +216,7 @@ struct BackupDetailColumn: View {
                     BackupDetailToolbar(
                         selectedCount: viewModel.selectedDetailCount,
                         isLoading: viewModel.isLoading,
-                        onDelete: { Task { await viewModel.deleteSelectedDetailApps() } },
+                        onDelete: { viewModel.deleteSelectedDetailApps() },
                         onClearSelection: { viewModel.clearDetailSelection() }
                     )
                     .frame(height: 44)

@@ -5,7 +5,6 @@
 //  State and business logic for the Backup Management settings tab.
 //
 
-import AppKit
 import Foundation
 import os.log
 import SwiftUI
@@ -28,6 +27,7 @@ final class BackupManagementViewModel {
 
     /// Inline delete confirmation for a backup row (left column).
     var pendingDeleteBackupId: String?
+    var pendingAlert: AlertModel?
 
     // MARK: - Size Caches
 
@@ -147,7 +147,10 @@ final class BackupManagementViewModel {
                 await loadBackups()
             } catch {
                 logger.error("Delete backup failed: \(error)")
-                showErrorAlert(message: error.localizedDescription)
+                pendingAlert = AlertModel.info(
+                    title: String(localized: "Error"),
+                    message: error.localizedDescription
+                )
             }
         } else {
             pendingDeleteBackupId = backup.id
@@ -158,105 +161,72 @@ final class BackupManagementViewModel {
         pendingDeleteBackupId = nil
     }
 
-    // MARK: - Batch Delete Apps (right-column, NSAlert confirmation)
+    // MARK: - Batch Delete Apps (right-column confirmation)
 
     /// Precondition: `detailBackup` must be non-nil and `selectedDetailAppIds` must be non-empty.
-    func deleteSelectedDetailApps() async {
+    func deleteSelectedDetailApps() {
         guard let backup = detailBackup else { return }
         let toDelete = backup.apps.filter { selectedDetailAppIds.contains($0.id) }
         guard !toDelete.isEmpty else { return }
 
-        let confirmed = await withCheckedContinuation { continuation in
-            let alert = NSAlert()
-            alert.messageText = String(localized: "Settings_Delete_Confirmation_Title")
-            alert.informativeText = String(
+        pendingAlert = AlertModel(
+            title: String(localized: "Settings_Delete_Confirmation_Title"),
+            message: String(
                 localized: "Backup_Management_Delete_Apps_Message",
                 defaultValue: "Delete \(toDelete.count) selected app backup(s) from this backup? This action cannot be undone."
-            )
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: String(localized: "Common_Delete"))
-            alert.addButton(withTitle: String(localized: "Common_Cancel"))
-            continuation.resume(returning: alert.runModal() == .alertFirstButtonReturn)
-        }
-
-        guard confirmed else { return }
-
-        isLoading = true
-        for app in toDelete {
-            try? await managementService.deleteAppFromBackup(app)
-            appSizeCache.removeValue(forKey: app.id)
-        }
-        selectedDetailAppIds.removeAll()
-        isLoading = false
-        await loadBackups()
+            ),
+            primaryLabel: String(localized: "Common_Delete"),
+            style: .destructive,
+            primaryAction: { [weak self] in
+                self?.executeDeleteDetailApps(toDelete)
+            }
+        )
     }
 
-    // MARK: - Batch Delete Backups (toolbar, NSAlert confirmation)
+    // MARK: - Batch Delete Backups (toolbar confirmation)
 
-    func batchDeleteSelectedBackups() async {
+    func batchDeleteSelectedBackups() {
         let toDelete = backups.filter { selectedBackupIds.contains($0.id) }
         guard !toDelete.isEmpty else { return }
 
-        let confirmed = await withCheckedContinuation { continuation in
-            let alert = NSAlert()
-            alert.messageText = String(localized: "Backup_Management_Batch_Delete_Title")
-            alert.informativeText = String(
+        pendingAlert = AlertModel(
+            title: String(localized: "Backup_Management_Batch_Delete_Title"),
+            message: String(
                 localized: "Backup_Management_Batch_Delete_Message",
                 defaultValue: "Delete \(toDelete.count) selected backups? This action cannot be undone."
-            )
-            alert.alertStyle = .warning
-            alert.addButton(withTitle: String(localized: "Common_Delete"))
-            alert.addButton(withTitle: String(localized: "Common_Cancel"))
-            continuation.resume(returning: alert.runModal() == .alertFirstButtonReturn)
-        }
-
-        guard confirmed else { return }
-
-        isLoading = true
-        for backup in toDelete {
-            try? await managementService.deleteBackup(backup)
-            backupSizeCache.removeValue(forKey: backup.id)
-        }
-        isLoading = false
-        await loadBackups()
+            ),
+            primaryLabel: String(localized: "Common_Delete"),
+            style: .destructive,
+            primaryAction: { [weak self] in
+                self?.executeBatchDeleteBackups(toDelete)
+            }
+        )
     }
 
-    // MARK: - Merge (NSAlert confirmation)
+    // MARK: - Merge (confirmation)
 
-    func performMerge() async {
+    func performMerge() {
         let toMerge = backups.filter { selectedBackupIds.contains($0.id) }
         guard toMerge.count >= 2 else { return }
 
         var uniqueBundleIds = Set<String>()
         toMerge.forEach { $0.apps.forEach { uniqueBundleIds.insert($0.bundleId) } }
 
-        let confirmed = await withCheckedContinuation { continuation in
-            let alert = NSAlert()
-            alert.messageText = String(
+        pendingAlert = AlertModel(
+            title: String(
                 localized: "Backup_Management_Merge_Title",
                 defaultValue: "Merge \(toMerge.count) Backups?"
-            )
-            alert.informativeText = String(
+            ),
+            message: String(
                 localized: "Backup_Management_Merge_Message",
                 defaultValue: "Will merge \(toMerge.count) backups containing \(uniqueBundleIds.count) apps. Same app keeps the newest version. Original backups are preserved."
-            )
-            alert.addButton(withTitle: String(localized: "Backup_Management_Merge_Button"))
-            alert.addButton(withTitle: String(localized: "Common_Cancel"))
-            continuation.resume(returning: alert.runModal() == .alertFirstButtonReturn)
-        }
-
-        guard confirmed else { return }
-
-        isMerging = true
-        do {
-            _ = try await managementService.mergeBackups(toMerge)
-            isMerging = false
-            await loadBackups()
-        } catch {
-            isMerging = false
-            logger.error("Merge failed: \(error)")
-            showErrorAlert(message: error.localizedDescription)
-        }
+            ),
+            primaryLabel: String(localized: "Backup_Management_Merge_Button"),
+            style: .confirm,
+            primaryAction: { [weak self] in
+                self?.executeMerge(toMerge)
+            }
+        )
     }
 
     // MARK: - Refresh
@@ -267,11 +237,46 @@ final class BackupManagementViewModel {
 
     // MARK: - Private Helpers
 
-    private func showErrorAlert(message: String) {
-        let alert = NSAlert()
-        alert.messageText = String(localized: "Error")
-        alert.informativeText = message
-        alert.alertStyle = .warning
-        alert.runModal()
+    private func executeDeleteDetailApps(_ toDelete: [BackupAppInfo]) {
+        Task {
+            isLoading = true
+            for app in toDelete {
+                try? await managementService.deleteAppFromBackup(app)
+                appSizeCache.removeValue(forKey: app.id)
+            }
+            selectedDetailAppIds.removeAll()
+            isLoading = false
+            await loadBackups()
+        }
+    }
+
+    private func executeBatchDeleteBackups(_ toDelete: [BackupInfo]) {
+        Task {
+            isLoading = true
+            for backup in toDelete {
+                try? await managementService.deleteBackup(backup)
+                backupSizeCache.removeValue(forKey: backup.id)
+            }
+            isLoading = false
+            await loadBackups()
+        }
+    }
+
+    private func executeMerge(_ toMerge: [BackupInfo]) {
+        Task {
+            isMerging = true
+            do {
+                _ = try await managementService.mergeBackups(toMerge)
+                isMerging = false
+                await loadBackups()
+            } catch {
+                isMerging = false
+                logger.error("Merge failed: \(error)")
+                pendingAlert = AlertModel.info(
+                    title: String(localized: "Error"),
+                    message: error.localizedDescription
+                )
+            }
+        }
     }
 }

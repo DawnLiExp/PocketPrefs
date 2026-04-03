@@ -18,6 +18,7 @@ struct SettingsView: View {
     @State private var newAppName = ""
     @State private var newAppBundleId = ""
     @State private var validationError = ""
+    @State private var settingsPendingAlert: AlertModel?
     @Environment(\.dismiss) var dismiss
     @Environment(\.colorScheme) var colorScheme
     
@@ -44,6 +45,8 @@ struct SettingsView: View {
     }
     
     var body: some View {
+        @Bindable var manager = importExportManager
+
         VStack(spacing: 0) {
             SettingsTabBar(selectedTab: $selectedTab, onClose: { dismiss() })
             
@@ -63,7 +66,8 @@ struct SettingsView: View {
                         showingAddAppSheet: $showingAddAppSheet,
                         newAppName: $newAppName,
                         newAppBundleId: $newAppBundleId,
-                        validationError: $validationError
+                        validationError: $validationError,
+                        pendingAlert: $settingsPendingAlert
                     )
                     
                 case .backups:
@@ -74,6 +78,8 @@ struct SettingsView: View {
         }
         .frame(width: 750, height: 500)
         .background(Color.App.contentAreaBackground.color(for: colorScheme))
+        .bindAlert($settingsPendingAlert)
+        .bindAlert($manager.pendingAlert)
         .sheet(isPresented: $showingAddAppSheet) {
             AddAppSheet(
                 appName: $newAppName,
@@ -263,6 +269,7 @@ struct CustomAppsContent: View {
     @Binding var newAppName: String
     @Binding var newAppBundleId: String
     @Binding var validationError: String
+    @Binding var pendingAlert: AlertModel?
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -335,16 +342,18 @@ struct CustomAppsContent: View {
     
     private func deleteSelectedApps() {
         guard !customAppManager.selectedAppIds.isEmpty else { return }
-        
-        let alert = NSAlert()
-        alert.messageText = String(localized: "Settings_Delete_Confirmation_Title")
-        alert.informativeText = String(localized: "Settings_Delete_Confirmation_Message", defaultValue: "Are you sure you want to delete \(customAppManager.selectedAppIds.count) selected app(s)?")
-        alert.alertStyle = .warning
-        alert.addButton(withTitle: String(localized: "Common_Delete"))
-        alert.addButton(withTitle: String(localized: "Common_Cancel"))
-        
-        if alert.runModal() == .alertFirstButtonReturn {
-            customAppManager.removeSelectedApps()
-        }
+
+        pendingAlert = AlertModel(
+            title: String(localized: "Settings_Delete_Confirmation_Title"),
+            message: String(
+                localized: "Settings_Delete_Confirmation_Message",
+                defaultValue: "Are you sure you want to delete \(customAppManager.selectedAppIds.count) selected app(s)?"
+            ),
+            primaryLabel: String(localized: "Common_Delete"),
+            style: .destructive,
+            primaryAction: { [customAppManager] in
+                customAppManager.removeSelectedApps()
+            }
+        )
     }
 }
