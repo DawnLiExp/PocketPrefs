@@ -9,29 +9,56 @@ import Foundation
 
 // MARK: - Progress Update
 
-/// Progress update containing completion fraction and optional status message
-struct ProgressUpdate: Sendable {
-    let fraction: Double  // 0.0 to 1.0
+/// Progress update containing completion fraction and optional status message.
+/// `fraction` is always clamped to [0.0, 1.0]; NaN / Infinity are treated as 0.0.
+struct ProgressUpdate: Equatable {
+    let fraction: Double // guaranteed: 0.0 ... 1.0
     let message: String?
-    
-    /// Initialize with discrete completion counts
-    init(completed: Int, total: Int, message: String? = nil) {
-        self.fraction = total > 0 ? min(Double(completed) / Double(total), 1.0) : 0.0
-        self.message = message
-    }
-    
-    /// Initialize with direct fraction value
+
+    // MARK: Convenience Constants
+
+    /// Zero-progress sentinel - use at operation start or to reset state.
+    static let idle = ProgressUpdate(fraction: 0.0)
+
+    /// Full-progress sentinel without a message - use when no status text is needed.
+    static let finished = ProgressUpdate(fraction: 1.0)
+
+    // MARK: Initializers
+
+    /// Initialize with direct fraction value.
+    /// - NaN and Infinity are normalized to 0.0.
+    /// - Values outside [0, 1] are clamped.
     init(fraction: Double, message: String? = nil) {
-        self.fraction = min(max(fraction, 0.0), 1.0)
+        if fraction.isNaN || fraction.isInfinite {
+            self.fraction = 0.0
+        } else {
+            self.fraction = max(0.0, min(1.0, fraction))
+        }
         self.message = message
     }
-    
-    /// Create initial progress update (0%)
-    static func initial() -> ProgressUpdate {
-        ProgressUpdate(fraction: 0.0, message: nil)
+
+    /// Initialize with discrete completion counts.
+    /// - `total <= 0` with `completed > 0` -> 1.0 (treat as complete).
+    /// - `total <= 0` with `completed <= 0` -> 0.0.
+    /// - `completed > total` is clamped to 1.0.
+    init(completed: Int, total: Int, message: String? = nil) {
+        if total <= 0 {
+            self.fraction = completed > 0 ? 1.0 : 0.0
+        } else {
+            self.fraction = max(0.0, min(1.0, Double(completed) / Double(total)))
+        }
+        self.message = message
     }
-    
-    /// Create completion progress update (100%)
+
+    // MARK: Legacy Static Factories (kept for call-sites that pass a message)
+
+    /// Create an initial (0%) progress update - prefer `.idle` when no message is needed.
+    @available(*, deprecated, renamed: "idle")
+    static func initial() -> ProgressUpdate {
+        .idle
+    }
+
+    /// Create a completion (100%) update with an optional status message.
     static func completed(message: String? = nil) -> ProgressUpdate {
         ProgressUpdate(fraction: 1.0, message: message)
     }

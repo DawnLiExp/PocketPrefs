@@ -35,7 +35,7 @@ actor RestoreService {
         }
         
         logger.info("Starting restore: \(selectedApps.count) apps")
-        await onProgress?(.initial())
+        await onProgress?(.idle)
         
         return await processRestore(apps: selectedApps, onProgress: onProgress)
     }

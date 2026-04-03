@@ -50,7 +50,7 @@ actor BackupService {
             return BackupResult(successCount: 0, failedApps: [], totalProcessed: 0)
         }
         
-        await onProgress?(.initial())
+        await onProgress?(.idle)
         
         let isIncrementalValid = await validateIncrementalBase(incrementalBase)
         
