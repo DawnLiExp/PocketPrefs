@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum SortOption: String, CaseIterable, Sendable, Codable {
+enum SortOption: String, CaseIterable, Codable {
     case nameAscending = "name_asc"
     case nameDescending = "name_desc"
     case dateAddedDescending = "date_added_desc"

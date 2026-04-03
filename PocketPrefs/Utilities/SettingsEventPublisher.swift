@@ -10,7 +10,7 @@ import os.log
 
 // MARK: - Settings Events
 
-enum SettingsEvent: Sendable {
+enum SettingsEvent {
     case didClose
 }
 
@@ -20,7 +20,7 @@ enum SettingsEvent: Sendable {
 final class SettingsEventPublisher {
     static let shared = SettingsEventPublisher()
     
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "SettingsEventPublisher")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "SettingsEventPublisher")
     private var continuations: [UUID: AsyncStream<SettingsEvent>.Continuation] = [:]
     
     private init() {}

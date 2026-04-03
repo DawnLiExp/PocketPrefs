@@ -9,7 +9,7 @@ import Foundation
 import os.log
 
 actor BackupService {
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "BackupService")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "BackupService")
     private let fileOps = FileOperationService.shared
     
     enum Config {

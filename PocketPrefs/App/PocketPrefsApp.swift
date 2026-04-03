@@ -13,7 +13,7 @@ struct PocketPrefsApp: App {
     @State private var themeManager = ThemeManager.shared
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
 
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "App")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "App")
 
     init() {
         // Apply stored language preference early

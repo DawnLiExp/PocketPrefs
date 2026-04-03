@@ -12,7 +12,7 @@ import os.log
 actor FileOperationService {
     static let shared = FileOperationService()
     
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "FileOperation")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "FileOperation")
     private let fileManager = FileManager.default
     
     private init() {}

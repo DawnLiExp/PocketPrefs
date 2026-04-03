@@ -8,7 +8,7 @@
 import Foundation
 import os.log
 
-struct AppInfo: Sendable {
+struct AppInfo {
     let name: String
     let bundleId: String
 }
@@ -34,7 +34,7 @@ enum AppInfoError: LocalizedError {
 }
 
 actor AppInfoReader {
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "AppInfoReader")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "AppInfoReader")
     
     func readAppInfo(from appURL: URL) async throws -> AppInfo {
         logger.info("Reading app info from: \(appURL.path)")

@@ -27,7 +27,7 @@ final class MainCoordinator {
     
     // MARK: - Services
     
-    @ObservationIgnored private let logger = Logger(subsystem: "com.pocketprefs", category: "MainCoordinator")
+    @ObservationIgnored private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "MainCoordinator")
     @ObservationIgnored private let iconService = IconService.shared
     @ObservationIgnored private let backupService = BackupService()
     @ObservationIgnored private let restoreService = RestoreService()

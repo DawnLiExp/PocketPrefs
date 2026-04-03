@@ -9,7 +9,7 @@ import AppKit
 
 // MARK: - Terminal Icon Configuration
 
-struct TerminalIconConfig: Sendable {
+struct TerminalIconConfig {
     let letter: String
     let backgroundColor: NSColor
     let textColor: NSColor

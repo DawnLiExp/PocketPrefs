@@ -40,7 +40,7 @@ final class AppListViewModel {
     // MARK: - Dependencies
 
     private weak var coordinator: MainCoordinator?
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "AppListViewModel")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "AppListViewModel")
 
     @ObservationIgnored private var eventTask: Task<Void, Never>?
     @ObservationIgnored private var searchDebounceTask: Task<Void, Never>?

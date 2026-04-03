@@ -53,7 +53,7 @@ final class RestoreListViewModel {
     // MARK: - Dependencies
 
     private weak var coordinator: MainCoordinator?
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "RestoreListViewModel")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "RestoreListViewModel")
 
     @ObservationIgnored private var eventTask: Task<Void, Never>?
     @ObservationIgnored private var searchDebounceTask: Task<Void, Never>?

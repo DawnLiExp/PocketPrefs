@@ -27,7 +27,7 @@ final class UserConfigStore {
     
     private(set) var customApps: [AppConfig] = []
     
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "UserConfigStore")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "UserConfigStore")
     private let storageURL: URL
     @ObservationIgnored
     private var continuations: [UUID: AsyncStream<UserConfigEvent>.Continuation] = [:]

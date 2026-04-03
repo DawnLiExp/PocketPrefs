@@ -29,7 +29,7 @@ final class DetailViewModel {
     // MARK: - Dependencies
 
     private weak var mainViewModel: MainViewModel?
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "DetailViewModel")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "DetailViewModel")
 
     @ObservationIgnored private var eventTask: Task<Void, Never>?
 

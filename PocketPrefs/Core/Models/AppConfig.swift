@@ -9,7 +9,7 @@ import Foundation
 
 // MARK: - App Category
 
-enum AppCategory: String, Codable, CaseIterable, Sendable {
+enum AppCategory: String, Codable, CaseIterable {
     case development = "Development"
     case media = "Media"
     case productivity = "Productivity"
@@ -51,8 +51,11 @@ enum AppCategory: String, Codable, CaseIterable, Sendable {
 
 // MARK: - App Configuration
 
-struct AppConfig: Identifiable, Codable, Sendable, Equatable {
-    var id: String { bundleId }
+struct AppConfig: Identifiable, Codable, Equatable {
+    var id: String {
+        bundleId
+    }
+
     var name: String
     let bundleId: String
     var configPaths: [String]

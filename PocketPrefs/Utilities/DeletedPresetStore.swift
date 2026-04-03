@@ -13,7 +13,7 @@ import os.log
 final class DeletedPresetStore {
     static let shared = DeletedPresetStore()
 
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "DeletedPresetStore")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "DeletedPresetStore")
     private let defaultsKey = "deletedPresetBundleIds"
     private let defaults: UserDefaults
 

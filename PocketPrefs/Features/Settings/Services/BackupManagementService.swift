@@ -12,7 +12,7 @@ actor BackupManagementService {
     private let fileManager = FileManager.default
     private let fileOps = FileOperationService.shared
     private let backupService = BackupService()
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "BackupManagementService")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "BackupManagementService")
 
     // MARK: - Delete
 

@@ -9,8 +9,11 @@ import Foundation
 
 // MARK: - Backup Information
 
-struct BackupInfo: Identifiable, Hashable, Sendable {
-    var id: String { path }
+struct BackupInfo: Identifiable, Hashable {
+    var id: String {
+        path
+    }
+
     let path: String
     let name: String
     let date: Date
@@ -27,8 +30,11 @@ struct BackupInfo: Identifiable, Hashable, Sendable {
 
 // MARK: - Backup App Information
 
-struct BackupAppInfo: Identifiable, Hashable, Sendable {
-    var id: String { path }
+struct BackupAppInfo: Identifiable, Hashable {
+    var id: String {
+        path
+    }
+
     let name: String
     let path: String
     let bundleId: String
@@ -48,7 +54,7 @@ struct BackupAppInfo: Identifiable, Hashable, Sendable {
 
 // MARK: - Backup Operation Result
 
-struct BackupResult: Sendable {
+struct BackupResult {
     let successCount: Int
     let failedApps: [(name: String, error: Error)]
     let totalProcessed: Int
@@ -60,10 +66,10 @@ struct BackupResult: Sendable {
     var statusMessage: String {
         if isCompleteSuccess {
             return String(localized: "Backup_Success_Message", defaultValue: "✅ Backup complete! Successfully backed up \(successCount) app configurations")
-        } else if failedApps.isEmpty && successCount == 0 {
+        } else if failedApps.isEmpty, successCount == 0 {
             return String(localized: "Backup_No_Apps_Processed", defaultValue: "No app configurations were backed up")
         } else {
-            let failedNames = failedApps.map { $0.name }.joined(separator: ", ")
+            let failedNames = failedApps.map(\.name).joined(separator: ", ")
             return String(localized: "Backup_Partial_Success_Message", defaultValue: "⚠️ Backup complete. Success: \(successCount), Failed: \(failedNames)")
         }
     }
@@ -71,7 +77,7 @@ struct BackupResult: Sendable {
 
 // MARK: - Restore Operation Result
 
-struct RestoreResult: Sendable {
+struct RestoreResult {
     let successCount: Int
     let failedApps: [(name: String, error: Error)]
     let totalProcessed: Int
@@ -83,10 +89,10 @@ struct RestoreResult: Sendable {
     var statusMessage: String {
         if isCompleteSuccess {
             return String(localized: "Restore_Success_Message", defaultValue: "✅ Restore complete! Successfully restored \(successCount) app configurations")
-        } else if failedApps.isEmpty && successCount == 0 {
+        } else if failedApps.isEmpty, successCount == 0 {
             return String(localized: "Restore_No_Apps_Processed", defaultValue: "No app configurations were restored")
         } else {
-            let failedNames = failedApps.map { $0.name }.joined(separator: ", ")
+            let failedNames = failedApps.map(\.name).joined(separator: ", ")
             return String(localized: "Restore_Partial_Success_Message", defaultValue: "⚠️ Restore complete. Success: \(successCount), Failed: \(failedNames)")
         }
     }

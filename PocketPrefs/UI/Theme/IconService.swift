@@ -12,7 +12,7 @@ import os.log
 final class IconService {
     static let shared = IconService()
     
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "IconService")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "IconService")
     private let iconCache = NSCache<NSString, NSImage>()
     
     private let eventContinuation: AsyncStream<String>.Continuation

@@ -19,7 +19,7 @@ final class CustomAppManager {
     var isAddingApp = false
     var editingApp: AppConfig?
     
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "CustomAppManager")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "CustomAppManager")
     let userStore = UserConfigStore.shared
     private let fileOps = FileOperationService.shared
     @ObservationIgnored

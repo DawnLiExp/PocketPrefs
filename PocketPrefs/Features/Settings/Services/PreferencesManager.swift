@@ -11,7 +11,7 @@ import SwiftUI
 
 // MARK: - Preferences Events
 
-enum PreferencesEvent: Sendable {
+enum PreferencesEvent {
     case directoryChanged(path: String)
     case statusUpdated(PreferencesManager.DirectoryStatus)
 }
@@ -21,7 +21,7 @@ enum PreferencesEvent: Sendable {
 @Observable
 @MainActor
 final class PreferencesManager {
-    enum DirectoryStatus: Equatable, Sendable {
+    enum DirectoryStatus: Equatable {
         case unknown
         case valid
         case invalid(reason: String)
@@ -30,7 +30,7 @@ final class PreferencesManager {
 
     static let shared = PreferencesManager()
     
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "PreferencesManager")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "PreferencesManager")
     private static let defaultBackupPath = NSHomeDirectory() + "/Documents/PocketPrefsBackups"
     
     @ObservationIgnored @AppStorage("backupDirectory") private var storedBackupDirectory: String = ""

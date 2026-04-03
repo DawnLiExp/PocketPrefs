@@ -16,7 +16,7 @@ import SwiftUI
 final class LanguageManager {
     static let shared = LanguageManager()
     
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "LanguageManager")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "LanguageManager")
     private static let languageKey = "PocketPrefsLanguage"
     private static let appleLanguagesKey = "AppleLanguages"
     
@@ -101,7 +101,7 @@ final class LanguageManager {
 
 // MARK: - App Language
 
-enum AppLanguage: String, CaseIterable, Sendable {
+enum AppLanguage: String, CaseIterable {
     case simplifiedChinese = "zh-Hans"
     case english = "en"
     

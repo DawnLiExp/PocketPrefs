@@ -10,7 +10,7 @@ import os.log
 
 // MARK: - Coordinator Events
 
-enum CoordinatorEvent: Sendable {
+enum CoordinatorEvent {
     case appsUpdated([AppConfig])
     case backupsUpdated([BackupInfo])
     case selectedBackupUpdated(BackupInfo?)
@@ -20,7 +20,7 @@ enum CoordinatorEvent: Sendable {
 
 // MARK: - Operation Events
 
-enum OperationEvent: Sendable {
+enum OperationEvent {
     case performBackup
     case performRestore
 }
@@ -31,7 +31,7 @@ enum OperationEvent: Sendable {
 final class CoordinatorEventPublisher {
     static let shared = CoordinatorEventPublisher()
     
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "CoordinatorEventPublisher")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "CoordinatorEventPublisher")
     private var continuations: [UUID: AsyncStream<CoordinatorEvent>.Continuation] = [:]
     
     private init() {}
@@ -71,7 +71,7 @@ final class CoordinatorEventPublisher {
 final class OperationEventPublisher {
     static let shared = OperationEventPublisher()
     
-    private let logger = Logger(subsystem: "com.pocketprefs", category: "OperationEventPublisher")
+    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "OperationEventPublisher")
     private var continuations: [UUID: AsyncStream<OperationEvent>.Continuation] = [:]
     
     private init() {}
