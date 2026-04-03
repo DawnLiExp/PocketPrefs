@@ -90,7 +90,7 @@ struct SettingsToolbar: View {
                     Label("Settings_Add_App", systemImage: "plus")
                         .font(DesignConstants.Typography.body)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(ToolbarButtonStyle(isDestructive: false))
                 
                 if selectedCount > 0 {
                     Button(action: onDeleteSelected) {
@@ -100,8 +100,7 @@ struct SettingsToolbar: View {
                         )
                         .font(DesignConstants.Typography.body)
                     }
-                    .buttonStyle(.bordered)
-                    .tint(Color.App.error.color(for: colorScheme))
+                    .buttonStyle(ToolbarButtonStyle(isDestructive: true))
                 }
                 
                 Spacer()

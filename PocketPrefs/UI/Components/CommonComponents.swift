@@ -198,3 +198,44 @@ struct SecondaryButtonStyle: ButtonStyle {
             .opacity(configuration.isPressed ? 0.8 : 1.0)
     }
 }
+
+struct ToolbarButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) var isEnabled
+    @Environment(\.colorScheme) var colorScheme
+    @State private var isHovered = false
+
+    var isDestructive: Bool = false
+
+    func makeBody(configuration: Configuration) -> some View {
+        // Use native Color.primary to ensure it perfectly matches macOS native contrast instead of the custom 1C1C1E hex.
+        let baseColor = Color.primary
+
+        configuration.label
+            .foregroundColor(isEnabled ? baseColor : Color.App.secondary.color(for: colorScheme).opacity(0.7))
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .frame(minHeight: 24) // Fixes potential layout jump when SF Symbols have different intrinsic heights
+            .background(
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(
+                        isHovered && isEnabled
+                            ? Color.App.hoverBackground.color(for: colorScheme)
+                            : Color.App.tertiaryBackground.color(for: colorScheme).opacity(colorScheme == .dark ? 0.2 : 0.6)
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 6)
+                    .stroke(
+                        Color.App.lightSeparator.color(for: colorScheme),
+                        lineWidth: 0.5
+                    )
+            )
+            .opacity(configuration.isPressed ? 0.7 : 1.0)
+            .contentShape(Rectangle())
+            .onHover { hovering in
+                withAnimation(DesignConstants.Animation.quick) {
+                    isHovered = hovering
+                }
+            }
+    }
+}

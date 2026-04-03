@@ -137,7 +137,7 @@ struct BackupListToolbar: View {
             Button(String(localized: "Backup_Management_Merge_Button")) {
                 Task { await viewModel.performMerge() }
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(ToolbarButtonStyle(isDestructive: false))
             .disabled(!viewModel.canMerge || viewModel.isMerging)
 
             Button(role: .destructive) {
@@ -145,7 +145,7 @@ struct BackupListToolbar: View {
             } label: {
                 Image(systemName: "trash")
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(ToolbarButtonStyle(isDestructive: true))
             .disabled(!viewModel.canBatchDelete || viewModel.isLoading)
         }
         .padding(.horizontal, 10)
@@ -297,7 +297,7 @@ struct BackupDetailToolbar: View {
                 action: onDelete
             )
             .font(DesignConstants.Typography.headline.monospacedDigit())
-            .buttonStyle(.bordered)
+            .buttonStyle(ToolbarButtonStyle(isDestructive: true))
             .disabled(selectedCount == 0 || isLoading)
         }
         .padding(.horizontal, 10)

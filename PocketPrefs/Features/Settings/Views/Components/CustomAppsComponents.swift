@@ -419,11 +419,11 @@ struct ImportExportToolbar: View {
             }) {
                 Label(
                     "Import_Button",
-                    systemImage: "square.and.arrow.down",
+                    systemImage: "square.and.arrow.down"
                 )
                 .font(DesignConstants.Typography.caption)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(ToolbarButtonStyle())
             .disabled(isImporting || isExporting)
             .help(Text("Import_Tooltip"))
             
@@ -438,7 +438,7 @@ struct ImportExportToolbar: View {
                 Label(exportButtonLabel, systemImage: "square.and.arrow.up")
                     .font(DesignConstants.Typography.caption)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(ToolbarButtonStyle())
             .disabled(customAppManager.customApps.isEmpty || isImporting || isExporting)
             .help(exportTooltip)
             
