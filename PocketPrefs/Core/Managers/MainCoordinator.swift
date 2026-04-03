@@ -151,7 +151,7 @@ final class MainCoordinator {
             .filter { !deletedPresets.contains($0.bundleId) }
         allApps.append(contentsOf: userStore.customApps)
         
-        await withTaskGroup(of: (UUID, Bool).self) { group in
+        await withTaskGroup(of: (String, Bool).self) { group in
             for app in allApps {
                 group.addTask { [weak self] in
                     guard let self else { return (app.id, false) }

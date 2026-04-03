@@ -15,7 +15,7 @@ import os.log
 final class CustomAppManager {
     var customApps: [AppConfig] = []
     var selectedApp: AppConfig?
-    var selectedAppIds: Set<UUID> = []
+    var selectedAppIds: Set<String> = []
     var isAddingApp = false
     var editingApp: AppConfig?
     
@@ -148,7 +148,7 @@ final class CustomAppManager {
     
     // MARK: - Selection Management
     
-    func toggleSelection(for appId: UUID) {
+    func toggleSelection(for appId: String) {
         if selectedAppIds.contains(appId) {
             selectedAppIds.remove(appId)
         } else {

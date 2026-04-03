@@ -18,23 +18,18 @@ final class BackupManagementViewModel {
     var backups: [BackupInfo] = []
 
     /// Left-column checkbox multi-selection (used for merge / batch delete).
-    var selectedBackupIds: Set<UUID> = []
+    var selectedBackupIds: Set<String> = []
 
     /// Right-column detail target (independent from checkbox selection).
     var detailBackup: BackupInfo?
 
     /// Right-column app-level multi-selection (used for batch delete).
-    var selectedDetailAppIds: Set<UUID> = []
+    var selectedDetailAppIds: Set<String> = []
 
     /// Inline delete confirmation for a backup row (left column).
-    var pendingDeleteBackupId: UUID?
+    var pendingDeleteBackupId: String?
 
-    // MARK: Size caches keyed by path (stable across reloads)
-
-    //
-    // IMPORTANT: Must use `path` (not `BackupInfo/BackupAppInfo.id`) as key.
-    // `id` is re-generated as a new UUID on every `scanBackups()` call,
-    // which would invalidate all cached entries and cause visible size flicker.
+    // MARK: - Size Caches
 
     /// Backup directory path → formatted total size string.
     var backupSizeCache: [String: String] = [:]
@@ -75,30 +70,12 @@ final class BackupManagementViewModel {
     func loadBackups() async {
         isLoading = true
 
-        // ── Capture state by path before reload ───────────────────────────────
-        // BackupInfo.id is a new UUID on every scanBackups() call.
-        // We must match by path to correctly reconcile selection and detail state.
-        let selectedPaths = Set(
-            backups.filter { selectedBackupIds.contains($0.id) }.map(\.path)
-        )
-        let detailPath = detailBackup?.path
+        let previousDetailId = detailBackup?.id
 
         backups = await backupService.scanBackups()
 
-        // ── Reconcile selectedBackupIds against new UUIDs ─────────────────────
-        selectedBackupIds = Set(
-            backups.filter { selectedPaths.contains($0.path) }.map(\.id)
-        )
+        detailBackup = backups.first(where: { $0.id == previousDetailId }) ?? backups.first
 
-        // ── Reconcile detailBackup against new UUIDs ──────────────────────────
-        if let detailPath {
-            detailBackup = backups.first(where: { $0.path == detailPath }) ?? backups.first
-        } else {
-            detailBackup = backups.first
-        }
-
-        // ── App-level selection is invalidated on every reload ─────────────────
-        // BackupAppInfo.id is also a new UUID on every scan.
         selectedDetailAppIds.removeAll()
 
         pendingDeleteBackupId = nil
@@ -114,22 +91,22 @@ final class BackupManagementViewModel {
     // MARK: - Size Computation
 
     private func computeBackupSizes() async {
-        for backup in backups where backupSizeCache[backup.path] == nil {
+        for backup in backups where backupSizeCache[backup.id] == nil {
             let size = await fileOps.calculateFileSize(at: backup.path)
-            backupSizeCache[backup.path] = size
+            backupSizeCache[backup.id] = size
         }
     }
 
     private func computeAppSizes(for backup: BackupInfo) async {
-        for app in backup.apps where appSizeCache[app.path] == nil {
+        for app in backup.apps where appSizeCache[app.id] == nil {
             let size = await fileOps.calculateFileSize(at: app.path)
-            appSizeCache[app.path] = size
+            appSizeCache[app.id] = size
         }
     }
 
     // MARK: - Backup Selection (left column)
 
-    func toggleBackupSelection(_ id: UUID) {
+    func toggleBackupSelection(_ id: String) {
         if selectedBackupIds.contains(id) {
             selectedBackupIds.remove(id)
         } else {
@@ -147,7 +124,7 @@ final class BackupManagementViewModel {
 
     // MARK: - App Selection (right column)
 
-    func toggleDetailAppSelection(_ id: UUID) {
+    func toggleDetailAppSelection(_ id: String) {
         if selectedDetailAppIds.contains(id) {
             selectedDetailAppIds.remove(id)
         } else {
@@ -165,7 +142,7 @@ final class BackupManagementViewModel {
         if pendingDeleteBackupId == backup.id {
             do {
                 try await managementService.deleteBackup(backup)
-                backupSizeCache.removeValue(forKey: backup.path)
+                backupSizeCache.removeValue(forKey: backup.id)
                 pendingDeleteBackupId = nil
                 await loadBackups()
             } catch {
@@ -207,7 +184,7 @@ final class BackupManagementViewModel {
         isLoading = true
         for app in toDelete {
             try? await managementService.deleteAppFromBackup(app)
-            appSizeCache.removeValue(forKey: app.path)
+            appSizeCache.removeValue(forKey: app.id)
         }
         selectedDetailAppIds.removeAll()
         isLoading = false
@@ -238,7 +215,7 @@ final class BackupManagementViewModel {
         isLoading = true
         for backup in toDelete {
             try? await managementService.deleteBackup(backup)
-            backupSizeCache.removeValue(forKey: backup.path)
+            backupSizeCache.removeValue(forKey: backup.id)
         }
         isLoading = false
         await loadBackups()

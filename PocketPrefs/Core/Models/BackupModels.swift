@@ -10,7 +10,7 @@ import Foundation
 // MARK: - Backup Information
 
 struct BackupInfo: Identifiable, Hashable, Sendable {
-    let id = UUID()
+    var id: String { path }
     let path: String
     let name: String
     let date: Date
@@ -28,7 +28,7 @@ struct BackupInfo: Identifiable, Hashable, Sendable {
 // MARK: - Backup App Information
 
 struct BackupAppInfo: Identifiable, Hashable, Sendable {
-    let id = UUID()
+    var id: String { path }
     let name: String
     let path: String
     let bundleId: String

@@ -12,7 +12,7 @@ struct AppConfigTests {
 
     // MARK: - Equatable
     // AppConfig.== is defined as: lhs.id == rhs.id && lhs.name == rhs.name
-    //   && lhs.bundleId == rhs.bundleId && lhs.configPaths == rhs.configPaths
+    //   && lhs.configPaths == rhs.configPaths
     //   && lhs.category == rhs.category && lhs.isUserAdded == rhs.isUserAdded
 
     @Test("Equatable：赋值拷贝（id 相同）时相等")
@@ -22,12 +22,11 @@ struct AppConfigTests {
         #expect(a == b)
     }
 
-    @Test("Equatable：两次 init（id 不同）时不相等，即使其他字段完全一致")
-    func equalityDifferentId() {
+    @Test("Equatable：相同 bundleId 的两次 init 视为相等（确定性 id）")
+    func equalityDeterministicId() {
         let a = AppConfig(name: "Git", bundleId: "git", configPaths: ["~/.gitconfig"])
         let b = AppConfig(name: "Git", bundleId: "git", configPaths: ["~/.gitconfig"])
-        // Each init generates a distinct UUID
-        #expect(a != b)
+        #expect(a == b)
     }
 
     // MARK: - Codable
@@ -49,8 +48,8 @@ struct AppConfigTests {
         #expect(decoded.configPaths == original.configPaths)
         #expect(decoded.category    == original.category)
         #expect(decoded.isUserAdded == original.isUserAdded)
-        // id is not in CodingKeys → decoded receives a fresh UUID
-        #expect(decoded.id != original.id)
+        // id 由 bundleId 确定性派生，解码后与原值一致
+        #expect(decoded.id == original.id)
     }
 
     @Test("Codable：isSelected / isInstalled 不参与编码，解码后使用默认值")

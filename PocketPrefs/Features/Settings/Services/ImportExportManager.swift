@@ -23,7 +23,7 @@ final class ImportExportManager {
     
     // MARK: - Export
     
-    func exportCustomApps(selectedIds: Set<UUID>? = nil) async {
+    func exportCustomApps(selectedIds: Set<String>? = nil) async {
         // Determine apps to export
         let appsToExport: [AppConfig]
         let exportTypeMessage: String
@@ -161,7 +161,6 @@ final class ImportExportManager {
                 if pathsChanged || nameChanged {
                     // Update existing app
                     var replacementApp = importedApp
-                    replacementApp.id = existingApp.id
                     replacementApp.isUserAdded = true
                     replacementApp.category = .custom
                     finalApps.append(replacementApp)
@@ -177,7 +176,6 @@ final class ImportExportManager {
             } else {
                 // Add new app
                 var newApp = importedApp
-                newApp.id = UUID()
                 newApp.isUserAdded = true
                 newApp.category = .custom
                 finalApps.append(newApp)

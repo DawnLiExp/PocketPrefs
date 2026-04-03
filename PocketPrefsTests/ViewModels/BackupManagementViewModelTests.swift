@@ -26,24 +26,24 @@ struct BackupManagementViewModelTests {
     @Test("canMerge：选中 1 个时为 false")
     func canMergeOne() {
         let vm = BackupManagementViewModel()
-        vm.selectedBackupIds.insert(UUID())
+        vm.selectedBackupIds.insert("/tmp/backup-a")
         #expect(!vm.canMerge)
     }
 
     @Test("canMerge：选中 2 个时为 true")
     func canMergeTwo() {
         let vm = BackupManagementViewModel()
-        vm.selectedBackupIds.insert(UUID())
-        vm.selectedBackupIds.insert(UUID())
+        vm.selectedBackupIds.insert("/tmp/backup-a")
+        vm.selectedBackupIds.insert("/tmp/backup-b")
         #expect(vm.canMerge)
     }
 
     @Test("canMerge：选中 3 个以上时为 true")
     func canMergeMany() {
         let vm = BackupManagementViewModel()
-        vm.selectedBackupIds.insert(UUID())
-        vm.selectedBackupIds.insert(UUID())
-        vm.selectedBackupIds.insert(UUID())
+        vm.selectedBackupIds.insert("/tmp/backup-a")
+        vm.selectedBackupIds.insert("/tmp/backup-b")
+        vm.selectedBackupIds.insert("/tmp/backup-c")
         #expect(vm.canMerge)
     }
 
@@ -58,7 +58,7 @@ struct BackupManagementViewModelTests {
     @Test("canBatchDelete：非空时为 true")
     func canBatchDeleteNonEmpty() {
         let vm = BackupManagementViewModel()
-        vm.selectedBackupIds.insert(UUID())
+        vm.selectedBackupIds.insert("/tmp/backup-a")
         #expect(vm.canBatchDelete)
     }
 
@@ -68,8 +68,8 @@ struct BackupManagementViewModelTests {
     func selectedCount() {
         let vm = BackupManagementViewModel()
         #expect(vm.selectedCount == 0)
-        vm.selectedBackupIds.insert(UUID())
-        vm.selectedBackupIds.insert(UUID())
+        vm.selectedBackupIds.insert("/tmp/backup-a")
+        vm.selectedBackupIds.insert("/tmp/backup-b")
         #expect(vm.selectedCount == 2)
     }
 
@@ -77,7 +77,7 @@ struct BackupManagementViewModelTests {
     func selectedDetailCount() {
         let vm = BackupManagementViewModel()
         #expect(vm.selectedDetailCount == 0)
-        vm.selectedDetailAppIds.insert(UUID())
+        vm.selectedDetailAppIds.insert("/tmp/backup-a/AppX")
         #expect(vm.selectedDetailCount == 1)
     }
 
@@ -86,7 +86,7 @@ struct BackupManagementViewModelTests {
     @Test("toggleBackupSelection：未选中 id → 加入 selectedBackupIds")
     func toggleBackupSelectionAdd() {
         let vm = BackupManagementViewModel()
-        let id = UUID()
+        let id = "/tmp/backup-toggle"
         vm.toggleBackupSelection(id)
         #expect(vm.selectedBackupIds.contains(id))
     }
@@ -94,7 +94,7 @@ struct BackupManagementViewModelTests {
     @Test("toggleBackupSelection：已选中 id → 从 selectedBackupIds 移除")
     func toggleBackupSelectionRemove() {
         let vm = BackupManagementViewModel()
-        let id = UUID()
+        let id = "/tmp/backup-toggle"
         vm.toggleBackupSelection(id)
         vm.toggleBackupSelection(id)
         #expect(!vm.selectedBackupIds.contains(id))
@@ -105,7 +105,7 @@ struct BackupManagementViewModelTests {
     @Test("toggleDetailAppSelection：未选中 → 加入；已选中 → 移除")
     func toggleDetailAppSelection() {
         let vm = BackupManagementViewModel()
-        let id = UUID()
+        let id = "/tmp/backup-a/AppX"
         vm.toggleDetailAppSelection(id)
         #expect(vm.selectedDetailAppIds.contains(id))
         vm.toggleDetailAppSelection(id)
@@ -117,8 +117,8 @@ struct BackupManagementViewModelTests {
     @Test("clearDetailSelection：selectedDetailAppIds 清空")
     func clearDetailSelection() {
         let vm = BackupManagementViewModel()
-        vm.selectedDetailAppIds.insert(UUID())
-        vm.selectedDetailAppIds.insert(UUID())
+        vm.selectedDetailAppIds.insert("/tmp/backup-a/App1")
+        vm.selectedDetailAppIds.insert("/tmp/backup-a/App2")
         vm.clearDetailSelection()
         #expect(vm.selectedDetailAppIds.isEmpty)
     }
@@ -129,8 +129,8 @@ struct BackupManagementViewModelTests {
     func selectDetailBackup() {
         let vm = BackupManagementViewModel()
         // Pre-populate dirty state
-        vm.selectedDetailAppIds.insert(UUID())
-        vm.pendingDeleteBackupId = UUID()
+        vm.selectedDetailAppIds.insert("/tmp/backup-a/AppX")
+        vm.pendingDeleteBackupId = "/tmp/backup-pending"
 
         // BackupInfo.apps is empty so the internal Task (computeAppSizes) exits immediately
         let backup = BackupInfo(path: "/tmp/test-\(UUID().uuidString)", name: "TestBackup", date: .now)

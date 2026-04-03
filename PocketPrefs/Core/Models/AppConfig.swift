@@ -52,7 +52,7 @@ enum AppCategory: String, Codable, CaseIterable, Sendable {
 // MARK: - App Configuration
 
 struct AppConfig: Identifiable, Codable, Sendable, Equatable {
-    var id = UUID()
+    var id: String { bundleId }
     var name: String
     let bundleId: String
     var configPaths: [String]
@@ -69,7 +69,6 @@ struct AppConfig: Identifiable, Codable, Sendable, Equatable {
     static func == (lhs: AppConfig, rhs: AppConfig) -> Bool {
         lhs.id == rhs.id &&
             lhs.name == rhs.name &&
-            lhs.bundleId == rhs.bundleId &&
             lhs.configPaths == rhs.configPaths &&
             lhs.category == rhs.category &&
             lhs.isUserAdded == rhs.isUserAdded

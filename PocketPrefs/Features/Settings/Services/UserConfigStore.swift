@@ -14,7 +14,7 @@ import os.log
 enum UserConfigEvent {
     case appAdded(AppConfig)
     case appUpdated(AppConfig)
-    case appsRemoved(Set<UUID>)
+    case appsRemoved(Set<String>)
     case batchUpdated([AppConfig])
 }
 
@@ -145,7 +145,7 @@ final class UserConfigStore {
         logger.info("Updated app: \(app.name)")
     }
     
-    func removeApps(_ appIds: Set<UUID>) {
+    func removeApps(_ appIds: Set<String>) {
         guard !appIds.isEmpty else { return }
         
         let countBefore = customApps.count

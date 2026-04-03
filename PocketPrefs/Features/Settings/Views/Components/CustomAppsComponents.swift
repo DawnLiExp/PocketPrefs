@@ -10,7 +10,7 @@ import SwiftUI
 // MARK: - Custom App List Item
 
 struct CustomAppListItem: View {
-    let appId: UUID
+    let appId: String
     let isSelected: Bool
     let isDetailSelected: Bool
     let onToggleSelection: () -> Void
@@ -198,7 +198,7 @@ struct CustomAppDetailView: View {
 // MARK: - Path Picker Wrapper
 
 struct PathPickerViewWrapper: View {
-    let appId: UUID
+    let appId: String
     var manager: CustomAppManager
     
     private var currentApp: AppConfig? {

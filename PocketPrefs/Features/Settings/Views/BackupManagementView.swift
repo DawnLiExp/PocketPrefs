@@ -161,7 +161,7 @@ struct BackupDetailColumn: View {
     @Environment(\.colorScheme) var colorScheme
 
     // Single-row highlight state (for Finder button), independent from multi-select checkboxes.
-    @State private var selectedRowId: UUID?
+    @State private var selectedRowId: String?
 
     var body: some View {
         Group {
