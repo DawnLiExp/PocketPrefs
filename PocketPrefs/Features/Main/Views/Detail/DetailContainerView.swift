@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct DetailContainerView: View {
-    let selectedApp: AppConfig?
+    let selectedAppID: AppConfig.ID?
     var coordinator: MainCoordinator
     var mainViewModel: MainViewModel
     let currentMode: MainView.AppMode
@@ -17,13 +17,13 @@ struct DetailContainerView: View {
     @State private var viewModel: DetailViewModel
 
     init(
-        selectedApp: AppConfig?,
+        selectedAppID: AppConfig.ID?,
         coordinator: MainCoordinator,
         mainViewModel: MainViewModel,
         currentMode: MainView.AppMode,
         showingRestorePicker: Binding<Bool>,
     ) {
-        self.selectedApp = selectedApp
+        self.selectedAppID = selectedAppID
         self.coordinator = coordinator
         self.mainViewModel = mainViewModel
         self.currentMode = currentMode
@@ -53,5 +53,10 @@ struct DetailContainerView: View {
         } else {
             RestorePlaceholderView(coordinator: coordinator, viewModel: viewModel)
         }
+    }
+
+    private var selectedApp: AppConfig? {
+        guard let selectedAppID else { return nil }
+        return coordinator.apps.first(where: { $0.id == selectedAppID })
     }
 }

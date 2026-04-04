@@ -9,15 +9,13 @@ import SwiftUI
 
 struct RestoreListView: View {
     var coordinator: MainCoordinator
-    @Binding var selectedApp: AppConfig?
 
     @State private var viewModel: RestoreListViewModel
     @State private var selectedBackupApp: BackupAppInfo?
     @Environment(\.colorScheme) var colorScheme
 
-    init(coordinator: MainCoordinator, selectedApp: Binding<AppConfig?>) {
+    init(coordinator: MainCoordinator) {
         self.coordinator = coordinator
-        self._selectedApp = selectedApp
         self._viewModel = State(wrappedValue: RestoreListViewModel(coordinator: coordinator))
     }
 

@@ -11,7 +11,7 @@ struct MainView: View {
     @State private var mainViewModel = MainViewModel()
     @State private var themeManager = ThemeManager.shared
     @State private var currentMode: AppMode = .backup
-    @State private var selectedApp: AppConfig?
+    @State private var selectedAppID: AppConfig.ID?
     @State private var showingRestorePicker = false
     @Environment(\.colorScheme) var colorScheme
     
@@ -114,7 +114,7 @@ struct MainView: View {
                 .padding(.trailing, Layout.unifiedSpacing)
 
             DetailContainerView(
-                selectedApp: selectedApp,
+                selectedAppID: selectedAppID,
                 coordinator: mainViewModel.coordinator,
                 mainViewModel: mainViewModel,
                 currentMode: currentMode,
@@ -131,14 +131,11 @@ struct MainView: View {
             AppListView(
                 coordinator: mainViewModel.coordinator,
                 mainViewModel: mainViewModel,
-                selectedApp: $selectedApp,
+                selectedAppID: $selectedAppID,
                 currentMode: currentMode,
             )
         case .restore:
-            RestoreListView(
-                coordinator: mainViewModel.coordinator,
-                selectedApp: $selectedApp,
-            )
+            RestoreListView(coordinator: mainViewModel.coordinator)
         }
     }
     
