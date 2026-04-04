@@ -307,6 +307,23 @@
         }
       }
     },
+    "Backup_Management_Delete_All_Apps_Message" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Deleting all %lld app backup(s) from this backup. The empty backup directory will also be removed. This action cannot be undone."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "将删除此备份下的全部 %lld 个应用备份，空备份目录也将一并删除。此操作无法撤销。"
+          }
+        }
+      }
+    },
     "Backup_Management_Delete_Apps_Message" : {
       "extractionState" : "extracted_with_value",
       "localizations" : {

@@ -15,10 +15,12 @@ struct BackupManagementServiceTests {
 
     let service = BackupManagementService()
 
-    // MARK: - Fixture Builder
+    // MARK: - Fixture Builders
 
     /// Creates a backup directory tree under `base` and returns a matching `BackupInfo`.
     /// Each app entry produces a subdirectory containing a `marker.txt` for result verification.
+    /// Note: does NOT write `app_config.json`; use `makeValidBackupFixture` when
+    /// `scanAppsInBackup`-based cleanup logic must recognize the app as valid.
     private func makeBackupFixture(
         in base: URL,
         name: String,
@@ -43,6 +45,52 @@ struct BackupManagementServiceTests {
                 bundleId: app.bundleId,
                 configPaths: [],
                 isCurrentlyInstalled: true,
+                isSelected: false,
+                category: .custom
+            ))
+        }
+
+        var info = BackupInfo(path: backupURL.path, name: name, date: date)
+        info.apps = backupApps
+        return info
+    }
+
+    /// Creates a backup directory tree whose app subdirectories contain a valid `app_config.json`.
+    /// This makes `BackupService.scanAppsInBackup` recognize them as valid app backups,
+    /// which is required for `cleanupBackupDirectoryIfNeeded` to behave correctly.
+    private func makeValidBackupFixture(
+        in base: URL,
+        name: String,
+        date: Date,
+        apps: [(name: String, bundleId: String)]
+    ) throws -> BackupInfo {
+        let backupURL = base.appending(path: name)
+        try FileManager.default.createDirectory(at: backupURL, withIntermediateDirectories: true)
+
+        var backupApps: [BackupAppInfo] = []
+        for app in apps {
+            let appURL = backupURL.appending(path: app.name)
+            try FileManager.default.createDirectory(at: appURL, withIntermediateDirectories: true)
+
+            // Write a minimal app_config.json so scanAppsInBackup treats this as a valid backup
+            let config = AppConfig(
+                name: app.name,
+                bundleId: app.bundleId,
+                configPaths: [],
+                category: .custom,
+                isUserAdded: true
+            )
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            let data = try encoder.encode(config)
+            try data.write(to: appURL.appending(path: "app_config.json"))
+
+            backupApps.append(BackupAppInfo(
+                name: app.name,
+                path: appURL.path,
+                bundleId: app.bundleId,
+                configPaths: [],
+                isCurrentlyInstalled: false,
                 isSelected: false,
                 category: .custom
             ))
@@ -201,5 +249,90 @@ struct BackupManagementServiceTests {
 
         #expect(!FileManager.default.fileExists(atPath: appURL.path))
         #expect(FileManager.default.fileExists(atPath: backupURL.path))
+    }
+
+    // MARK: - deleteAppsFromBackup (high-level, with auto-cleanup)
+
+    @Test("deleteAppsFromBackup：删除最后一个 app 后，父备份目录被删除")
+    func deleteAppsLastApp_parentDeleted() async throws {
+        let tempDir = try TempDirectory()
+        defer { tempDir.cleanup() }
+
+        let backup = try makeValidBackupFixture(
+            in: tempDir.url,
+            name: "Backup_2025-01-01_10-00-00",
+            date: .now,
+            apps: [(name: "OnlyApp", bundleId: "com.only.app")]
+        )
+
+        let outcome = await service.deleteAppsFromBackup(backup.apps, in: backup)
+
+        #expect(outcome.deletedCount == 1)
+        #expect(outcome.failedApps.isEmpty)
+        #expect(outcome.parentBackupDeleted)
+        #expect(!FileManager.default.fileExists(atPath: backup.path))
+    }
+
+    @Test("deleteAppsFromBackup：删除部分 app，剩余有效 app 时父目录保留")
+    func deleteAppsPartial_parentPreserved() async throws {
+        let tempDir = try TempDirectory()
+        defer { tempDir.cleanup() }
+
+        let backup = try makeValidBackupFixture(
+            in: tempDir.url,
+            name: "Backup_2025-01-01_10-00-00",
+            date: .now,
+            apps: [
+                (name: "AppA", bundleId: "com.app.a"),
+                (name: "AppB", bundleId: "com.app.b")
+            ]
+        )
+
+        // Delete only AppA; AppB remains
+        let toDelete = backup.apps.filter { $0.name == "AppA" }
+        let outcome = await service.deleteAppsFromBackup(toDelete, in: backup)
+
+        #expect(outcome.deletedCount == 1)
+        #expect(!outcome.parentBackupDeleted)
+        #expect(FileManager.default.fileExists(atPath: backup.path))
+        // AppB's directory and its app_config.json must still exist
+        let appBPath = URL(fileURLWithPath: backup.path).appending(path: "AppB/app_config.json").path
+        #expect(FileManager.default.fileExists(atPath: appBPath))
+    }
+
+    @Test("deleteAppsFromBackup：父目录仅含无效子目录时，父备份目录也被删除")
+    func deleteAppsOrphanDirsOnly_parentDeleted() async throws {
+        let tempDir = try TempDirectory()
+        defer { tempDir.cleanup() }
+
+        // One valid app + one orphan directory (no app_config.json)
+        let backup = try makeValidBackupFixture(
+            in: tempDir.url,
+            name: "Backup_2025-01-01_10-00-00",
+            date: .now,
+            apps: [(name: "RealApp", bundleId: "com.real.app")]
+        )
+
+        // Create an orphan subdirectory with no app_config.json
+        let orphanURL = URL(fileURLWithPath: backup.path).appending(path: "OrphanDir")
+        try FileManager.default.createDirectory(at: orphanURL, withIntermediateDirectories: true)
+        try "junk".write(to: orphanURL.appending(path: "junk.txt"), atomically: true, encoding: .utf8)
+
+        // Delete the only valid app; orphan dir remains but has no app_config.json
+        let outcome = await service.deleteAppsFromBackup(backup.apps, in: backup)
+
+        #expect(outcome.parentBackupDeleted)
+        #expect(!FileManager.default.fileExists(atPath: backup.path))
+    }
+
+    @Test("cleanupBackupDirectoryIfNeeded：父目录不存在时幂等返回 false")
+    func cleanupNonExistentParent_idempotent() async {
+        let ghostPath = "/tmp/nonexistent-backup-\(UUID().uuidString)"
+        let backup = BackupInfo(path: ghostPath, name: "GhostBackup", date: .now)
+
+        let deleted = await service.cleanupBackupDirectoryIfNeeded(backup)
+
+        // Directory never existed; no error and returns false
+        #expect(!deleted)
     }
 }

@@ -169,16 +169,25 @@ final class BackupManagementViewModel {
         let toDelete = backup.apps.filter { selectedDetailAppIds.contains($0.id) }
         guard !toDelete.isEmpty else { return }
 
-        pendingAlert = AlertModel(
-            title: String(localized: "Settings_Delete_Confirmation_Title"),
-            message: String(
+        // When all apps are selected, warn that the parent backup directory will also be removed.
+        let willRemoveParent = toDelete.count == backup.apps.count
+        let message = willRemoveParent
+            ? String(
+                localized: "Backup_Management_Delete_All_Apps_Message",
+                defaultValue: "Deleting all \(toDelete.count) app backup(s) from this backup. The empty backup directory will also be removed. This action cannot be undone."
+            )
+            : String(
                 localized: "Backup_Management_Delete_Apps_Message",
                 defaultValue: "Delete \(toDelete.count) selected app backup(s) from this backup? This action cannot be undone."
-            ),
+            )
+
+        pendingAlert = AlertModel(
+            title: String(localized: "Settings_Delete_Confirmation_Title"),
+            message: message,
             primaryLabel: String(localized: "Common_Delete"),
             style: .destructive,
             primaryAction: { [weak self] in
-                self?.executeDeleteDetailApps(toDelete)
+                self?.executeDeleteDetailApps(toDelete, in: backup)
             }
         )
     }
@@ -237,13 +246,29 @@ final class BackupManagementViewModel {
 
     // MARK: - Private Helpers
 
-    private func executeDeleteDetailApps(_ toDelete: [BackupAppInfo]) {
+    /// Deletes selected app backups via the service, then cleans up any empty parent directory.
+    ///
+    /// Precondition: `backup` is the parent of all `toDelete` entries.
+    /// Postcondition: caches are pruned; if the parent backup was removed, its size cache entry
+    ///   is also cleared so `loadBackups` does not attempt to display a stale entry.
+    private func executeDeleteDetailApps(_ toDelete: [BackupAppInfo], in backup: BackupInfo) {
         Task {
             isLoading = true
-            for app in toDelete {
-                try? await managementService.deleteAppFromBackup(app)
-                appSizeCache.removeValue(forKey: app.id)
+
+            let outcome = await managementService.deleteAppsFromBackup(toDelete, in: backup)
+
+            // Prune app-level size cache for all attempted deletions
+            toDelete.forEach { appSizeCache.removeValue(forKey: $0.id) }
+
+            // If the parent backup directory was also removed, drop its cache entry
+            if outcome.parentBackupDeleted {
+                backupSizeCache.removeValue(forKey: backup.id)
             }
+
+            if !outcome.failedApps.isEmpty {
+                logger.warning("deleteAppsFromBackup: \(outcome.failedApps.count) app(s) failed to delete")
+            }
+
             selectedDetailAppIds.removeAll()
             isLoading = false
             await loadBackups()
