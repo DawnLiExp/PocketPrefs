@@ -43,7 +43,7 @@ struct CustomBackupPicker: View {
                             }
                         }
                     } label: {
-                        Text(coordinator.currentSelectedBackup?.formattedName ?? String(localized: "Restore_Select_Backup", defaultValue: "Select a backup"))
+                        Text(coordinator.selectedBackup?.formattedName ?? String(localized: "Restore_Select_Backup", defaultValue: "Select a backup"))
                             .font(DesignConstants.Typography.body)
                             .foregroundColor(Color.App.primary.color(for: colorScheme))
                             .padding(.horizontal, 12)

@@ -60,6 +60,12 @@ struct MainView: View {
             minHeight: DesignConstants.Layout.minWindowHeight,
         )
         .preferredColorScheme(themeManager.currentTheme.colorScheme)
+        .task {
+            mainViewModel.syncIncrementalBase()
+        }
+        .onChange(of: mainViewModel.coordinator.availableBackups) { _, _ in
+            mainViewModel.syncIncrementalBase()
+        }
     }
     
     // MARK: - Layout Components

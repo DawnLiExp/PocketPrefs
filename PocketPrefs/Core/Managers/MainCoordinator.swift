@@ -2,7 +2,7 @@
 //  MainCoordinator.swift
 //  PocketPrefs
 //
-//  Core business logic coordination with event-driven architecture
+//  Core business logic coordination
 //
 
 import Foundation
@@ -14,12 +14,13 @@ import SwiftUI
 final class MainCoordinator {
     // MARK: - Internal State
     
-    private var apps: [AppConfig] = []
+    private(set) var apps: [AppConfig] = []
     
     // MARK: - Published State
     
     private(set) var availableBackups: [BackupInfo] = []
     private(set) var selectedBackup: BackupInfo?
+    private(set) var isProcessing = false
     
     // MARK: - Icon Refresh
     
@@ -47,20 +48,6 @@ final class MainCoordinator {
         }
         
         subscribeToEvents()
-    }
-    
-    // MARK: - Public Accessors
-    
-    var currentApps: [AppConfig] {
-        apps
-    }
-
-    var currentBackups: [BackupInfo] {
-        availableBackups
-    }
-
-    var currentSelectedBackup: BackupInfo? {
-        selectedBackup
     }
     
     // MARK: - Event Subscriptions
@@ -172,7 +159,6 @@ final class MainCoordinator {
             
             guard !Task.isCancelled else { return }
             apps = updatedApps
-            publishEvent(.appsUpdated(updatedApps))
         }
         
         logger.info("Loaded \(self.apps.count) apps (\(self.userStore.customApps.count) custom)")
@@ -205,18 +191,11 @@ final class MainCoordinator {
         if selectedBackup == nil, let firstBackup = availableBackups.first {
             selectBackup(firstBackup)
         }
-        
-        publishEvent(.backupsUpdated(backups))
         logger.info("Found \(self.availableBackups.count) backups")
     }
     
     func selectBackup(_ backup: BackupInfo) {
         selectedBackup = backup
-        publishEvent(.selectedBackupUpdated(backup))
-    }
-    
-    func selectIncrementalBase(_ backup: BackupInfo) {
-        // Managed by MainViewModel
     }
     
     // MARK: - App Deletion
@@ -238,7 +217,6 @@ final class MainCoordinator {
     func toggleSelection(for app: AppConfig) {
         guard let index = apps.firstIndex(where: { $0.id == app.id }) else { return }
         apps[index].isSelected.toggle()
-        publishEvent(.appsUpdated(apps))
     }
     
     func selectAll() {
@@ -249,7 +227,6 @@ final class MainCoordinator {
             }
             return updated
         }
-        publishEvent(.appsUpdated(apps))
     }
     
     func deselectAll() {
@@ -258,7 +235,6 @@ final class MainCoordinator {
             updated.isSelected = false
             return updated
         }
-        publishEvent(.appsUpdated(apps))
     }
     
     func toggleRestoreSelection(for app: BackupAppInfo) {
@@ -294,10 +270,12 @@ final class MainCoordinator {
         incrementalBase: BackupInfo?,
         onProgress: @escaping @Sendable (ProgressUpdate) async -> Void,
     ) async {
+        guard !isProcessing else { return }
+        isProcessing = true
+        defer { isProcessing = false }
+
         let startTime = Date()
-        
-        publishEvent(.operationStarted)
-        
+
         await onProgress(ProgressUpdate(
             fraction: 0.0,
             message: String(localized: "Backup_Starting", defaultValue: "Starting configuration backup..."),
@@ -314,7 +292,6 @@ final class MainCoordinator {
         await scanBackups()
         
         try? await Task.sleep(for: .seconds(0.2))
-        publishEvent(.operationCompleted)
     }
     
     func performRestoreOperation(
@@ -324,11 +301,12 @@ final class MainCoordinator {
             logger.error("No backup selected for restore")
             return
         }
-        
+        guard !isProcessing else { return }
+        isProcessing = true
+        defer { isProcessing = false }
+
         let startTime = Date()
-        
-        publishEvent(.operationStarted)
-        
+
         await onProgress(ProgressUpdate(
             fraction: 0.0,
             message: String(localized: "Restore_Starting", defaultValue: "Starting configuration restore..."),
@@ -344,7 +322,6 @@ final class MainCoordinator {
         await loadApps()
         
         try? await Task.sleep(for: .seconds(0.2))
-        publishEvent(.operationCompleted)
     }
     
     func scanAppsInBackup(at path: String) async -> [BackupAppInfo] {
@@ -360,17 +337,6 @@ final class MainCoordinator {
         
         modify(&availableBackups[backupIndex].apps)
         selectedBackup = availableBackups[backupIndex]
-        
-        publishBackupUpdates()
-    }
-    
-    private func publishEvent(_ event: CoordinatorEvent) {
-        CoordinatorEventPublisher.shared.publish(event)
-    }
-    
-    private func publishBackupUpdates() {
-        publishEvent(.backupsUpdated(availableBackups))
-        publishEvent(.selectedBackupUpdated(selectedBackup))
     }
     
     private func enforceMinimumDuration(

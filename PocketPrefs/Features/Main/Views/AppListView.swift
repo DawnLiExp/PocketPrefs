@@ -38,7 +38,7 @@ struct AppListView: View {
                 mainViewModel: mainViewModel,
                 viewModel: viewModel,
                 selectedCount: viewModel.cachedSelectedCount,
-                totalCount: viewModel.apps.count,
+                totalCount: viewModel.totalCount,
             )
 
             // Only the scrollable list content needs to be non-draggable
@@ -71,12 +71,6 @@ struct AppListView: View {
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .onAppear {
-            viewModel.onAppear()
-        }
-        .onChange(of: viewModel.searchText) { _, newValue in
-            viewModel.handleSearchChange(newValue)
-        }
         .alert(
             deleteAlertTitle,
             isPresented: Binding(
@@ -130,7 +124,7 @@ struct AppListHeader: View {
     @FocusState private var isSearchFocused: Bool
 
     private var hasAvailableBackups: Bool {
-        !coordinator.currentBackups.isEmpty
+        !coordinator.availableBackups.isEmpty
     }
 
     var body: some View {
@@ -301,7 +295,7 @@ struct IncrementalBaseSelector: View {
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
 
             Menu {
-                ForEach(coordinator.currentBackups) { backup in
+                ForEach(coordinator.availableBackups) { backup in
                     Button {
                         mainViewModel.selectIncrementalBase(backup)
                     } label: {

@@ -32,7 +32,7 @@ struct DetailContainerView: View {
     }
 
     var body: some View {
-        if mainViewModel.isProcessing {
+        if mainViewModel.coordinator.isProcessing {
             ProgressView(
                 progress: mainViewModel.currentProgress,
                 messageHistory: mainViewModel.statusMessageHistory,
