@@ -20,11 +20,16 @@ final class MainViewModel {
     // MARK: - Incremental Backup State
 
     var isIncrementalMode = false
-    var incrementalBaseBackup: BackupInfo?
+    var incrementalBaseBackupID: BackupInfo.ID?
 
     // MARK: - Dependencies
 
     let coordinator: MainCoordinator
+
+    var incrementalBaseBackup: BackupInfo? {
+        guard let incrementalBaseBackupID else { return nil }
+        return coordinator.availableBackups.first(where: { $0.id == incrementalBaseBackupID })
+    }
 
     // MARK: - Initialization
 
@@ -60,18 +65,20 @@ final class MainViewModel {
     // MARK: - Incremental Base
 
     func selectIncrementalBase(_ backup: BackupInfo) {
-        incrementalBaseBackup = backup
+        incrementalBaseBackupID = backup.id
     }
 
     func syncIncrementalBase() {
         let backups = coordinator.availableBackups
 
-        if let current = incrementalBaseBackup, !backups.contains(current) {
-            incrementalBaseBackup = nil
+        if let currentID = incrementalBaseBackupID,
+           !backups.contains(where: { $0.id == currentID })
+        {
+            incrementalBaseBackupID = nil
         }
 
-        if incrementalBaseBackup == nil {
-            incrementalBaseBackup = backups.first
+        if incrementalBaseBackupID == nil {
+            incrementalBaseBackupID = backups.first?.id
         }
     }
 
