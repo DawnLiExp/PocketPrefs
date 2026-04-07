@@ -13,11 +13,10 @@ import SwiftUI
 @Observable
 final class MainCoordinator {
     // MARK: - Internal State
-    
-    private var apps: [AppConfig] = []
-    
+
     // MARK: - Published State
-    
+
+    private(set) var currentApps: [AppConfig] = []
     private(set) var availableBackups: [BackupInfo] = []
     private(set) var selectedBackup: BackupInfo?
     
@@ -51,10 +50,6 @@ final class MainCoordinator {
     
     // MARK: - Public Accessors
     
-    var currentApps: [AppConfig] {
-        apps
-    }
-
     var currentBackups: [BackupInfo] {
         availableBackups
     }
@@ -171,11 +166,11 @@ final class MainCoordinator {
             }
             
             guard !Task.isCancelled else { return }
-            apps = updatedApps
+            currentApps = updatedApps
             publishEvent(.appsUpdated(updatedApps))
         }
         
-        logger.info("Loaded \(self.apps.count) apps (\(self.userStore.customApps.count) custom)")
+        logger.info("Loaded \(self.currentApps.count) apps (\(self.userStore.customApps.count) custom)")
     }
     
     // MARK: - Icon Management
@@ -236,29 +231,29 @@ final class MainCoordinator {
     // MARK: - Selection Management
     
     func toggleSelection(for app: AppConfig) {
-        guard let index = apps.firstIndex(where: { $0.id == app.id }) else { return }
-        apps[index].isSelected.toggle()
-        publishEvent(.appsUpdated(apps))
+        guard let index = currentApps.firstIndex(where: { $0.id == app.id }) else { return }
+        currentApps[index].isSelected.toggle()
+        publishEvent(.appsUpdated(currentApps))
     }
     
     func selectAll() {
-        apps = apps.map { app in
+        currentApps = currentApps.map { app in
             var updated = app
             if updated.isInstalled {
                 updated.isSelected = true
             }
             return updated
         }
-        publishEvent(.appsUpdated(apps))
+        publishEvent(.appsUpdated(currentApps))
     }
     
     func deselectAll() {
-        apps = apps.map { app in
+        currentApps = currentApps.map { app in
             var updated = app
             updated.isSelected = false
             return updated
         }
-        publishEvent(.appsUpdated(apps))
+        publishEvent(.appsUpdated(currentApps))
     }
     
     func toggleRestoreSelection(for app: BackupAppInfo) {
@@ -304,7 +299,7 @@ final class MainCoordinator {
         ))
         
         let result = await backupService.performBackup(
-            apps: apps,
+            apps: currentApps,
             incrementalBase: incrementalBase,
             onProgress: onProgress,
         )

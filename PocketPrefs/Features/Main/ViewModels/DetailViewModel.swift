@@ -2,7 +2,7 @@
 //  DetailViewModel.swift
 //  PocketPrefs
 //
-//  Detail view state and operation management
+//  Detail view state and operation management.
 //
 
 import Foundation
@@ -14,35 +14,29 @@ import SwiftUI
 final class DetailViewModel {
     // MARK: - Cached Backup Selection State
 
-    // Stored properties so @Observable correctly tracks changes for view re-renders.
-    // Derived from coordinator state via direct event subscription.
-
-    var hasValidBackupSelection: Bool = false
+    var hasValidBackupSelection = false
 
     // MARK: - Cached Restore Selection State
 
     var selectedBackup: BackupInfo?
-    var selectedRestoreAppsCount: Int = 0
-    var uninstalledSelectedCount: Int = 0
-    var hasSelectedRestoreApps: Bool = false
+    var selectedRestoreAppsCount = 0
+    var uninstalledSelectedCount = 0
+    var hasSelectedRestoreApps = false
 
     // MARK: - Dependencies
 
     private weak var mainViewModel: MainViewModel?
-    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "DetailViewModel")
-
     @ObservationIgnored private var eventTask: Task<Void, Never>?
-
-    // MARK: - Initialization
 
     init(mainViewModel: MainViewModel) {
         self.mainViewModel = mainViewModel
-        // Sync initial state from coordinator
         syncFromCoordinator(mainViewModel.coordinator)
         subscribeToEvents()
     }
 
-    // MARK: - Event Subscription
+    deinit {
+        eventTask?.cancel()
+    }
 
     private func subscribeToEvents() {
         eventTask?.cancel()
@@ -67,15 +61,12 @@ final class DetailViewModel {
             updateRestoreState(from: backup)
 
         case .backupsUpdated:
-            // selectedBackup is kept in sync via selectedBackupUpdated
             break
 
         case .operationStarted, .operationCompleted:
             break
         }
     }
-
-    // MARK: - Private Helpers
 
     private func syncFromCoordinator(_ coordinator: MainCoordinator) {
         let apps = coordinator.currentApps
@@ -94,10 +85,10 @@ final class DetailViewModel {
             return
         }
 
-        let selected = backup.apps.filter(\.isSelected)
-        selectedRestoreAppsCount = selected.count
-        uninstalledSelectedCount = selected.count(where: { !$0.isCurrentlyInstalled })
-        hasSelectedRestoreApps = !selected.isEmpty
+        let selectedApps = backup.apps.filter(\.isSelected)
+        selectedRestoreAppsCount = selectedApps.count
+        uninstalledSelectedCount = selectedApps.count(where: { !$0.isCurrentlyInstalled })
+        hasSelectedRestoreApps = !selectedApps.isEmpty
     }
 
     // MARK: - Actions
