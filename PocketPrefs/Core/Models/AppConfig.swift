@@ -73,8 +73,11 @@ struct AppConfig: Identifiable, Codable, Equatable {
         lhs.id == rhs.id &&
             lhs.name == rhs.name &&
             lhs.configPaths == rhs.configPaths &&
+            lhs.isSelected == rhs.isSelected &&
+            lhs.isInstalled == rhs.isInstalled &&
             lhs.category == rhs.category &&
-            lhs.isUserAdded == rhs.isUserAdded
+            lhs.isUserAdded == rhs.isUserAdded &&
+            lhs.createdAt == rhs.createdAt
     }
 }
 

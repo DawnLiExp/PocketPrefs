@@ -24,7 +24,10 @@ struct BackupInfo: Identifiable, Hashable {
     }
 
     static func == (lhs: BackupInfo, rhs: BackupInfo) -> Bool {
-        lhs.id == rhs.id
+        lhs.path == rhs.path &&
+            lhs.name == rhs.name &&
+            lhs.date == rhs.date &&
+            lhs.apps == rhs.apps
     }
 }
 
@@ -48,7 +51,13 @@ struct BackupAppInfo: Identifiable, Hashable {
     }
 
     static func == (lhs: BackupAppInfo, rhs: BackupAppInfo) -> Bool {
-        lhs.id == rhs.id
+        lhs.name == rhs.name &&
+            lhs.path == rhs.path &&
+            lhs.bundleId == rhs.bundleId &&
+            lhs.configPaths == rhs.configPaths &&
+            lhs.isCurrentlyInstalled == rhs.isCurrentlyInstalled &&
+            lhs.isSelected == rhs.isSelected &&
+            lhs.category == rhs.category
     }
 }
 

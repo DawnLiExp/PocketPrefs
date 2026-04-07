@@ -191,7 +191,7 @@ final class MainCoordinator {
         availableBackups = backups
         
         if let currentSelected = selectedBackup,
-           !availableBackups.contains(currentSelected)
+           !availableBackups.contains(where: { $0.id == currentSelected.id })
         {
             selectedBackup = nil
         }
