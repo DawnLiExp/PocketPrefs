@@ -2,7 +2,15 @@
 //  RestoreListViewModel.swift
 //  PocketPrefs
 //
-//  Restore backup list state management with sorting and persistence
+//  Restore backup list state management with sorting and persistence.
+//
+//  Architecture note — two-tier property strategy:
+//  - filteredApps: computed property that reads selectedBackup directly.
+//    SwiftUI tracks selectedBackup changes and re-renders the list immediately.
+//  - cachedAllSelected / cachedSelectedCount / cachedTotalCount: stored properties
+//    updated synchronously in action methods and asynchronously on coordinator events.
+//    This guarantees Toggle and count text update in the same runloop as user actions
+//    and avoids visual desync on select-all (Bug 2).
 //
 
 import Foundation
@@ -12,12 +20,11 @@ import SwiftUI
 @MainActor
 @Observable
 final class RestoreListViewModel {
-    // MARK: - State
+    // MARK: - Stored State
 
     var selectedBackup: BackupInfo?
     var availableBackups: [BackupInfo] = []
     var searchText = ""
-    var filteredApps: [BackupAppInfo] = []
     var isRefreshing = false
     var cachedAllSelected = false
     var cachedSelectedCount = 0
@@ -35,7 +42,6 @@ final class RestoreListViewModel {
                 return
             }
             sortOptionRawValue = currentSortOption.rawValue
-            updateFilteredApps()
         }
     }
 
@@ -50,15 +56,26 @@ final class RestoreListViewModel {
         [.nameAscending, .nameDescending]
     }
 
+    var filteredApps: [BackupAppInfo] {
+        guard let backup = selectedBackup else { return [] }
+        let source = backup.apps
+        let filtered: [BackupAppInfo] = if searchText.isEmpty {
+            source
+        } else {
+            source.filter { app in
+                app.name.localizedCaseInsensitiveContains(searchText) ||
+                    app.bundleId.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        return currentSortOption.apply(to: filtered)
+    }
+
     // MARK: - Dependencies
 
     private weak var coordinator: MainCoordinator?
     private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "RestoreListViewModel")
 
     @ObservationIgnored private var eventTask: Task<Void, Never>?
-    @ObservationIgnored private var searchDebounceTask: Task<Void, Never>?
-
-    private static let searchDebounceDelay: Duration = .milliseconds(300)
 
     // MARK: - Initialization
 
@@ -73,7 +90,6 @@ final class RestoreListViewModel {
 
     deinit {
         eventTask?.cancel()
-        searchDebounceTask?.cancel()
     }
 
     // MARK: - Event Subscription
@@ -106,8 +122,7 @@ final class RestoreListViewModel {
         guard let coordinator else { return }
         availableBackups = coordinator.currentBackups
         selectedBackup = coordinator.currentSelectedBackup
-        updateFilteredApps()
-        updateCachedState()
+        refreshCachedState()
     }
 
     func onSettingsClose() {
@@ -115,17 +130,7 @@ final class RestoreListViewModel {
         coordinator.deselectAllRestoreApps()
         availableBackups = coordinator.currentBackups
         selectedBackup = coordinator.currentSelectedBackup
-        updateFilteredApps()
-    }
-
-    func handleSearchChange(_ newValue: String) {
-        searchDebounceTask?.cancel()
-        searchDebounceTask = Task {
-            try? await Task.sleep(for: Self.searchDebounceDelay)
-            guard !Task.isCancelled else { return }
-            updateFilteredApps()
-            updateCachedState()
-        }
+        refreshCachedState()
     }
 
     /// Set sort option — didSet handles persistence and list refresh.
@@ -136,6 +141,7 @@ final class RestoreListViewModel {
 
     func toggleSelection(for app: BackupAppInfo) {
         coordinator?.toggleRestoreSelection(for: app)
+        refreshCachedState(from: coordinator?.currentSelectedBackup?.apps ?? [])
     }
 
     func toggleSelectAll() {
@@ -146,6 +152,9 @@ final class RestoreListViewModel {
         } else {
             coordinator.selectAllRestoreApps()
         }
+
+        // Synchronous update — same runloop cycle as user action.
+        refreshCachedState(from: coordinator.currentSelectedBackup?.apps ?? [])
     }
 
     func selectBackup(_ backup: BackupInfo) {
@@ -176,8 +185,7 @@ final class RestoreListViewModel {
             selectedBackup = backups.first
         }
 
-        updateFilteredApps()
-        updateCachedState()
+        refreshCachedState()
     }
 
     private func handleSelectedBackupUpdate(_ backup: BackupInfo?) {
@@ -190,44 +198,31 @@ final class RestoreListViewModel {
             availableBackups[idx] = backup
         }
 
-        updateFilteredApps()
-        updateCachedState()
+        refreshCachedState()
     }
 
     // MARK: - Private Implementation
 
-    private func updateFilteredApps() {
-        guard let backup = selectedBackup else {
-            filteredApps = []
-            return
-        }
-
-        let filtered: [BackupAppInfo] = if searchText.isEmpty {
-            backup.apps
+    private func refreshCachedState(from apps: [BackupAppInfo]? = nil) {
+        let source = apps ?? selectedBackup?.apps ?? []
+        let visible: [BackupAppInfo] = if searchText.isEmpty {
+            source
         } else {
-            backup.apps.filter { app in
+            source.filter { app in
                 app.name.localizedCaseInsensitiveContains(searchText) ||
                     app.bundleId.localizedCaseInsensitiveContains(searchText)
             }
         }
 
-        filteredApps = currentSortOption.apply(to: filtered)
-    }
-
-    private func updateCachedState() {
-        guard let backup = selectedBackup else {
+        guard !visible.isEmpty else {
             cachedAllSelected = false
             cachedSelectedCount = 0
-            cachedTotalCount = 0
+            cachedTotalCount = visible.count
             return
         }
 
-        let filtered = backup.apps.filter {
-            searchText.isEmpty || $0.name.localizedCaseInsensitiveContains(searchText)
-        }
-
-        cachedTotalCount = filtered.count
-        cachedSelectedCount = filtered.count(where: { $0.isSelected })
-        cachedAllSelected = !filtered.isEmpty && filtered.allSatisfy(\.isSelected)
+        cachedTotalCount = visible.count
+        cachedSelectedCount = visible.count(where: \.isSelected)
+        cachedAllSelected = visible.allSatisfy(\.isSelected)
     }
 }
