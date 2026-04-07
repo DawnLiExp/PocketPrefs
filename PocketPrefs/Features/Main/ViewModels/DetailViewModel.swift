@@ -6,78 +6,46 @@
 //
 
 import Foundation
-import Observation
 import SwiftUI
 
 @MainActor
 @Observable
 final class DetailViewModel {
-    // MARK: - Cached Backup Selection State
+    // MARK: - Derived Backup Selection State
 
-    var hasValidBackupSelection = false
+    var hasValidBackupSelection: Bool {
+        guard let coordinator else { return false }
+        return coordinator.currentApps.contains { $0.isInstalled && $0.isSelected }
+    }
 
-    // MARK: - Cached Restore Selection State
+    // MARK: - Derived Restore Selection State
 
-    var selectedBackup: BackupInfo?
-    var selectedRestoreAppsCount = 0
-    var uninstalledSelectedCount = 0
-    var hasSelectedRestoreApps = false
+    var selectedBackup: BackupInfo? {
+        coordinator?.currentSelectedBackup
+    }
+
+    var selectedRestoreAppsCount: Int {
+        selectedBackup?.apps.count(where: \.isSelected) ?? 0
+    }
+
+    var uninstalledSelectedCount: Int {
+        selectedBackup?.apps.count(where: { $0.isSelected && !$0.isCurrentlyInstalled }) ?? 0
+    }
+
+    var hasSelectedRestoreApps: Bool {
+        selectedRestoreAppsCount > 0
+    }
 
     // MARK: - Dependencies
 
     private weak var mainViewModel: MainViewModel?
-    @ObservationIgnored private var isObservingCoordinator = false
 
     init(mainViewModel: MainViewModel) {
         self.mainViewModel = mainViewModel
-        refreshFromCoordinator()
-        startCoordinatorObservation()
     }
 
     private var coordinator: MainCoordinator? {
         mainViewModel?.coordinator
-    }
-
-    private func startCoordinatorObservation() {
-        guard !isObservingCoordinator else { return }
-        isObservingCoordinator = true
-        observeCoordinatorState()
-    }
-
-    private func observeCoordinatorState() {
-        withObservationTracking {
-            _ = coordinator?.currentApps
-            _ = coordinator?.selectedBackup
-        } onChange: { [weak self] in
-            Task { @MainActor [weak self] in
-                guard let self else { return }
-                self.refreshFromCoordinator()
-                self.observeCoordinatorState()
-            }
-        }
-    }
-
-    private func refreshFromCoordinator() {
-        let apps = coordinator?.currentApps ?? []
-        hasValidBackupSelection = apps.contains { $0.isSelected && $0.isInstalled }
-
-        let backup = coordinator?.selectedBackup
-        selectedBackup = backup
-        updateRestoreState(from: backup)
-    }
-
-    private func updateRestoreState(from backup: BackupInfo?) {
-        guard let backup else {
-            selectedRestoreAppsCount = 0
-            uninstalledSelectedCount = 0
-            hasSelectedRestoreApps = false
-            return
-        }
-
-        let selectedApps = backup.apps.filter(\.isSelected)
-        selectedRestoreAppsCount = selectedApps.count
-        uninstalledSelectedCount = selectedApps.count(where: { !$0.isCurrentlyInstalled })
-        hasSelectedRestoreApps = !selectedApps.isEmpty
     }
 
     // MARK: - Actions
