@@ -2,7 +2,9 @@
 //  CoordinatorEventPublisher.swift
 //  PocketPrefs
 //
-//  Event publisher for coordinator state changes
+//  Event publisher for coordinator state changes.
+//  Scheduled for full removal in Phase 3 (Step 6-7) of the refactoring.
+//  OperationEvent / OperationEventPublisher have been moved to OperationEventPublisher.swift.
 //
 
 import Foundation
@@ -18,89 +20,42 @@ enum CoordinatorEvent {
     case operationCompleted
 }
 
-// MARK: - Operation Events
-
-enum OperationEvent {
-    case performBackup
-    case performRestore
-}
-
 // MARK: - Coordinator Event Publisher
 
 @MainActor
 final class CoordinatorEventPublisher {
     static let shared = CoordinatorEventPublisher()
-    
+
     private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "CoordinatorEventPublisher")
     private var continuations: [UUID: AsyncStream<CoordinatorEvent>.Continuation] = [:]
-    
+
     private init() {}
-    
+
     // MARK: - Subscription
-    
+
     func subscribe() -> AsyncStream<CoordinatorEvent> {
         let id = UUID()
         let (stream, continuation) = AsyncStream<CoordinatorEvent>.makeStream(
             bufferingPolicy: .bufferingNewest(10),
         )
-        
+
         continuation.onTermination = { [weak self] _ in
             Task { @MainActor [weak self] in
                 self?.continuations.removeValue(forKey: id)
                 self?.logger.debug("Coordinator event subscriber unregistered: \(id)")
             }
         }
-        
+
         continuations[id] = continuation
         logger.debug("Coordinator event subscriber registered: \(id)")
-        
+
         return stream
     }
-    
+
     // MARK: - Publishing
-    
+
     func publish(_ event: CoordinatorEvent) {
         logger.debug("Broadcasting coordinator event to \(self.continuations.count) subscribers")
-        continuations.values.forEach { $0.yield(event) }
-    }
-}
-
-// MARK: - Operation Event Publisher
-
-@MainActor
-final class OperationEventPublisher {
-    static let shared = OperationEventPublisher()
-    
-    private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "OperationEventPublisher")
-    private var continuations: [UUID: AsyncStream<OperationEvent>.Continuation] = [:]
-    
-    private init() {}
-    
-    // MARK: - Subscription
-    
-    func subscribe() -> AsyncStream<OperationEvent> {
-        let id = UUID()
-        let (stream, continuation) = AsyncStream<OperationEvent>.makeStream(
-            bufferingPolicy: .bufferingNewest(5),
-        )
-        
-        continuation.onTermination = { [weak self] _ in
-            Task { @MainActor [weak self] in
-                self?.continuations.removeValue(forKey: id)
-                self?.logger.debug("Operation event subscriber unregistered: \(id)")
-            }
-        }
-        
-        continuations[id] = continuation
-        logger.debug("Operation event subscriber registered: \(id)")
-        
-        return stream
-    }
-    
-    // MARK: - Publishing
-    
-    func publish(_ event: OperationEvent) {
-        logger.debug("Broadcasting operation event to \(self.continuations.count) subscribers")
         continuations.values.forEach { $0.yield(event) }
     }
 }

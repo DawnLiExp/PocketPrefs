@@ -74,9 +74,6 @@ struct AppListView: View {
         .onAppear {
             viewModel.onAppear()
         }
-        .onChange(of: viewModel.searchText) { _, newValue in
-            viewModel.handleSearchChange(newValue)
-        }
         .alert(
             deleteAlertTitle,
             isPresented: Binding(

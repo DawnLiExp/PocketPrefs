@@ -132,8 +132,11 @@ struct BackupManagementViewModelTests {
         vm.selectedDetailAppIds.insert("/tmp/backup-a/AppX")
         vm.pendingDeleteBackupId = "/tmp/backup-pending"
 
-        // BackupInfo.apps is empty so the internal Task (computeAppSizes) exits immediately
+        // IMPORTANT: detailBackup is a computed property derived from backups array.
+        // Must add backup to backups before calling selectDetailBackup, otherwise
+        // the computed property cannot find it and returns nil.
         let backup = BackupInfo(path: "/tmp/test-\(UUID().uuidString)", name: "TestBackup", date: .now)
+        vm.backups = [backup]
         vm.selectDetailBackup(backup)
 
         #expect(vm.detailBackup == backup)

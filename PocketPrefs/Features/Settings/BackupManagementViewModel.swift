@@ -19,8 +19,16 @@ final class BackupManagementViewModel {
     /// Left-column checkbox multi-selection (used for merge / batch delete).
     var selectedBackupIds: Set<String> = []
 
+    /// Backing ID for detailBackup — only the identifier is stored, not the value copy.
+    /// Computed property `detailBackup` always derives from `backups`, ensuring the
+    /// right-column UI reflects the latest app count after any mutation.
+    private var detailBackupId: String?
+
     /// Right-column detail target (independent from checkbox selection).
-    var detailBackup: BackupInfo?
+    /// Precondition: `backups` must be populated before this returns a non-nil value.
+    var detailBackup: BackupInfo? {
+        backups.first(where: { $0.id == detailBackupId }) ?? backups.first
+    }
 
     /// Right-column app-level multi-selection (used for batch delete).
     var selectedDetailAppIds: Set<String> = []
@@ -70,11 +78,14 @@ final class BackupManagementViewModel {
     func loadBackups() async {
         isLoading = true
 
-        let previousDetailId = detailBackup?.id
-
         backups = await backupService.scanBackups()
 
-        detailBackup = backups.first(where: { $0.id == previousDetailId }) ?? backups.first
+        // detailBackup is a computed property derived from backups.
+        // If detailBackupId still matches a backup, it is preserved automatically.
+        // On first load (detailBackupId == nil), falls back to backups.first via computed property.
+        if detailBackupId == nil {
+            detailBackupId = backups.first?.id
+        }
 
         selectedDetailAppIds.removeAll()
 
@@ -116,7 +127,7 @@ final class BackupManagementViewModel {
 
     /// Switches the right-column detail view; resets both pending-delete and app selection.
     func selectDetailBackup(_ backup: BackupInfo) {
-        detailBackup = backup
+        detailBackupId = backup.id
         pendingDeleteBackupId = nil
         selectedDetailAppIds.removeAll()
         Task { await computeAppSizes(for: backup) }

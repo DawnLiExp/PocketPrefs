@@ -2,7 +2,18 @@
 //  AppListViewModel.swift
 //  PocketPrefs
 //
-//  Backup app list state management with sorting and persistence
+//  Backup app list state management with sorting and persistence.
+//
+//  Architecture note — two-tier property strategy:
+//  - filteredApps / apps: computed properties that read coordinator directly.
+//    SwiftUI tracks coordinator.apps through these and re-renders the list immediately.
+//  - cachedAllSelected / cachedSelectedCount: stored properties updated synchronously
+//    from every action method (toggleSelectAll, toggleSelection) and on appsUpdated events.
+//    This guarantees the Toggle and count text in AppListHeader re-render in the same
+//    runloop cycle as the user action, avoiding the async-delay visual glitch (Bug 1).
+//    Using computed properties for these does NOT fix Bug 1 because the Toggle's Binding
+//    closure runs in Toggle's own observation context, not AppListHeader's body context,
+//    so AppListHeader never receives the SwiftUI invalidation signal.
 //
 
 import Foundation
@@ -12,14 +23,18 @@ import SwiftUI
 @MainActor
 @Observable
 final class AppListViewModel {
-    // MARK: - State
+    // MARK: - Stored: User Input
 
-    var apps: [AppConfig] = []
     var searchText = ""
-    var filteredApps: [AppConfig] = []
+
+    // MARK: - Stored: Toggle / Count State
+
+    //
+    // IMPORTANT: Must be updated synchronously in every mutating method.
+    // Do NOT convert to computed properties — see architecture note in file header.
+
     var cachedAllSelected = false
     var cachedSelectedCount = 0
-    var installedCount = 0
 
     // MARK: - Persistent Sort Option
 
@@ -29,7 +44,6 @@ final class AppListViewModel {
         didSet {
             guard oldValue != currentSortOption else { return }
             sortOptionRawValue = currentSortOption.rawValue
-            updateFilteredApps(source: apps, searchTerm: searchText)
         }
     }
 
@@ -37,21 +51,40 @@ final class AppListViewModel {
     @ObservationIgnored
     @AppStorage("backupSortOption") private var sortOptionRawValue: String = SortOption.nameAscending.rawValue
 
+    // MARK: - Computed: List Data
+
+    //
+    // Read coordinator.apps directly so ForEach always reflects the latest state
+    // without any intermediate copy or async hop.
+
+    var apps: [AppConfig] {
+        coordinator?.currentApps ?? []
+    }
+
+    var filteredApps: [AppConfig] {
+        let source = coordinator?.currentApps ?? []
+        let filtered: [AppConfig] = if searchText.isEmpty {
+            source
+        } else {
+            source.filter {
+                $0.name.localizedCaseInsensitiveContains(searchText)
+                    || $0.bundleId.localizedCaseInsensitiveContains(searchText)
+            }
+        }
+        return currentSortOption.apply(to: filtered)
+    }
+
     // MARK: - Dependencies
 
     private weak var coordinator: MainCoordinator?
     private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "AppListViewModel")
 
     @ObservationIgnored private var eventTask: Task<Void, Never>?
-    @ObservationIgnored private var searchDebounceTask: Task<Void, Never>?
-
-    private static let searchDebounceDelay: Duration = .milliseconds(300)
 
     // MARK: - Initialization
 
     init(coordinator: MainCoordinator) {
         self.coordinator = coordinator
-        // Restore persisted sort option without triggering didSet
         let saved = UserDefaults.standard.string(forKey: "backupSortOption") ?? ""
         self.currentSortOption = SortOption(rawValue: saved) ?? .nameAscending
         subscribeToEvents()
@@ -59,58 +92,46 @@ final class AppListViewModel {
 
     deinit {
         eventTask?.cancel()
-        searchDebounceTask?.cancel()
     }
 
     // MARK: - Event Subscription
+
+    //
+    // Subscribes only to appsUpdated — handles external app list changes
+    // (e.g., loadApps after settings close, app added/removed).
+    // User-initiated actions update cached state synchronously at the call site
+    // and do not rely on this path for immediate UI feedback.
 
     private func subscribeToEvents() {
         eventTask?.cancel()
         eventTask = Task { [weak self] in
             guard let self else { return }
-            let eventStream = CoordinatorEventPublisher.shared.subscribe()
-
-            for await event in eventStream {
+            for await event in CoordinatorEventPublisher.shared.subscribe() {
                 guard !Task.isCancelled else { break }
-
-                if case .appsUpdated(let updatedApps) = event {
-                    self.handleAppsUpdate(updatedApps)
+                if case .appsUpdated(let apps) = event {
+                    self.refreshCachedState(from: apps)
                 }
             }
         }
     }
 
+    // MARK: - Lifecycle
+
+    func onAppear() {
+        refreshCachedState(from: coordinator?.currentApps ?? [])
+    }
+
     // MARK: - Public Interface
 
-    /// Initialize view state
-    func onAppear() {
-        guard let coordinator else { return }
-        apps = coordinator.currentApps
-        updateFilteredApps(source: apps, searchTerm: searchText)
-        updateCachedState(apps: apps)
-    }
-
-    /// Handle search text changes with debouncing
-    func handleSearchChange(_ newValue: String) {
-        searchDebounceTask?.cancel()
-        searchDebounceTask = Task {
-            try? await Task.sleep(for: Self.searchDebounceDelay)
-            guard !Task.isCancelled else { return }
-            updateFilteredApps(source: apps, searchTerm: newValue)
-        }
-    }
-
-    /// Set sort option — didSet handles persistence and list refresh.
     func setSortOption(_ option: SortOption) {
         currentSortOption = option
     }
 
-    /// Toggle selection for specific app
     func toggleSelection(for app: AppConfig) {
         coordinator?.toggleSelection(for: app)
+        refreshCachedState(from: coordinator?.currentApps ?? [])
     }
 
-    /// Toggle all app selection state
     func toggleSelectAll() {
         guard let coordinator else { return }
         if cachedAllSelected {
@@ -118,46 +139,19 @@ final class AppListViewModel {
         } else {
             coordinator.selectAll()
         }
+        // Synchronous update — same runloop cycle as the user action.
+        refreshCachedState(from: coordinator.currentApps)
     }
 
-    /// Delete app — routes to coordinator which handles preset vs custom logic.
     func deleteApp(_ app: AppConfig) {
         coordinator?.deleteApp(app)
     }
 
-    // MARK: - Event Handlers
+    // MARK: - Private
 
-    @ObservationIgnored private var lastAppsUpdate: Date?
-
-    private func handleAppsUpdate(_ updatedApps: [AppConfig]) {
-        if let last = lastAppsUpdate, Date().timeIntervalSince(last) < 0.1 {
-            return
-        }
-        lastAppsUpdate = Date()
-        apps = updatedApps
-        updateFilteredApps(source: apps, searchTerm: searchText)
-        updateCachedState(apps: apps)
-    }
-
-    // MARK: - Private Implementation
-
-    private func updateFilteredApps(source: [AppConfig], searchTerm: String) {
-        let filtered: [AppConfig] = if searchTerm.isEmpty {
-            source
-        } else {
-            source.filter { app in
-                app.name.localizedCaseInsensitiveContains(searchTerm) ||
-                    app.bundleId.localizedCaseInsensitiveContains(searchTerm)
-            }
-        }
-
-        filteredApps = currentSortOption.apply(to: filtered)
-    }
-
-    private func updateCachedState(apps: [AppConfig]) {
-        let installedApps = apps.filter(\.isInstalled)
-        installedCount = installedApps.count
-        cachedAllSelected = !installedApps.isEmpty && installedApps.allSatisfy(\.isSelected)
-        cachedSelectedCount = apps.count(where: { $0.isSelected })
+    private func refreshCachedState(from apps: [AppConfig]) {
+        let installed = apps.filter(\.isInstalled)
+        cachedAllSelected = !installed.isEmpty && installed.allSatisfy(\.isSelected)
+        cachedSelectedCount = apps.count(where: \.isSelected)
     }
 }
