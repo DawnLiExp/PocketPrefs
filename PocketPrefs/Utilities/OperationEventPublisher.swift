@@ -3,8 +3,7 @@
 //  PocketPrefs
 //
 //  Event publisher for user-initiated backup and restore commands.
-//  Distinct from CoordinatorEventPublisher (state sync): this publisher carries
-//  imperative commands, not state snapshots.
+//  This publisher carries imperative commands, not state snapshots.
 //
 
 import Foundation

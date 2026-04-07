@@ -6,7 +6,7 @@
 //
 
 import Foundation
-import os.log
+import Observation
 import SwiftUI
 
 @MainActor
@@ -26,53 +26,42 @@ final class DetailViewModel {
     // MARK: - Dependencies
 
     private weak var mainViewModel: MainViewModel?
-    @ObservationIgnored private var eventTask: Task<Void, Never>?
+    @ObservationIgnored private var isObservingCoordinator = false
 
     init(mainViewModel: MainViewModel) {
         self.mainViewModel = mainViewModel
-        syncFromCoordinator(mainViewModel.coordinator)
-        subscribeToEvents()
+        refreshFromCoordinator()
+        startCoordinatorObservation()
     }
 
-    deinit {
-        eventTask?.cancel()
+    private var coordinator: MainCoordinator? {
+        mainViewModel?.coordinator
     }
 
-    private func subscribeToEvents() {
-        eventTask?.cancel()
-        eventTask = Task { [weak self] in
-            guard let self else { return }
-            let stream = CoordinatorEventPublisher.shared.subscribe()
+    private func startCoordinatorObservation() {
+        guard !isObservingCoordinator else { return }
+        isObservingCoordinator = true
+        observeCoordinatorState()
+    }
 
-            for await event in stream {
-                guard !Task.isCancelled else { break }
-                self.handleCoordinatorEvent(event)
+    private func observeCoordinatorState() {
+        withObservationTracking {
+            _ = coordinator?.currentApps
+            _ = coordinator?.selectedBackup
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.refreshFromCoordinator()
+                self.observeCoordinatorState()
             }
         }
     }
 
-    private func handleCoordinatorEvent(_ event: CoordinatorEvent) {
-        switch event {
-        case .appsUpdated(let apps):
-            hasValidBackupSelection = apps.contains { $0.isSelected && $0.isInstalled }
-
-        case .selectedBackupUpdated(let backup):
-            selectedBackup = backup
-            updateRestoreState(from: backup)
-
-        case .backupsUpdated:
-            break
-
-        case .operationStarted, .operationCompleted:
-            break
-        }
-    }
-
-    private func syncFromCoordinator(_ coordinator: MainCoordinator) {
-        let apps = coordinator.currentApps
+    private func refreshFromCoordinator() {
+        let apps = coordinator?.currentApps ?? []
         hasValidBackupSelection = apps.contains { $0.isSelected && $0.isInstalled }
 
-        let backup = coordinator.currentSelectedBackup
+        let backup = coordinator?.selectedBackup
         selectedBackup = backup
         updateRestoreState(from: backup)
     }

@@ -14,6 +14,7 @@
 //
 
 import Foundation
+import Observation
 import os.log
 import SwiftUI
 
@@ -74,8 +75,7 @@ final class RestoreListViewModel {
 
     private weak var coordinator: MainCoordinator?
     private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "RestoreListViewModel")
-
-    @ObservationIgnored private var eventTask: Task<Void, Never>?
+    @ObservationIgnored private var isObservingCoordinator = false
 
     // MARK: - Initialization
 
@@ -85,51 +85,21 @@ final class RestoreListViewModel {
         let saved = UserDefaults.standard.string(forKey: "restoreSortOption") ?? ""
         let restored = SortOption(rawValue: saved) ?? .nameAscending
         self.currentSortOption = [SortOption.nameAscending, .nameDescending].contains(restored) ? restored : .nameAscending
-        subscribeToEvents()
-    }
-
-    deinit {
-        eventTask?.cancel()
-    }
-
-    // MARK: - Event Subscription
-
-    private func subscribeToEvents() {
-        eventTask?.cancel()
-        eventTask = Task { [weak self] in
-            guard let self else { return }
-            let eventStream = CoordinatorEventPublisher.shared.subscribe()
-
-            for await event in eventStream {
-                guard !Task.isCancelled else { break }
-
-                switch event {
-                case .backupsUpdated(let backups):
-                    self.handleBackupsUpdate(backups)
-                case .selectedBackupUpdated(let backup):
-                    self.handleSelectedBackupUpdate(backup)
-                default:
-                    break
-                }
-            }
-        }
     }
 
     // MARK: - Public Interface
 
     /// Initialize view state
     func onAppear() {
-        guard let coordinator else { return }
-        availableBackups = coordinator.currentBackups
-        selectedBackup = coordinator.currentSelectedBackup
+        syncFromCoordinator()
         refreshCachedState()
+        startCoordinatorObservation()
     }
 
     func onSettingsClose() {
         guard let coordinator else { return }
         coordinator.deselectAllRestoreApps()
-        availableBackups = coordinator.currentBackups
-        selectedBackup = coordinator.currentSelectedBackup
+        syncFromCoordinator()
         refreshCachedState()
     }
 
@@ -172,36 +142,37 @@ final class RestoreListViewModel {
         isRefreshing = false
     }
 
-    // MARK: - Event Handlers
-
-    private func handleBackupsUpdate(_ backups: [BackupInfo]) {
-        availableBackups = backups
-
-        if let current = selectedBackup,
-           let updated = backups.first(where: { $0.id == current.id })
-        {
-            selectedBackup = updated
-        } else if let current = selectedBackup, !backups.contains(where: { $0.id == current.id }) {
-            selectedBackup = backups.first
-        }
-
-        refreshCachedState()
-    }
-
-    private func handleSelectedBackupUpdate(_ backup: BackupInfo?) {
-        // Use the incoming backup directly — it carries the latest isSelected state.
-        // Do NOT look up in availableBackups: that array may not yet reflect this change.
-        selectedBackup = backup
-
-        // Keep availableBackups in sync so future handleBackupsUpdate lookups are consistent.
-        if let backup, let idx = availableBackups.firstIndex(where: { $0.id == backup.id }) {
-            availableBackups[idx] = backup
-        }
-
-        refreshCachedState()
-    }
-
     // MARK: - Private Implementation
+
+    private func startCoordinatorObservation() {
+        guard !isObservingCoordinator else { return }
+        isObservingCoordinator = true
+        observeCoordinatorState()
+    }
+
+    private func observeCoordinatorState() {
+        withObservationTracking {
+            _ = coordinator?.currentBackups
+            _ = coordinator?.selectedBackup
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.syncFromCoordinator()
+                self.refreshCachedState()
+                self.observeCoordinatorState()
+            }
+        }
+    }
+
+    private func syncFromCoordinator() {
+        guard let coordinator else {
+            availableBackups = []
+            selectedBackup = nil
+            return
+        }
+        availableBackups = coordinator.currentBackups
+        selectedBackup = coordinator.selectedBackup
+    }
 
     private func refreshCachedState(from apps: [BackupAppInfo]? = nil) {
         let source = apps ?? selectedBackup?.apps ?? []

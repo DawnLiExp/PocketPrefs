@@ -17,6 +17,7 @@
 //
 
 import Foundation
+import Observation
 import os.log
 import SwiftUI
 
@@ -78,8 +79,7 @@ final class AppListViewModel {
 
     private weak var coordinator: MainCoordinator?
     private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "AppListViewModel")
-
-    @ObservationIgnored private var eventTask: Task<Void, Never>?
+    @ObservationIgnored private var isObservingCoordinator = false
 
     // MARK: - Initialization
 
@@ -87,38 +87,13 @@ final class AppListViewModel {
         self.coordinator = coordinator
         let saved = UserDefaults.standard.string(forKey: "backupSortOption") ?? ""
         self.currentSortOption = SortOption(rawValue: saved) ?? .nameAscending
-        subscribeToEvents()
-    }
-
-    deinit {
-        eventTask?.cancel()
-    }
-
-    // MARK: - Event Subscription
-
-    //
-    // Subscribes only to appsUpdated — handles external app list changes
-    // (e.g., loadApps after settings close, app added/removed).
-    // User-initiated actions update cached state synchronously at the call site
-    // and do not rely on this path for immediate UI feedback.
-
-    private func subscribeToEvents() {
-        eventTask?.cancel()
-        eventTask = Task { [weak self] in
-            guard let self else { return }
-            for await event in CoordinatorEventPublisher.shared.subscribe() {
-                guard !Task.isCancelled else { break }
-                if case .appsUpdated(let apps) = event {
-                    self.refreshCachedState(from: apps)
-                }
-            }
-        }
     }
 
     // MARK: - Lifecycle
 
     func onAppear() {
         refreshCachedState(from: coordinator?.currentApps ?? [])
+        startCoordinatorObservation()
     }
 
     // MARK: - Public Interface
@@ -148,6 +123,24 @@ final class AppListViewModel {
     }
 
     // MARK: - Private
+
+    private func startCoordinatorObservation() {
+        guard !isObservingCoordinator else { return }
+        isObservingCoordinator = true
+        observeCoordinatorApps()
+    }
+
+    private func observeCoordinatorApps() {
+        withObservationTracking {
+            _ = coordinator?.currentApps
+        } onChange: { [weak self] in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                self.refreshCachedState(from: self.coordinator?.currentApps ?? [])
+                self.observeCoordinatorApps()
+            }
+        }
+    }
 
     private func refreshCachedState(from apps: [AppConfig]) {
         let installed = apps.filter(\.isInstalled)

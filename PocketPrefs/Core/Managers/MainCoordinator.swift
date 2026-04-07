@@ -167,7 +167,6 @@ final class MainCoordinator {
             
             guard !Task.isCancelled else { return }
             currentApps = updatedApps
-            publishEvent(.appsUpdated(updatedApps))
         }
         
         logger.info("Loaded \(self.currentApps.count) apps (\(self.userStore.customApps.count) custom)")
@@ -200,14 +199,12 @@ final class MainCoordinator {
         if selectedBackup == nil, let firstBackup = availableBackups.first {
             selectBackup(firstBackup)
         }
-        
-        publishEvent(.backupsUpdated(backups))
+
         logger.info("Found \(self.availableBackups.count) backups")
     }
     
     func selectBackup(_ backup: BackupInfo) {
         selectedBackup = backup
-        publishEvent(.selectedBackupUpdated(backup))
     }
     
     func selectIncrementalBase(_ backup: BackupInfo) {
@@ -233,7 +230,6 @@ final class MainCoordinator {
     func toggleSelection(for app: AppConfig) {
         guard let index = currentApps.firstIndex(where: { $0.id == app.id }) else { return }
         currentApps[index].isSelected.toggle()
-        publishEvent(.appsUpdated(currentApps))
     }
     
     func selectAll() {
@@ -244,7 +240,6 @@ final class MainCoordinator {
             }
             return updated
         }
-        publishEvent(.appsUpdated(currentApps))
     }
     
     func deselectAll() {
@@ -253,7 +248,6 @@ final class MainCoordinator {
             updated.isSelected = false
             return updated
         }
-        publishEvent(.appsUpdated(currentApps))
     }
     
     func toggleRestoreSelection(for app: BackupAppInfo) {
@@ -290,9 +284,7 @@ final class MainCoordinator {
         onProgress: @escaping @Sendable (ProgressUpdate) async -> Void,
     ) async {
         let startTime = Date()
-        
-        publishEvent(.operationStarted)
-        
+
         await onProgress(ProgressUpdate(
             fraction: 0.0,
             message: String(localized: "Backup_Starting", defaultValue: "Starting configuration backup..."),
@@ -309,7 +301,6 @@ final class MainCoordinator {
         await scanBackups()
         
         try? await Task.sleep(for: .seconds(0.2))
-        publishEvent(.operationCompleted)
     }
     
     func performRestoreOperation(
@@ -319,11 +310,9 @@ final class MainCoordinator {
             logger.error("No backup selected for restore")
             return
         }
-        
+
         let startTime = Date()
-        
-        publishEvent(.operationStarted)
-        
+
         await onProgress(ProgressUpdate(
             fraction: 0.0,
             message: String(localized: "Restore_Starting", defaultValue: "Starting configuration restore..."),
@@ -339,7 +328,6 @@ final class MainCoordinator {
         await loadApps()
         
         try? await Task.sleep(for: .seconds(0.2))
-        publishEvent(.operationCompleted)
     }
     
     func scanAppsInBackup(at path: String) async -> [BackupAppInfo] {
@@ -355,17 +343,6 @@ final class MainCoordinator {
         
         modify(&availableBackups[backupIndex].apps)
         selectedBackup = availableBackups[backupIndex]
-        
-        publishBackupUpdates()
-    }
-    
-    private func publishEvent(_ event: CoordinatorEvent) {
-        CoordinatorEventPublisher.shared.publish(event)
-    }
-    
-    private func publishBackupUpdates() {
-        publishEvent(.backupsUpdated(availableBackups))
-        publishEvent(.selectedBackupUpdated(selectedBackup))
     }
     
     private func enforceMinimumDuration(
