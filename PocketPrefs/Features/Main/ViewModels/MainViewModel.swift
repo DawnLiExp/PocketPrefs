@@ -22,38 +22,36 @@ final class MainViewModel {
     // MARK: - Incremental Backup State
     
     var isIncrementalMode = false
-    var incrementalBaseBackup: BackupInfo?
+    @ObservationIgnored private var _incrementalBaseBackupId: String?
+
+    var incrementalBaseBackup: BackupInfo? {
+        if let id = _incrementalBaseBackupId,
+           let matched = coordinator.currentBackups.first(where: { $0.id == id })
+        {
+            return matched
+        }
+        return coordinator.currentBackups.first
+    }
     
     // MARK: - Dependencies
     
     let coordinator: MainCoordinator
     @ObservationIgnored private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "MainViewModel")
     
-    @ObservationIgnored private var coordinatorEventTask: Task<Void, Never>?
     @ObservationIgnored private var operationEventTask: Task<Void, Never>?
     
     // MARK: - Initialization
     
     init() {
         self.coordinator = MainCoordinator()
-        subscribeToCoordinatorEvents()
         subscribeToOperationEvents()
     }
     
-    // MARK: - Event Subscriptions
-    
-    private func subscribeToCoordinatorEvents() {
-        coordinatorEventTask?.cancel()
-        coordinatorEventTask = Task { [weak self] in
-            guard let self else { return }
-            let eventStream = CoordinatorEventPublisher.shared.subscribe()
-            
-            for await event in eventStream {
-                guard !Task.isCancelled else { break }
-                await self.handleCoordinatorEvent(event)
-            }
-        }
+    deinit {
+        operationEventTask?.cancel()
     }
+    
+    // MARK: - Event Subscriptions
     
     private func subscribeToOperationEvents() {
         operationEventTask?.cancel()
@@ -70,24 +68,14 @@ final class MainViewModel {
     
     // MARK: - Event Handlers
     
-    private func handleCoordinatorEvent(_ event: CoordinatorEvent) async {
-        switch event {
-        case .appsUpdated:
-            break
-        case .backupsUpdated:
-            handleBackupsUpdate()
-        case .selectedBackupUpdated:
-            break
-        case .operationStarted:
-            isProcessing = true
-        case .operationCompleted:
+    private func handleOperationEvent(_ event: OperationEvent) async {
+        isProcessing = true
+        defer {
             isProcessing = false
             currentProgress = 0.0
             statusMessageHistory = []
         }
-    }
-    
-    private func handleOperationEvent(_ event: OperationEvent) async {
+
         switch event {
         case .performBackup:
             await coordinator.performBackupOperation(
@@ -104,22 +92,8 @@ final class MainViewModel {
             )
         }
     }
-    
+
     // MARK: - State Updates
-    
-    private func handleBackupsUpdate() {
-        let availableBackups = coordinator.currentBackups
-        
-        if let currentBase = incrementalBaseBackup,
-           !availableBackups.contains(currentBase)
-        {
-            incrementalBaseBackup = nil
-        }
-        
-        if incrementalBaseBackup == nil, let firstBackup = availableBackups.first {
-            incrementalBaseBackup = firstBackup
-        }
-    }
     
     private func updateProgress(_ update: ProgressUpdate) {
         currentProgress = update.fraction
@@ -141,7 +115,7 @@ final class MainViewModel {
     
     /// Select base backup for incremental operations
     func selectIncrementalBase(_ backup: BackupInfo) {
-        incrementalBaseBackup = backup
+        _incrementalBaseBackupId = backup.id
         coordinator.selectIncrementalBase(backup)
     }
     
