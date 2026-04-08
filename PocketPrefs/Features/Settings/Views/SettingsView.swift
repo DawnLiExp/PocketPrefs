@@ -103,7 +103,11 @@ struct SettingsView: View {
             searchDebouncer.updateApps(customAppManager.customApps, searchText: searchText)
         }
         .onDisappear {
-            SettingsEventPublisher.shared.publishDidClose()
+            let backupManagementVM = backupManagementViewModel
+            Task { @MainActor in
+                await backupManagementVM.waitForPendingMutations()
+                SettingsEventPublisher.shared.publishDidClose()
+            }
         }
     }
     

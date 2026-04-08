@@ -187,15 +187,16 @@ final class MainCoordinator {
     func scanBackups() async {
         let backups = await backupService.scanBackups()
         guard !Task.isCancelled else { return }
-        
+
+        let currentSelectedId = selectedBackup?.id
         availableBackups = backups
-        
-        if let currentSelected = selectedBackup,
-           !availableBackups.contains(where: { $0.id == currentSelected.id })
-        {
+
+        if let currentSelectedId {
+            selectedBackup = availableBackups.first(where: { $0.id == currentSelectedId })
+        } else {
             selectedBackup = nil
         }
-        
+
         if selectedBackup == nil, let firstBackup = availableBackups.first {
             selectBackup(firstBackup)
         }

@@ -72,6 +72,7 @@ final class BackupManagementViewModel {
     private let managementService = BackupManagementService()
     private let fileOps = FileOperationService.shared
     private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "BackupManagementViewModel")
+    @ObservationIgnored private var pendingMutationTasks: [UUID: Task<Void, Never>] = [:]
 
     // MARK: - Load
 
@@ -246,44 +247,70 @@ final class BackupManagementViewModel {
         await loadBackups()
     }
 
+    /// Waits until all tracked mutation tasks have completed.
+    func waitForPendingMutations() async {
+        while true {
+            let pendingTasks = Array(pendingMutationTasks.values)
+            guard !pendingTasks.isEmpty else { return }
+
+            for task in pendingTasks {
+                await task.value
+            }
+        }
+    }
+
     // MARK: - Private Helpers
 
+    private func runTrackedMutation(_ operation: @escaping @MainActor () async -> Void) {
+        let taskId = UUID()
+        let task = Task { @MainActor [weak self] in
+            defer { self?.pendingMutationTasks.removeValue(forKey: taskId) }
+            await operation()
+        }
+        pendingMutationTasks[taskId] = task
+    }
+
     private func executeDeleteDetailApps(_ toDelete: [BackupAppInfo]) {
-        Task {
-            isLoading = true
+        runTrackedMutation { [weak self] in
+            guard let self else { return }
+            self.isLoading = true
+            defer { self.isLoading = false }
+
             for app in toDelete {
-                try? await managementService.deleteAppFromBackup(app)
-                appSizeCache.removeValue(forKey: app.id)
+                try? await self.managementService.deleteAppFromBackup(app)
+                self.appSizeCache.removeValue(forKey: app.id)
             }
-            selectedDetailAppIds.removeAll()
-            isLoading = false
-            await loadBackups()
+            self.selectedDetailAppIds.removeAll()
+            await self.loadBackups()
         }
     }
 
     private func executeBatchDeleteBackups(_ toDelete: [BackupInfo]) {
-        Task {
-            isLoading = true
+        runTrackedMutation { [weak self] in
+            guard let self else { return }
+            self.isLoading = true
+            defer { self.isLoading = false }
+
             for backup in toDelete {
-                try? await managementService.deleteBackup(backup)
-                backupSizeCache.removeValue(forKey: backup.id)
+                try? await self.managementService.deleteBackup(backup)
+                self.backupSizeCache.removeValue(forKey: backup.id)
             }
-            isLoading = false
-            await loadBackups()
+            await self.loadBackups()
         }
     }
 
     private func executeMerge(_ toMerge: [BackupInfo]) {
-        Task {
-            isMerging = true
+        runTrackedMutation { [weak self] in
+            guard let self else { return }
+            self.isMerging = true
+            defer { self.isMerging = false }
+
             do {
-                _ = try await managementService.mergeBackups(toMerge)
-                isMerging = false
-                await loadBackups()
+                _ = try await self.managementService.mergeBackups(toMerge)
+                await self.loadBackups()
             } catch {
-                isMerging = false
-                logger.error("Merge failed: \(error)")
-                pendingAlert = AlertModel.info(
+                self.logger.error("Merge failed: \(error)")
+                self.pendingAlert = AlertModel.info(
                     title: String(localized: "Error"),
                     message: error.localizedDescription
                 )
