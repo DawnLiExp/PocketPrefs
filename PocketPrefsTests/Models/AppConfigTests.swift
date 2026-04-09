@@ -24,10 +24,22 @@ struct AppConfigTests {
         #expect(a == b)
     }
 
-    @Test("Equatable：相同 bundleId 的两次 init 视为相等（确定性 id）")
+    @Test("Equatable：相同 bundleId 且 createdAt 一致时相等（确定性 id）")
     func equalityDeterministicId() {
-        let a = AppConfig(name: "Git", bundleId: "git", configPaths: ["~/.gitconfig"])
-        let b = AppConfig(name: "Git", bundleId: "git", configPaths: ["~/.gitconfig"])
+        let fixedDate = Date(timeIntervalSince1970: 1_700_000_000)
+        let a = AppConfig(
+            name: "Git",
+            bundleId: "git",
+            configPaths: ["~/.gitconfig"],
+            createdAt: fixedDate
+        )
+        let b = AppConfig(
+            name: "Git",
+            bundleId: "git",
+            configPaths: ["~/.gitconfig"],
+            createdAt: fixedDate
+        )
+        #expect(a.id == b.id)
         #expect(a == b)
     }
 

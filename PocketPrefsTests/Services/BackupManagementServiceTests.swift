@@ -53,6 +53,37 @@ struct BackupManagementServiceTests {
         return info
     }
 
+    /// Creates a valid backup app directory that can be discovered by `scanAppsInBackup`.
+    private func makeValidBackupApp(
+        in backupURL: URL,
+        appName: String,
+        bundleId: String
+    ) throws -> BackupAppInfo {
+        let appURL = backupURL.appending(path: appName)
+        try FileManager.default.createDirectory(at: appURL, withIntermediateDirectories: true)
+
+        let config = AppConfig(
+            name: appName,
+            bundleId: bundleId,
+            configPaths: ["~/Library/Preferences/\(bundleId).plist"],
+            category: .custom,
+            isUserAdded: true,
+            createdAt: Date(timeIntervalSince1970: 1_700_000_000)
+        )
+        let data = try JSONEncoder().encode(config)
+        try data.write(to: appURL.appending(path: BackupService.Config.configFileName))
+
+        return BackupAppInfo(
+            name: appName,
+            path: appURL.path,
+            bundleId: bundleId,
+            configPaths: config.configPaths,
+            isCurrentlyInstalled: false,
+            isSelected: false,
+            category: .custom
+        )
+    }
+
     // MARK: - mergeBackups
 
     @Test("mergeBackups：相同 bundleId 保留较新版本（newest-wins）")
@@ -178,28 +209,43 @@ struct BackupManagementServiceTests {
 
     // MARK: - deleteAppFromBackup
 
-    @Test("deleteAppFromBackup：app 子目录被删除，父备份目录保留")
+    @Test("deleteAppFromBackup：删除最后一个 app 后，父备份目录也会被清理")
     func deleteAppFromBackup() async throws {
         let tempDir = try TempDirectory()
         defer { tempDir.cleanup() }
 
         let backupURL = tempDir.url.appending(path: "TestBackup")
-        let appURL    = backupURL.appending(path: "SomeApp")
-        try FileManager.default.createDirectory(at: appURL, withIntermediateDirectories: true)
-
-        let app = BackupAppInfo(
-            name: "SomeApp",
-            path: appURL.path,
-            bundleId: "com.some.app",
-            configPaths: [],
-            isCurrentlyInstalled: true,
-            isSelected: false,
-            category: .custom
-        )
+        try FileManager.default.createDirectory(at: backupURL, withIntermediateDirectories: true)
+        let app = try makeValidBackupApp(in: backupURL, appName: "SomeApp", bundleId: "com.some.app")
 
         try await service.deleteAppFromBackup(app)
 
-        #expect(!FileManager.default.fileExists(atPath: appURL.path))
+        #expect(!FileManager.default.fileExists(atPath: app.path))
+        #expect(!FileManager.default.fileExists(atPath: backupURL.path))
+    }
+
+    @Test("deleteAppFromBackup：备份内仍有其它 app 时，父备份目录保留")
+    func deleteAppFromBackupKeepsParentWhenOtherAppsRemain() async throws {
+        let tempDir = try TempDirectory()
+        defer { tempDir.cleanup() }
+
+        let backupURL = tempDir.url.appending(path: "TestBackupMulti")
+        try FileManager.default.createDirectory(at: backupURL, withIntermediateDirectories: true)
+
+        let appToDelete = try makeValidBackupApp(
+            in: backupURL,
+            appName: "AppToDelete",
+            bundleId: "com.test.delete"
+        )
+        _ = try makeValidBackupApp(
+            in: backupURL,
+            appName: "AppToKeep",
+            bundleId: "com.test.keep"
+        )
+
+        try await service.deleteAppFromBackup(appToDelete)
+
+        #expect(!FileManager.default.fileExists(atPath: appToDelete.path))
         #expect(FileManager.default.fileExists(atPath: backupURL.path))
     }
 }
