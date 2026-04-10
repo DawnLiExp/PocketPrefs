@@ -8,12 +8,12 @@
 import SwiftUI
 
 struct CustomBackupPicker: View {
-    var coordinator: MainCoordinator
     @Environment(\.colorScheme) var colorScheme
+    @Environment(MainCoordinator.self) private var coordinator
 
     var body: some View {
         Group {
-            if coordinator.availableBackups.isEmpty {
+            if coordinator.currentBackups.isEmpty {
                 Text("No_Backups_Found")
                     .font(DesignConstants.Typography.body)
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
@@ -35,7 +35,7 @@ struct CustomBackupPicker: View {
                         .foregroundColor(Color.App.primary.color(for: colorScheme))
 
                     Menu {
-                        ForEach(coordinator.availableBackups) { backup in
+                        ForEach(coordinator.currentBackups) { backup in
                             Button {
                                 coordinator.selectBackup(backup)
                             } label: {

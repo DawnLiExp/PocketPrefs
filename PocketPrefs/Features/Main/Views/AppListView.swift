@@ -8,14 +8,27 @@
 import SwiftUI
 
 struct AppListView: View {
-    var coordinator: MainCoordinator
-    var mainViewModel: MainViewModel
     @Binding var selectedApp: AppConfig?
     let currentMode: MainView.AppMode
+    @Environment(MainCoordinator.self) private var coordinator
+    @Environment(MainViewModel.self) private var mainViewModel
 
+    var body: some View {
+        AppListContent(
+            coordinator: coordinator,
+            mainViewModel: mainViewModel,
+            selectedApp: $selectedApp,
+            currentMode: currentMode,
+        )
+    }
+}
+
+private struct AppListContent: View {
+    let mainViewModel: MainViewModel
+    @Binding var selectedApp: AppConfig?
+    let currentMode: MainView.AppMode
     @State private var viewModel: AppListViewModel
     @State private var appPendingDeletion: AppConfig?
-    @Environment(\.colorScheme) var colorScheme
 
     init(
         coordinator: MainCoordinator,
@@ -23,7 +36,6 @@ struct AppListView: View {
         selectedApp: Binding<AppConfig?>,
         currentMode: MainView.AppMode,
     ) {
-        self.coordinator = coordinator
         self.mainViewModel = mainViewModel
         self._selectedApp = selectedApp
         self.currentMode = currentMode
@@ -34,7 +46,6 @@ struct AppListView: View {
         VStack(spacing: 0) {
             AppListHeader(
                 searchText: $viewModel.searchText,
-                coordinator: coordinator,
                 mainViewModel: mainViewModel,
                 viewModel: viewModel,
                 selectedCount: viewModel.cachedSelectedCount,
@@ -52,7 +63,6 @@ struct AppListView: View {
                                 AppListItem(
                                     app: app,
                                     isSelected: selectedApp?.id == app.id,
-                                    coordinator: coordinator,
                                     viewModel: viewModel,
                                     currentMode: currentMode,
                                     onDelete: { appPendingDeletion = app },
@@ -118,13 +128,13 @@ struct AppListView: View {
 
 struct AppListHeader: View {
     @Binding var searchText: String
-    var coordinator: MainCoordinator
     var mainViewModel: MainViewModel
     @Bindable var viewModel: AppListViewModel
     let selectedCount: Int
     let totalCount: Int
     @Environment(\.colorScheme) var colorScheme
     @FocusState private var isSearchFocused: Bool
+    @Environment(MainCoordinator.self) private var coordinator
 
     private var hasAvailableBackups: Bool {
         !coordinator.currentBackups.isEmpty
@@ -227,11 +237,7 @@ struct AppListHeader: View {
             }
 
             if mainViewModel.isIncrementalMode, hasAvailableBackups {
-                IncrementalBaseSelector(
-                    mainViewModel: mainViewModel,
-                    coordinator: coordinator,
-                    isRefreshing: .constant(false),
-                )
+                IncrementalBaseSelector(isRefreshing: .constant(false))
                 .padding(.top, 0)
             }
         }
@@ -285,11 +291,11 @@ struct IncrementalModeHelpPopover: View {
 }
 
 struct IncrementalBaseSelector: View {
-    var mainViewModel: MainViewModel
-    var coordinator: MainCoordinator
     @Binding var isRefreshing: Bool
     @Environment(\.colorScheme) var colorScheme
     @State private var localRefreshing = false
+    @Environment(MainCoordinator.self) private var coordinator
+    @Environment(MainViewModel.self) private var mainViewModel
 
     var body: some View {
         HStack(spacing: 8) {
@@ -385,7 +391,6 @@ struct BackupSearchEmptyState: View {
 struct AppListItem: View {
     let app: AppConfig
     let isSelected: Bool
-    let coordinator: MainCoordinator
     let viewModel: AppListViewModel
     let currentMode: MainView.AppMode
     let onDelete: () -> Void
@@ -393,6 +398,7 @@ struct AppListItem: View {
 
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
+    @Environment(MainCoordinator.self) private var coordinator
 
     private var isChecked: Bool {
         app.isSelected

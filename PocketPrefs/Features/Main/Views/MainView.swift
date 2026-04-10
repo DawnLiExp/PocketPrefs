@@ -123,16 +123,11 @@ struct MainView: View {
         switch currentMode {
         case .backup:
             AppListView(
-                coordinator: mainViewModel.coordinator,
-                mainViewModel: mainViewModel,
                 selectedApp: $selectedApp,
                 currentMode: currentMode,
             )
         case .restore:
-            RestoreListView(
-                coordinator: mainViewModel.coordinator,
-                selectedApp: $selectedApp,
-            )
+            RestoreListView()
         }
     }
     

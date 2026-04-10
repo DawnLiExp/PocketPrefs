@@ -8,23 +8,24 @@
 import SwiftUI
 
 struct RestoreListView: View {
-    var coordinator: MainCoordinator
-    @Binding var selectedApp: AppConfig?
+    @Environment(MainCoordinator.self) private var coordinator
 
+    var body: some View {
+        RestoreListContent(coordinator: coordinator)
+    }
+}
+
+private struct RestoreListContent: View {
     @State private var viewModel: RestoreListViewModel
     @State private var selectedBackupApp: BackupAppInfo?
-    @Environment(\.colorScheme) var colorScheme
 
-    init(coordinator: MainCoordinator, selectedApp: Binding<AppConfig?>) {
-        self.coordinator = coordinator
-        self._selectedApp = selectedApp
+    init(coordinator: MainCoordinator) {
         self._viewModel = State(wrappedValue: RestoreListViewModel(coordinator: coordinator))
     }
 
     var body: some View {
         VStack(spacing: 0) {
             RestoreListHeader(
-                coordinator: coordinator,
                 searchText: $viewModel.searchText,
                 viewModel: viewModel,
                 cachedSelectedCount: viewModel.cachedSelectedCount,
@@ -34,8 +35,7 @@ struct RestoreListView: View {
 
             // Only the scrollable list content needs to be non-draggable
             NonDraggableView {
-                RestoreListContent(
-                    coordinator: coordinator,
+                RestoreListScrollArea(
                     selectedBackupApp: $selectedBackupApp,
                     viewModel: viewModel,
                 )
@@ -58,7 +58,6 @@ struct RestoreListView: View {
 // MARK: - Header Components
 
 struct RestoreListHeader: View {
-    var coordinator: MainCoordinator
     @Binding var searchText: String
     @Bindable var viewModel: RestoreListViewModel
     let cachedSelectedCount: Int
@@ -72,7 +71,7 @@ struct RestoreListHeader: View {
                 .foregroundColor(Color.App.primary.color(for: colorScheme))
 
             HStack(spacing: 13) {
-                CustomBackupPicker(coordinator: coordinator)
+                CustomBackupPicker()
 
                 RefreshButton(
                     isRefreshing: $viewModel.isRefreshing,
@@ -222,11 +221,10 @@ struct RefreshButton: View {
 
 // MARK: - Content Area
 
-struct RestoreListContent: View {
-    var coordinator: MainCoordinator
+struct RestoreListScrollArea: View {
     @Binding var selectedBackupApp: BackupAppInfo?
     var viewModel: RestoreListViewModel
-    @Environment(\.colorScheme) var colorScheme
+    @Environment(MainCoordinator.self) private var coordinator
 
     var body: some View {
         Group {
@@ -240,7 +238,6 @@ struct RestoreListContent: View {
                                 RestoreAppItem(
                                     app: app,
                                     isSelected: selectedBackupApp?.id == app.id,
-                                    coordinator: coordinator,
                                     viewModel: viewModel,
                                 ) {
                                     withAnimation(DesignConstants.Animation.quick) {
@@ -311,11 +308,11 @@ struct RestoreEmptyState: View {
 struct RestoreAppItem: View {
     let app: BackupAppInfo
     let isSelected: Bool
-    var coordinator: MainCoordinator
     var viewModel: RestoreListViewModel
     let onTap: () -> Void
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
+    @Environment(MainCoordinator.self) private var coordinator
 
     private var isChecked: Bool {
         app.isSelected
