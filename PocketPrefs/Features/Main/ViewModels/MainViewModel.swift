@@ -42,8 +42,8 @@ final class MainViewModel {
     
     // MARK: - Initialization
     
-    init() {
-        self.coordinator = MainCoordinator()
+    init(coordinator: MainCoordinator) {
+        self.coordinator = coordinator
         subscribeToOperationEvents()
     }
     

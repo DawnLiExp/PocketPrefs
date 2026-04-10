@@ -31,7 +31,7 @@ struct PocketPrefsApp: App {
                 WindowBackgroundView()
                     .ignoresSafeArea(.all)
 
-                MainView()
+                MainSceneContainer()
             }
             .task {
                 logger.info("PocketPrefs initializing")
@@ -72,6 +72,6 @@ struct PocketPrefsApp: App {
 // MARK: - Preview
 
 #Preview {
-    MainView()
+    MainSceneContainer()
         .frame(width: 900, height: 600)
 }

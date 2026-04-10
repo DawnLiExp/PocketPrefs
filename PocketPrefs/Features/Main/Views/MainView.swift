@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct MainView: View {
-    @State private var mainViewModel = MainViewModel()
+    @Environment(MainViewModel.self) private var mainViewModel
     @State private var themeManager = ThemeManager.shared
     @State private var currentMode: AppMode = .backup
     @State private var selectedApp: AppConfig?
@@ -150,6 +150,6 @@ struct MainView: View {
 }
 
 #Preview {
-    MainView()
+    MainSceneContainer()
         .frame(width: 900, height: 600)
 }

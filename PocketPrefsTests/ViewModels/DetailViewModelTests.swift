@@ -82,10 +82,11 @@ struct DetailViewModelTests {
     // MARK: - Helpers
 
     private func makeMainViewModel() async -> MainViewModel {
-        let viewModel = MainViewModel()
+        let coordinator = MainCoordinator()
+        let viewModel = MainViewModel(coordinator: coordinator)
         // IMPORTANT: settle initial async bootstrap to avoid startup races in assertions.
-        await viewModel.coordinator.loadApps()
-        await viewModel.coordinator.scanBackups()
+        await coordinator.loadApps()
+        await coordinator.scanBackups()
         return viewModel
     }
 
