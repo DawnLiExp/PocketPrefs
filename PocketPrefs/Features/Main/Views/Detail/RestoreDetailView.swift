@@ -10,17 +10,13 @@ import SwiftUI
 // MARK: - RestorePlaceholderView
 
 struct RestorePlaceholderView: View {
-    var coordinator: MainCoordinator
     var viewModel: DetailViewModel
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         VStack(spacing: 0) {
             if viewModel.selectedBackup != nil {
-                RestoreDetailContent(
-                    coordinator: coordinator,
-                    viewModel: viewModel,
-                )
+                RestoreDetailContent(viewModel: viewModel)
             } else {
                 RestoreEmptyDetail()
             }
@@ -32,7 +28,6 @@ struct RestorePlaceholderView: View {
 // MARK: - RestoreDetailContent
 
 struct RestoreDetailContent: View {
-    var coordinator: MainCoordinator
     var viewModel: DetailViewModel
     @Environment(\.colorScheme) var colorScheme
 
@@ -50,8 +45,8 @@ struct RestoreDetailContent: View {
                                 .font(DesignConstants.Typography.title)
 
                             Text(String(localized: "Detail_Restore_Backup_App_Count", defaultValue: "\(backup.apps.count) apps"))
-                            .font(DesignConstants.Typography.caption)
-                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                                .font(DesignConstants.Typography.caption)
+                                .foregroundColor(Color.App.secondary.color(for: colorScheme))
                         }
 
                         Spacer()

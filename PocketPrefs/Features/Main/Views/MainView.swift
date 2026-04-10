@@ -8,7 +8,6 @@
 import SwiftUI
 
 struct MainView: View {
-    @Environment(MainViewModel.self) private var mainViewModel
     @State private var themeManager = ThemeManager.shared
     @State private var currentMode: AppMode = .backup
     @State private var selectedApp: AppConfig?
@@ -109,8 +108,6 @@ struct MainView: View {
 
             DetailContainerView(
                 selectedApp: selectedApp,
-                coordinator: mainViewModel.coordinator,
-                mainViewModel: mainViewModel,
                 currentMode: currentMode,
                 showingRestorePicker: $showingRestorePicker,
             )

@@ -9,11 +9,27 @@ import SwiftUI
 
 struct DetailContainerView: View {
     let selectedApp: AppConfig?
-    var coordinator: MainCoordinator
-    var mainViewModel: MainViewModel
     let currentMode: MainView.AppMode
     @Binding var showingRestorePicker: Bool
+    @Environment(MainCoordinator.self) private var coordinator
+    @Environment(MainViewModel.self) private var mainViewModel
 
+    var body: some View {
+        DetailContent(
+            selectedApp: selectedApp,
+            coordinator: coordinator,
+            mainViewModel: mainViewModel,
+            currentMode: currentMode,
+            showingRestorePicker: $showingRestorePicker,
+        )
+    }
+}
+
+private struct DetailContent: View {
+    let selectedApp: AppConfig?
+    let mainViewModel: MainViewModel
+    let currentMode: MainView.AppMode
+    @Binding var showingRestorePicker: Bool
     @State private var viewModel: DetailViewModel
 
     init(
@@ -24,11 +40,13 @@ struct DetailContainerView: View {
         showingRestorePicker: Binding<Bool>,
     ) {
         self.selectedApp = selectedApp
-        self.coordinator = coordinator
         self.mainViewModel = mainViewModel
         self.currentMode = currentMode
         self._showingRestorePicker = showingRestorePicker
-        self._viewModel = State(wrappedValue: DetailViewModel(mainViewModel: mainViewModel))
+        self._viewModel = State(wrappedValue: DetailViewModel(
+            coordinator: coordinator,
+            mainViewModel: mainViewModel
+        ))
     }
 
     var body: some View {
@@ -42,16 +60,15 @@ struct DetailContainerView: View {
             if let app = selectedApp {
                 AppDetailView(
                     app: app,
-                    coordinator: coordinator,
                     currentMode: currentMode,
                     showingRestorePicker: $showingRestorePicker,
                     viewModel: viewModel,
                 )
             } else {
-                BackupPlaceholderView(coordinator: coordinator, viewModel: viewModel)
+                BackupPlaceholderView(viewModel: viewModel)
             }
         } else {
-            RestorePlaceholderView(coordinator: coordinator, viewModel: viewModel)
+            RestorePlaceholderView(viewModel: viewModel)
         }
     }
 }

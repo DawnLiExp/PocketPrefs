@@ -11,7 +11,6 @@ import SwiftUI
 
 struct AppDetailView: View {
     let app: AppConfig
-    var coordinator: MainCoordinator
     let currentMode: MainView.AppMode
     @Binding var showingRestorePicker: Bool
     var viewModel: DetailViewModel
@@ -56,7 +55,6 @@ struct AppDetailView: View {
 // MARK: - BackupPlaceholderView
 
 struct BackupPlaceholderView: View {
-    var coordinator: MainCoordinator
     var viewModel: DetailViewModel
     @Environment(\.colorScheme) var colorScheme
 

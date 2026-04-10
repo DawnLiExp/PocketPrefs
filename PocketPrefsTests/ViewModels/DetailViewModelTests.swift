@@ -16,14 +16,13 @@ struct DetailViewModelTests {
 
     @Test("备份状态：全选后 hasValidBackupSelection 与 installed 集合一致")
     func backupSelectionDerivedFromCoordinatorApps() async {
-        let mainViewModel = await makeMainViewModel()
-        let detailViewModel = DetailViewModel(mainViewModel: mainViewModel)
+        let (coordinator, _, detailViewModel) = await makeSetup()
 
-        mainViewModel.coordinator.deselectAll()
+        coordinator.deselectAll()
         #expect(!detailViewModel.hasValidBackupSelection)
 
-        mainViewModel.coordinator.selectAll()
-        let hasInstalledApps = mainViewModel.coordinator.currentApps.contains(where: { $0.isInstalled })
+        coordinator.selectAll()
+        let hasInstalledApps = coordinator.currentApps.contains(where: { $0.isInstalled })
         #expect(detailViewModel.hasValidBackupSelection == hasInstalledApps)
     }
 
@@ -31,8 +30,7 @@ struct DetailViewModelTests {
 
     @Test("恢复状态：备份切换后已选数量/未安装数量/按钮可用态即时更新")
     func restoreSelectionDerivedFromSelectedBackup() async {
-        let mainViewModel = await makeMainViewModel()
-        let detailViewModel = DetailViewModel(mainViewModel: mainViewModel)
+        let (coordinator, _, detailViewModel) = await makeSetup()
 
         let partiallySelected = makeBackup(
             name: "Backup_Partial",
@@ -42,7 +40,7 @@ struct DetailViewModelTests {
                 makeRestoreApp(name: "AppC", isSelected: false, isInstalled: true),
             ]
         )
-        mainViewModel.coordinator.selectBackup(partiallySelected)
+        coordinator.selectBackup(partiallySelected)
 
         #expect(detailViewModel.selectedBackup?.id == partiallySelected.id)
         #expect(detailViewModel.selectedRestoreAppsCount == 2)
@@ -57,7 +55,7 @@ struct DetailViewModelTests {
                 makeRestoreApp(name: "AppC", isSelected: true, isInstalled: false),
             ]
         )
-        mainViewModel.coordinator.selectBackup(allSelected)
+        coordinator.selectBackup(allSelected)
 
         #expect(detailViewModel.selectedBackup?.id == allSelected.id)
         #expect(detailViewModel.selectedRestoreAppsCount == 3)
@@ -71,7 +69,7 @@ struct DetailViewModelTests {
                 makeRestoreApp(name: "AppB", isSelected: false, isInstalled: false),
             ]
         )
-        mainViewModel.coordinator.selectBackup(noneSelected)
+        coordinator.selectBackup(noneSelected)
 
         #expect(detailViewModel.selectedBackup?.id == noneSelected.id)
         #expect(detailViewModel.selectedRestoreAppsCount == 0)
@@ -81,13 +79,17 @@ struct DetailViewModelTests {
 
     // MARK: - Helpers
 
-    private func makeMainViewModel() async -> MainViewModel {
+    private func makeSetup() async -> (coordinator: MainCoordinator, mainViewModel: MainViewModel, detailViewModel: DetailViewModel) {
         let coordinator = MainCoordinator()
-        let viewModel = MainViewModel(coordinator: coordinator)
+        let mainViewModel = MainViewModel(coordinator: coordinator)
+        let detailViewModel = DetailViewModel(
+            coordinator: coordinator,
+            mainViewModel: mainViewModel
+        )
         // IMPORTANT: settle initial async bootstrap to avoid startup races in assertions.
         await coordinator.loadApps()
         await coordinator.scanBackups()
-        return viewModel
+        return (coordinator, mainViewModel, detailViewModel)
     }
 
     private func makeBackup(name: String, apps: [BackupAppInfo]) -> BackupInfo {

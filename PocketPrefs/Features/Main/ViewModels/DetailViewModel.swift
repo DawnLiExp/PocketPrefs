@@ -38,14 +38,12 @@ final class DetailViewModel {
 
     // MARK: - Dependencies
 
+    private weak var coordinator: MainCoordinator?
     private weak var mainViewModel: MainViewModel?
 
-    init(mainViewModel: MainViewModel) {
+    init(coordinator: MainCoordinator, mainViewModel: MainViewModel) {
+        self.coordinator = coordinator
         self.mainViewModel = mainViewModel
-    }
-
-    private var coordinator: MainCoordinator? {
-        mainViewModel?.coordinator
     }
 
     // MARK: - Actions

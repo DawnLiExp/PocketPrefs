@@ -35,7 +35,7 @@ final class MainViewModel {
     
     // MARK: - Dependencies
     
-    let coordinator: MainCoordinator
+    private let coordinator: MainCoordinator
     @ObservationIgnored private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "MainViewModel")
     
     @ObservationIgnored private var operationEventTask: Task<Void, Never>?
