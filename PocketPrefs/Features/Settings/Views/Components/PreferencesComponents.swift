@@ -17,11 +17,6 @@ struct AppearanceSection: View {
     var body: some View {
         @Bindable var themeManager = themeManager
         VStack(alignment: .leading, spacing: 16) {
-            Text("Settings_Appearance")
-                .font(DesignConstants.Typography.headline)
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                .padding(.horizontal, 4)
-            
             HStack {
                 Label(
                     "Menu_Theme",
@@ -67,17 +62,6 @@ struct LanguageSection: View {
     
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 8) {
-                Text("Settings_Language")
-                    .font(DesignConstants.Typography.headline)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                
-                Text("Settings_Language_Restart_Hint")
-                    .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme).opacity(0.7))
-            }
-            .padding(.horizontal, 4)
-            
             HStack {
                 Label(
                     "Settings_Language",
@@ -112,7 +96,7 @@ struct LanguageSection: View {
 // MARK: - Backup Location Section
 
 struct BackupLocationSection: View {
-    var preferencesManager: PreferencesManager
+    @Bindable var preferencesManager: PreferencesManager
     @Binding var showingDirectoryPicker: Bool
     @Environment(\.colorScheme) var colorScheme
     
@@ -169,6 +153,27 @@ struct BackupLocationSection: View {
                 .font(DesignConstants.Typography.headline)
             }
             .buttonStyle(SecondaryButtonStyle())
+            
+            Divider()
+            
+            HStack {
+                Label(
+                    "Preferences_Backup_Before_Restore",
+                    systemImage: "doc.on.doc",
+                )
+                .font(DesignConstants.Typography.body)
+                .foregroundColor(Color.App.primary.color(for: colorScheme))
+                
+                Spacer()
+                
+                Toggle("", isOn: $preferencesManager.createBackupBeforeRestore)
+                    .toggleStyle(.switch)
+                    .labelsHidden()
+            }
+            
+            Text("Preferences_Backup_Before_Restore_Hint")
+                .font(DesignConstants.Typography.caption)
+                .foregroundColor(Color.App.secondary.color(for: colorScheme).opacity(0.7))
         }
         .padding(16)
         .sectionBackground()

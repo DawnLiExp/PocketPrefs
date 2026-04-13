@@ -37,6 +37,13 @@ final class PreferencesManager {
     var backupDirectory: String = ""
     var directoryStatus: DirectoryStatus = .unknown
     
+    @ObservationIgnored @AppStorage("createBackupBeforeRestore") private var storedCreateBackupBeforeRestore: Bool = true
+    var createBackupBeforeRestore: Bool = true {
+        didSet {
+            storedCreateBackupBeforeRestore = createBackupBeforeRestore
+        }
+    }
+    
     @ObservationIgnored private nonisolated let continuation: AsyncStream<PreferencesEvent>.Continuation
     @ObservationIgnored nonisolated let events: AsyncStream<PreferencesEvent>
     
@@ -53,6 +60,8 @@ final class PreferencesManager {
         } else {
             backupDirectory = storedBackupDirectory
         }
+        
+        createBackupBeforeRestore = storedCreateBackupBeforeRestore
         
         Task {
             await validateAndCreateDirectory()

@@ -319,8 +319,13 @@ final class MainCoordinator {
             message: String(localized: "Restore_Starting", defaultValue: "Starting configuration restore..."),
         ))
         
+        // IMPORTANT: snapshot the backup preference once before starting restore;
+        // mid-restore changes by the user must not affect this operation.
+        let shouldBackup = PreferencesManager.shared.createBackupBeforeRestore
+        
         let result = await restoreService.performRestore(
             backup: backup,
+            createBackupBeforeRestore: shouldBackup,
             onProgress: onProgress,
         )
         

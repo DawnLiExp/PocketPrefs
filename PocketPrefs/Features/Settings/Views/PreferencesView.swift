@@ -22,18 +22,10 @@ struct PreferencesView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
-                // General Section
-                VStack(alignment: .leading, spacing: 16) {
-                    Text("Preferences_General")
-                        .font(DesignConstants.Typography.headline)
-                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                        .padding(.horizontal, 4)
-                    
-                    BackupLocationSection(
-                        preferencesManager: preferencesManager,
-                        showingDirectoryPicker: $showingDirectoryPicker,
-                    )
-                }
+                BackupLocationSection(
+                    preferencesManager: preferencesManager,
+                    showingDirectoryPicker: $showingDirectoryPicker,
+                )
                 
                 AppearanceSection(themeManager: themeManager)
                 

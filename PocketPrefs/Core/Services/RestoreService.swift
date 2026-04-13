@@ -25,6 +25,7 @@ actor RestoreService {
     /// - Returns: Restore result with success/failure counts
     func performRestore(
         backup: BackupInfo,
+        createBackupBeforeRestore: Bool = true,
         onProgress: ProgressHandler? = nil,
     ) async -> RestoreResult {
         let selectedApps = backup.apps.filter(\.isSelected)
@@ -37,7 +38,7 @@ actor RestoreService {
         logger.info("Starting restore: \(selectedApps.count) apps")
         await onProgress?(.idle)
         
-        return await processRestore(apps: selectedApps, onProgress: onProgress)
+        return await processRestore(apps: selectedApps, createBackupBeforeRestore: createBackupBeforeRestore, onProgress: onProgress)
     }
     
     // MARK: - Private Implementation
@@ -45,6 +46,7 @@ actor RestoreService {
     /// Process restore with batch-controlled concurrency
     private func processRestore(
         apps: [BackupAppInfo],
+        createBackupBeforeRestore: Bool,
         onProgress: ProgressHandler?,
     ) async -> RestoreResult {
         var successCount = 0
@@ -59,7 +61,7 @@ actor RestoreService {
             await withTaskGroup(of: RestoreTaskResult.self) { group in
                 for app in batch {
                     group.addTask {
-                        await self.restoreSingleApp(app)
+                        await self.restoreSingleApp(app, createBackupBeforeRestore: createBackupBeforeRestore)
                     }
                 }
                 
@@ -94,9 +96,9 @@ actor RestoreService {
         )
     }
     
-    private func restoreSingleApp(_ app: BackupAppInfo) async -> RestoreTaskResult {
+    private func restoreSingleApp(_ app: BackupAppInfo, createBackupBeforeRestore: Bool) async -> RestoreTaskResult {
         do {
-            try await restoreConfigFiles(for: app)
+            try await restoreConfigFiles(for: app, createBackupBeforeRestore: createBackupBeforeRestore)
             return RestoreTaskResult(appName: app.name, outcome: .success(()))
         } catch {
             let wrappedError = AppError.restoreFailed(
@@ -108,13 +110,14 @@ actor RestoreService {
     }
     
     /// Restore all config files concurrently
-    private func restoreConfigFiles(for app: BackupAppInfo) async throws {
+    private func restoreConfigFiles(for app: BackupAppInfo, createBackupBeforeRestore: Bool) async throws {
         try await withThrowingTaskGroup(of: Void.self) { group in
             for originalPath in app.configPaths {
                 group.addTask {
                     try await self.restoreSingleConfigFile(
                         originalPath: originalPath,
                         backupRoot: app.path,
+                        createBackupBeforeRestore: createBackupBeforeRestore,
                     )
                 }
             }
@@ -126,6 +129,7 @@ actor RestoreService {
     private func restoreSingleConfigFile(
         originalPath: String,
         backupRoot: String,
+        createBackupBeforeRestore: Bool,
     ) async throws {
         let expandedPath = NSString(string: originalPath).expandingTildeInPath
         let fileName = URL(fileURLWithPath: expandedPath).lastPathComponent
@@ -136,8 +140,10 @@ actor RestoreService {
             return
         }
         
-        // Backup existing file before overwriting
-        try await fileOps.backupExistingFile(expandedPath)
+        // Backup existing file before overwriting (if enabled)
+        if createBackupBeforeRestore {
+            try await fileOps.backupExistingFile(expandedPath)
+        }
         try await fileOps.copyFile(from: sourcePath, to: expandedPath)
     }
     

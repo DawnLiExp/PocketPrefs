@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "" : {
+
+    },
     "%lld%%" : {
       "shouldTranslate" : false
     },
@@ -1566,6 +1569,38 @@
         }
       }
     },
+    "Preferences_Backup_Before_Restore" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Create old-config backup before restore"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复前备份旧配置"
+          }
+        }
+      }
+    },
+    "Preferences_Backup_Before_Restore_Hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When disabled, restore will overwrite current config without creating a backup"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭后，恢复将直接覆盖当前配置，不再生成旧配置备份"
+          }
+        }
+      }
+    },
     "Preferences_Backup_Location" : {
       "localizations" : {
         "en" : {
@@ -1611,23 +1646,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "路径存在但不是目录"
-          }
-        }
-      }
-    },
-    "Preferences_General" : {
-      "comment" : "Preferences Section",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "General"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "通用"
           }
         }
       }
@@ -2151,23 +2169,6 @@
         }
       }
     },
-    "Settings_Appearance" : {
-      "comment" : "Appearance & Language Settings",
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "Appearance"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "外观设置"
-          }
-        }
-      }
-    },
     "Settings_Apps_Count" : {
       "localizations" : {
         "en" : {
@@ -2348,22 +2349,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "语言选择"
-          }
-        }
-      }
-    },
-    "Settings_Language_Restart_Hint" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "(Restart to apply)"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "(需重启应用)"
           }
         }
       }
