@@ -22,6 +22,10 @@ struct DetailContainerView: View {
             currentMode: currentMode,
             showingRestorePicker: $showingRestorePicker,
         )
+        .transaction { transaction in
+            // IMPORTANT: detail content must not inherit selection animations; animating text/layout changes causes visible ghosting when switching apps.
+            transaction.animation = nil
+        }
     }
 }
 

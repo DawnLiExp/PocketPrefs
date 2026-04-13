@@ -67,9 +67,7 @@ private struct AppListContent: View {
                                     currentMode: currentMode,
                                     onDelete: { appPendingDeletion = app },
                                 ) {
-                                    withAnimation(DesignConstants.Animation.quick) {
-                                        selectedApp = app
-                                    }
+                                    selectedApp = app
                                 }
                             }
                         }
@@ -453,6 +451,7 @@ struct AppListItem: View {
         }
         .padding(11)
         .cardEffect(isSelected: isSelected)
+        .animation(DesignConstants.Animation.quick, value: isSelected)
         .onTapGesture(perform: onTap)
         .onHover { hovering in
             withAnimation(DesignConstants.Animation.quick) {

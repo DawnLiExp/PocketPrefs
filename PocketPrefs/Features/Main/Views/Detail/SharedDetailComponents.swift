@@ -105,7 +105,14 @@ struct ConfigPathItem: View {
         }
         .onAppear {
             Task {
-                fileSize = await FileOperationService.shared.calculateFileSize(at: path)
+                let calculatedSize = await FileOperationService.shared.calculateFileSize(at: path)
+                await MainActor.run {
+                    var transaction = Transaction(animation: nil)
+                    transaction.disablesAnimations = true
+                    withTransaction(transaction) {
+                        fileSize = calculatedSize
+                    }
+                }
             }
         }
     }
