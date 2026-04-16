@@ -166,9 +166,12 @@ struct BackupLocationSection: View {
                 
                 Spacer()
                 
-                Toggle("", isOn: $preferencesManager.createBackupBeforeRestore)
-                    .toggleStyle(.switch)
-                    .labelsHidden()
+                Toggle(isOn: $preferencesManager.createBackupBeforeRestore) {
+                    EmptyView()
+                }
+                .toggleStyle(.switch)
+                .labelsHidden()
+                .accessibilityLabel(Text("Preferences_Backup_Before_Restore"))
             }
             
             Text("Preferences_Backup_Before_Restore_Hint")

@@ -1,12 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "" : {
-
-    },
-    "%lld%%" : {
-      "shouldTranslate" : false
-    },
     "AppInfo_Error_Invalid_Bundle" : {
       "localizations" : {
         "en" : {

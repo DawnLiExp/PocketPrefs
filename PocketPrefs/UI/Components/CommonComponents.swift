@@ -105,7 +105,7 @@ struct CircularProgressView: View {
                 }
 
             // Center percentage number
-            Text("\(Int(progress * 100))%")
+            Text(progress, format: .percent.precision(.fractionLength(0)))
                 .font(.system(size: 38, weight: .light, design: .rounded))
                 .foregroundColor(Color.App.accent.color(for: colorScheme))
                 .animation(.easeOut(duration: 0.3), value: progress)
