@@ -256,15 +256,18 @@ actor BackupService {
     
     private func backupSingleApp(_ app: AppConfig, to backupDir: String) async -> Result<Void, Error> {
         let appBackupDir = "\(backupDir)/\(sanitizeName(app.name))"
+        let backupNameMap = BackupService.buildBackupNameMap(app.configPaths)
         
         do {
             try await fileOps.createDirectory(at: appBackupDir)
             
             try await withThrowingTaskGroup(of: Void.self) { group in
                 for path in app.configPaths {
+                    let backupName = backupNameMap[path] ?? URL(fileURLWithPath: NSString(string: path).expandingTildeInPath).lastPathComponent
                     group.addTask {
                         await self.backupConfigFile(
                             path: path,
+                            backupName: backupName,
                             to: appBackupDir,
                         )
                     }
@@ -273,7 +276,7 @@ actor BackupService {
                 try await group.waitForAll()
             }
             
-            try await saveAppConfig(app, to: appBackupDir)
+            try await saveAppConfig(app, backupNameMap: backupNameMap, to: appBackupDir)
             
             return .success(())
         } catch {
@@ -281,13 +284,12 @@ actor BackupService {
         }
     }
     
-    private func backupConfigFile(path: String, to destinationDir: String) async {
+    private func backupConfigFile(path: String, backupName: String, to destinationDir: String) async {
         let expandedPath = NSString(string: path).expandingTildeInPath
         
         guard await fileOps.fileExists(at: expandedPath) else { return }
         
-        let fileName = URL(fileURLWithPath: expandedPath).lastPathComponent
-        let destPath = "\(destinationDir)/\(fileName)"
+        let destPath = "\(destinationDir)/\(backupName)"
         
         do {
             try await fileOps.copyFile(from: expandedPath, to: destPath)
@@ -296,10 +298,38 @@ actor BackupService {
         }
     }
     
-    private func saveAppConfig(_ app: AppConfig, to directory: String) async throws {
+    /// Private wrapper struct for serializing app config with backupEntries.
+    /// We do NOT modify AppConfig itself — backupEntries is backup-time metadata only.
+    private struct BackupAppConfig: Codable {
+        let name: String
+        let bundleId: String
+        let configPaths: [String]
+        let category: AppCategory
+        let isUserAdded: Bool
+        let createdAt: Date
+        let backupEntries: [BackupEntry]
+    }
+
+    private func saveAppConfig(_ app: AppConfig, backupNameMap: [String: String], to directory: String) async throws {
+        // Convert backupNameMap to [BackupEntry], maintaining configPaths order
+        let backupEntries: [BackupEntry] = app.configPaths.compactMap { path in
+            guard let storedName = backupNameMap[path] else { return nil }
+            return BackupEntry(originalPath: path, storedName: storedName)
+        }
+
+        let backupConfig = BackupAppConfig(
+            name: app.name,
+            bundleId: app.bundleId,
+            configPaths: app.configPaths,
+            category: app.category,
+            isUserAdded: app.isUserAdded,
+            createdAt: app.createdAt,
+            backupEntries: backupEntries
+        )
+
         let encoder = JSONEncoder()
         encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let configData = try encoder.encode(app)
+        let configData = try encoder.encode(backupConfig)
         let configURL = URL(fileURLWithPath: "\(directory)/\(Config.configFileName)")
         try configData.write(to: configURL)
     }
@@ -381,6 +411,12 @@ actor BackupService {
         return apps
     }
     
+    /// Lightweight wrapper to decode the optional `backupEntries` field from `app_config.json`.
+    /// Kept separate from `AppConfig` because `backupEntries` is backup-time metadata only.
+    private struct BackupEntriesWrapper: Decodable {
+        let backupEntries: [BackupEntry]?
+    }
+
     private func loadBackupApp(from appDir: String, at basePath: String) async -> BackupAppInfo? {
         let appPath = "\(basePath)/\(appDir)"
         let configPath = "\(appPath)/\(Config.configFileName)"
@@ -392,6 +428,9 @@ actor BackupService {
         do {
             let configData = try Data(contentsOf: URL(fileURLWithPath: configPath))
             let appConfig = try JSONDecoder().decode(AppConfig.self, from: configData)
+            
+            // Decode backupEntries separately — old backups without this field will decode as nil
+            let entries = try? JSONDecoder().decode(BackupEntriesWrapper.self, from: configData)
             
             let isInstalled = await fileOps.checkIfAppInstalled(
                 bundleId: appConfig.bundleId,
@@ -405,11 +444,37 @@ actor BackupService {
                 isCurrentlyInstalled: isInstalled,
                 isSelected: false,
                 category: appConfig.category,
+                backupEntries: entries?.backupEntries,
             )
         } catch {
             logger.error("Failed to read app config for \(appDir): \(error)")
             return nil
         }
+    }
+    
+    // MARK: - Backup Name Disambiguation
+    
+    /// Builds a mapping from each config path to a unique backup directory name.
+    /// When multiple paths share the same `lastPathComponent`, appends `_2`, `_3`, etc.
+    /// to disambiguate. Non-conflicting paths keep their original `lastPathComponent`.
+    static func buildBackupNameMap(_ configPaths: [String]) -> [String: String] {
+        var componentCounts: [String: Int] = [:]
+        var result: [String: String] = [:]
+
+        for path in configPaths {
+            let component = URL(fileURLWithPath: NSString(string: path).expandingTildeInPath).lastPathComponent
+
+            if let count = componentCounts[component] {
+                let newCount = count + 1
+                componentCounts[component] = newCount
+                result[path] = "\(component)_\(newCount)"
+            } else {
+                componentCounts[component] = 1
+                result[path] = component
+            }
+        }
+
+        return result
     }
     
     // MARK: - Helpers

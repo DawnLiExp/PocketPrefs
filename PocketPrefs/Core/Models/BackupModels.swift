@@ -31,6 +31,13 @@ struct BackupInfo: Identifiable, Hashable {
     }
 }
 
+// MARK: - Backup Entry (Path → StoredName Mapping)
+
+struct BackupEntry: Codable, Equatable {
+    let originalPath: String
+    let storedName: String
+}
+
 // MARK: - Backup App Information
 
 struct BackupAppInfo: Identifiable, Hashable {
@@ -45,6 +52,7 @@ struct BackupAppInfo: Identifiable, Hashable {
     var isCurrentlyInstalled: Bool
     var isSelected: Bool
     let category: AppCategory // Add category for icon retrieval
+    var backupEntries: [BackupEntry]?
 
     func hash(into hasher: inout Hasher) {
         hasher.combine(id)
@@ -57,7 +65,8 @@ struct BackupAppInfo: Identifiable, Hashable {
             lhs.configPaths == rhs.configPaths &&
             lhs.isCurrentlyInstalled == rhs.isCurrentlyInstalled &&
             lhs.isSelected == rhs.isSelected &&
-            lhs.category == rhs.category
+            lhs.category == rhs.category &&
+            lhs.backupEntries == rhs.backupEntries
     }
 }
 
