@@ -1584,13 +1584,61 @@
         "en" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "When disabled, restore will overwrite current config without creating a backup"
+            "value" : "When enabled, restore renames the current config to .pocketprefs_backup before replacing it"
           }
         },
         "zh-Hans" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "关闭后，恢复将直接覆盖当前配置，不再生成旧配置备份"
+            "value" : "开启后，恢复前会先将现有配置重命名为 .pocketprefs_backup 备份"
+          }
+        }
+      }
+    },
+    "Preferences_Backup_Before_Restore_Disable_Confirm" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn Off"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭"
+          }
+        }
+      }
+    },
+    "Preferences_Backup_Before_Restore_Disable_Message" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When turned off, restore replaces the current config directly and does not create a .pocketprefs_backup backup first. This change takes effect immediately."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭后，恢复操作将直接覆盖当前配置，不会先创建 .pocketprefs_backup 备份。该设置会立即生效。"
+          }
+        }
+      }
+    },
+    "Preferences_Backup_Before_Restore_Disable_Title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Turn off \"Create old-config backup before restore\"?"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "关闭“恢复前备份旧配置”？"
           }
         }
       }

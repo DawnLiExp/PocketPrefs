@@ -98,6 +98,8 @@ struct LanguageSection: View {
 struct BackupLocationSection: View {
     @Bindable var preferencesManager: PreferencesManager
     @Binding var showingDirectoryPicker: Bool
+    let backupBeforeRestore: Binding<Bool>
+    let onAttemptDisableBackupBeforeRestore: () -> Void
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -166,7 +168,7 @@ struct BackupLocationSection: View {
                 
                 Spacer()
                 
-                Toggle(isOn: $preferencesManager.createBackupBeforeRestore) {
+                Toggle(isOn: backupBeforeRestoreToggleBinding) {
                     EmptyView()
                 }
                 .toggleStyle(.switch)
@@ -186,6 +188,20 @@ struct BackupLocationSection: View {
         let path = preferencesManager.getBackupDirectory()
         guard FileManager.default.fileExists(atPath: path) else { return }
         NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path)
+    }
+
+    private var backupBeforeRestoreToggleBinding: Binding<Bool> {
+        Binding(
+            get: { backupBeforeRestore.wrappedValue },
+            set: { newValue in
+                guard newValue != backupBeforeRestore.wrappedValue else { return }
+                if newValue {
+                    backupBeforeRestore.wrappedValue = true
+                } else {
+                    onAttemptDisableBackupBeforeRestore()
+                }
+            }
+        )
     }
 }
 

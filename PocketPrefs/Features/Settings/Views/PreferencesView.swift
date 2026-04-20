@@ -13,6 +13,7 @@ struct PreferencesView: View {
     @State private var themeManager = ThemeManager.shared
     private var languageManager = LanguageManager.shared
     @State private var showingDirectoryPicker = false
+    @State private var showingDisableBackupBeforeRestoreAlert = false
     @State private var showingRestartAlert = false
     @State private var pendingLanguage: AppLanguage?
     @State private var languageChangeError: AppError?
@@ -25,6 +26,10 @@ struct PreferencesView: View {
                 BackupLocationSection(
                     preferencesManager: preferencesManager,
                     showingDirectoryPicker: $showingDirectoryPicker,
+                    backupBeforeRestore: backupBeforeRestoreBinding,
+                    onAttemptDisableBackupBeforeRestore: {
+                        showingDisableBackupBeforeRestoreAlert = true
+                    }
                 )
                 
                 AppearanceSection(themeManager: themeManager)
@@ -46,6 +51,19 @@ struct PreferencesView: View {
             Task {
                 await handleDirectorySelection(result)
             }
+        }
+        .alert(
+            String(localized: "Preferences_Backup_Before_Restore_Disable_Title"),
+            isPresented: $showingDisableBackupBeforeRestoreAlert,
+        ) {
+            Button(String(localized: "Preferences_Backup_Before_Restore_Disable_Confirm")) {
+                preferencesManager.createBackupBeforeRestore = false
+            }
+            Button(String(localized: "Common_Cancel"), role: .cancel) {
+                preferencesManager.createBackupBeforeRestore = true
+            }
+        } message: {
+            Text("Preferences_Backup_Before_Restore_Disable_Message")
         }
         .alert(
             String(localized: "Language_Restart_Title"),
@@ -105,6 +123,13 @@ struct PreferencesView: View {
         } catch {
             languageChangeError = .preferencesSaveFailed(error)
         }
+    }
+
+    private var backupBeforeRestoreBinding: Binding<Bool> {
+        Binding(
+            get: { preferencesManager.createBackupBeforeRestore },
+            set: { preferencesManager.createBackupBeforeRestore = $0 }
+        )
     }
     
     @MainActor
