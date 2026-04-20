@@ -111,12 +111,27 @@ actor RestoreService {
     
     /// Restore all config files concurrently
     private func restoreConfigFiles(for app: BackupAppInfo, createBackupBeforeRestore: Bool) async throws {
+        // Build entriesMap from backupEntries if available
+        var entriesMap: [String: String]? = nil
+        if let entries = app.backupEntries {
+            var map: [String: String] = [:]
+            for entry in entries {
+                map[entry.originalPath] = entry.storedName
+            }
+            entriesMap = map
+        }
+        
         try await withThrowingTaskGroup(of: Void.self) { group in
             for originalPath in app.configPaths {
+                let expandedPath = NSString(string: originalPath).expandingTildeInPath
+                let fallbackName = URL(fileURLWithPath: expandedPath).lastPathComponent
+                let backupName = entriesMap?[originalPath] ?? fallbackName
+                
                 group.addTask {
                     try await self.restoreSingleConfigFile(
                         originalPath: originalPath,
                         backupRoot: app.path,
+                        backupName: backupName,
                         createBackupBeforeRestore: createBackupBeforeRestore,
                     )
                 }
@@ -129,14 +144,20 @@ actor RestoreService {
     private func restoreSingleConfigFile(
         originalPath: String,
         backupRoot: String,
+        backupName: String,
         createBackupBeforeRestore: Bool,
     ) async throws {
         let expandedPath = NSString(string: originalPath).expandingTildeInPath
-        let fileName = URL(fileURLWithPath: expandedPath).lastPathComponent
-        let sourcePath = "\(backupRoot)/\(fileName)"
+        let fallbackName = URL(fileURLWithPath: expandedPath).lastPathComponent
+        
+        // Try backupName first; if that directory doesn't exist, fall back to lastPathComponent
+        var sourcePath = "\(backupRoot)/\(backupName)"
+        if backupName != fallbackName, !(await fileOps.fileExists(at: sourcePath)) {
+            sourcePath = "\(backupRoot)/\(fallbackName)"
+        }
         
         guard await fileOps.fileExists(at: sourcePath) else {
-            logger.debug("Config file not in backup: \(fileName)")
+            logger.debug("Config file not in backup: \(backupName)")
             return
         }
         
