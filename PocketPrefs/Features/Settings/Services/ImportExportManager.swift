@@ -50,7 +50,11 @@ final class ImportExportManager {
         panel.title = String(localized: "Export_Title")
         panel.message = exportTypeMessage
 
-        let response = await panel.beginSheetModal(for: NSApp.keyWindow!)
+        let response: NSApplication.ModalResponse = if let window = NSApp.keyWindow {
+            await panel.beginSheetModal(for: window)
+        } else {
+            panel.runModal()
+        }
         guard response == .OK, let url = panel.url else {
             logger.info("Export cancelled by user")
             return
@@ -93,7 +97,11 @@ final class ImportExportManager {
         panel.title = String(localized: "Import_Title")
         panel.message = String(localized: "Import_Message")
 
-        let response = await panel.beginSheetModal(for: NSApp.keyWindow!)
+        let response: NSApplication.ModalResponse = if let window = NSApp.keyWindow {
+            await panel.beginSheetModal(for: window)
+        } else {
+            panel.runModal()
+        }
         guard response == .OK, let url = panel.url else {
             logger.info("Import cancelled by user")
             return
