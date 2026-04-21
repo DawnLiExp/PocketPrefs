@@ -294,24 +294,34 @@ struct CustomAppsContent: View {
                     EmptyAppsListView(searchActive: !searchText.isEmpty, searchText: searchText)
                         .frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 8) {
-                            ForEach(filteredApps) { app in
-                                CustomAppListItem(
-                                    appId: app.id,
-                                    isSelected: customAppManager.selectedAppIds.contains(app.id),
-                                    isDetailSelected: customAppManager.selectedApp?.id == app.id,
-                                    onToggleSelection: {
-                                        customAppManager.toggleSelection(for: app.id)
-                                    },
-                                    onSelectForDetail: {
-                                        customAppManager.selectedApp = app
-                                    },
-                                    manager: customAppManager,
-                                )
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 8) {
+                                ForEach(filteredApps) { app in
+                                    CustomAppListItem(
+                                        appId: app.id,
+                                        isSelected: customAppManager.selectedAppIds.contains(app.id),
+                                        isDetailSelected: customAppManager.selectedApp?.id == app.id,
+                                        isNewlyAdded: customAppManager.newlyAddedAppId == app.id,
+                                        onToggleSelection: {
+                                            customAppManager.toggleSelection(for: app.id)
+                                        },
+                                        onSelectForDetail: {
+                                            customAppManager.selectedApp = app
+                                        },
+                                        manager: customAppManager,
+                                    )
+                                    .id(app.id)
+                                }
                             }
+                            .padding(12)
                         }
-                        .padding(12)
+                        .onChange(of: customAppManager.pendingRevealAppId) { _, appId in
+                            scrollToPendingReveal(appId, with: proxy)
+                        }
+                        .onChange(of: filteredApps.map(\.id)) { _, _ in
+                            scrollToPendingReveal(customAppManager.pendingRevealAppId, with: proxy)
+                        }
                     }
                 }
                 
@@ -359,5 +369,15 @@ struct CustomAppsContent: View {
                 customAppManager.removeSelectedApps()
             }
         )
+    }
+
+    private func scrollToPendingReveal(_ appId: String?, with proxy: ScrollViewProxy) {
+        guard let appId, filteredApps.contains(where: { $0.id == appId }) else { return }
+
+        withAnimation(DesignConstants.Animation.quick) {
+            proxy.scrollTo(appId, anchor: .center)
+        }
+
+        customAppManager.consumePendingRevealAppId(appId)
     }
 }

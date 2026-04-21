@@ -13,6 +13,7 @@ struct CustomAppListItem: View {
     let appId: String
     let isSelected: Bool
     let isDetailSelected: Bool
+    let isNewlyAdded: Bool
     let onToggleSelection: () -> Void
     let onSelectForDetail: () -> Void
     var manager: CustomAppManager
@@ -50,6 +51,14 @@ struct CustomAppListItem: View {
                             .lineLimit(1)
                         
                         Spacer(minLength: 8)
+
+                        if isNewlyAdded {
+                            StatusBadge(
+                                text: String(localized: "Settings_New_Badge", defaultValue: "New"),
+                                color: Color.App.info.color(for: colorScheme),
+                                style: .compact,
+                            )
+                        }
                         
                         if !app.configPaths.isEmpty {
                             Text(String(localized: "Settings_Paths_Count", defaultValue: "\(app.configPaths.count) paths"))
@@ -57,6 +66,7 @@ struct CustomAppListItem: View {
                                 .foregroundColor(Color.App.accent.color(for: colorScheme))
                         }
                     }
+                    .frame(minHeight: 18, alignment: .center)
                     
                     Text(app.bundleId)
                         .font(DesignConstants.Typography.caption)

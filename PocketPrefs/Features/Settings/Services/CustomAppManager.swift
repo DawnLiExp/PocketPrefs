@@ -16,6 +16,8 @@ final class CustomAppManager {
     var customApps: [AppConfig] = []
     var selectedApp: AppConfig?
     var selectedAppIds: Set<String> = []
+    var newlyAddedAppId: String?
+    var pendingRevealAppId: String?
     var isAddingApp = false
     var editingApp: AppConfig?
     
@@ -24,6 +26,8 @@ final class CustomAppManager {
     private let fileOps = FileOperationService.shared
     @ObservationIgnored
     private var eventTask: Task<Void, Never>?
+    @ObservationIgnored
+    private var clearNewlyAddedBadgeTask: Task<Void, Never>?
     
     init() {
         loadCustomApps()
@@ -50,6 +54,8 @@ final class CustomAppManager {
         case .appAdded(let app):
             syncFromStore()
             selectedApp = app
+            markAppAsNew(app.id)
+            pendingRevealAppId = app.id
             logger.info("App added: \(app.name)")
             
         case .appsRemoved(let removedIds):
@@ -91,6 +97,29 @@ final class CustomAppManager {
         syncFromStore()
         logger.info("Loaded \(self.customApps.count) custom apps")
     }
+
+    private func markAppAsNew(_ appId: String) {
+        clearNewlyAddedBadgeTask?.cancel()
+        newlyAddedAppId = appId
+
+        clearNewlyAddedBadgeTask = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(2))
+
+            guard !Task.isCancelled else { return }
+            self?.clearNewlyAddedAppIfNeeded(appId)
+        }
+    }
+
+    private func clearNewlyAddedAppIfNeeded(_ appId: String) {
+        guard newlyAddedAppId == appId else { return }
+        newlyAddedAppId = nil
+        clearNewlyAddedBadgeTask = nil
+    }
+
+    func consumePendingRevealAppId(_ appId: String) {
+        guard pendingRevealAppId == appId else { return }
+        pendingRevealAppId = nil
+    }
     
     // MARK: - App Management
     
@@ -119,6 +148,13 @@ final class CustomAppManager {
     }
     
     func removeSelectedApps() {
+        if let newlyAddedAppId, selectedAppIds.contains(newlyAddedAppId) {
+            self.newlyAddedAppId = nil
+        }
+        if let pendingRevealAppId, selectedAppIds.contains(pendingRevealAppId) {
+            self.pendingRevealAppId = nil
+        }
+
         userStore.removeApps(selectedAppIds)
         selectedAppIds.removeAll()
     }

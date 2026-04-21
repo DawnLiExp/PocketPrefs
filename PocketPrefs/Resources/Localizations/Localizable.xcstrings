@@ -1579,22 +1579,6 @@
         }
       }
     },
-    "Preferences_Backup_Before_Restore_Hint" : {
-      "localizations" : {
-        "en" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "When enabled, restore renames the current config to .pocketprefs_backup before replacing it"
-          }
-        },
-        "zh-Hans" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "开启后，恢复前会先将现有配置重命名为 .pocketprefs_backup 备份"
-          }
-        }
-      }
-    },
     "Preferences_Backup_Before_Restore_Disable_Confirm" : {
       "localizations" : {
         "en" : {
@@ -1639,6 +1623,22 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "关闭“恢复前备份旧配置”？"
+          }
+        }
+      }
+    },
+    "Preferences_Backup_Before_Restore_Hint" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "When enabled, restore renames the current config to .pocketprefs_backup before replacing it"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "开启后，恢复前会先将现有配置重命名为 .pocketprefs_backup 备份"
           }
         }
       }
@@ -2391,6 +2391,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "语言选择"
+          }
+        }
+      }
+    },
+    "Settings_New_Badge" : {
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "New"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "新"
           }
         }
       }
