@@ -74,7 +74,8 @@ struct RestoreListHeader: View {
                 CustomBackupPicker()
 
                 RefreshButton(
-                    isRefreshing: $viewModel.isRefreshing,
+                    isRefreshing: viewModel.isRefreshing,
+                    isEnabled: !viewModel.isRefreshing,
                     action: {
                         Task { @MainActor in
                             await viewModel.refreshBackups()
@@ -185,37 +186,6 @@ struct SearchFieldView: View {
                 ),
         )
         .animation(.easeInOut(duration: 0.15), value: isFocused)
-    }
-}
-
-struct RefreshButton: View {
-    @Binding var isRefreshing: Bool
-    let action: () -> Void
-    @Environment(\.colorScheme) var colorScheme
-
-    var body: some View {
-        Button(action: action) {
-            ZStack {
-                Color.clear
-                    .contentShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
-
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(Color.App.primary.color(for: colorScheme))
-                    .rotationEffect(.degrees(isRefreshing ? 360 : 0))
-                    .animation(
-                        isRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default,
-                        value: isRefreshing,
-                    )
-            }
-        }
-        .buttonStyle(PlainButtonStyle())
-        .frame(width: 32, height: 32)
-        .background(
-            Color.App.contentAreaBackground.color(for: colorScheme),
-        )
-        .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
-        .disabled(isRefreshing)
     }
 }
 

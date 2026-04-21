@@ -115,14 +115,13 @@ struct BackupListToolbar: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Button {
-                Task { await viewModel.refresh() }
-            } label: {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 13, weight: .medium))
-            }
-            .buttonStyle(PlainButtonStyle())
-            .disabled(viewModel.isLoading)
+            RefreshButton(
+                isRefreshing: viewModel.isRefreshing,
+                isEnabled: viewModel.canRefresh,
+                action: {
+                    Task { await viewModel.refresh() }
+                }
+            )
 
             Spacer()
 

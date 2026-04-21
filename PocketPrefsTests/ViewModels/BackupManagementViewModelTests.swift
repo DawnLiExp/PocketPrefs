@@ -62,6 +62,35 @@ struct BackupManagementViewModelTests {
         #expect(vm.canBatchDelete)
     }
 
+    // MARK: - canRefresh
+
+    @Test("canRefresh：默认状态为 true")
+    func canRefreshDefault() {
+        let vm = BackupManagementViewModel()
+        #expect(vm.canRefresh)
+    }
+
+    @Test("canRefresh：加载中为 false")
+    func canRefreshWhileLoading() {
+        let vm = BackupManagementViewModel()
+        vm.isLoading = true
+        #expect(!vm.canRefresh)
+    }
+
+    @Test("canRefresh：刷新中为 false")
+    func canRefreshWhileRefreshing() {
+        let vm = BackupManagementViewModel()
+        vm.isRefreshing = true
+        #expect(!vm.canRefresh)
+    }
+
+    @Test("canRefresh：合并中为 false")
+    func canRefreshWhileMerging() {
+        let vm = BackupManagementViewModel()
+        vm.isMerging = true
+        #expect(!vm.canRefresh)
+    }
+
     // MARK: - selectedCount / selectedDetailCount
 
     @Test("selectedCount 与 selectedBackupIds.count 一致")

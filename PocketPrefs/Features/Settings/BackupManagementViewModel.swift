@@ -46,6 +46,7 @@ final class BackupManagementViewModel {
     var appSizeCache: [String: String] = [:]
 
     var isLoading = false
+    var isRefreshing = false
     var isMerging = false
 
     // MARK: - Computed
@@ -64,6 +65,10 @@ final class BackupManagementViewModel {
 
     var selectedDetailCount: Int {
         selectedDetailAppIds.count
+    }
+
+    var canRefresh: Bool {
+        !isLoading && !isRefreshing && !isMerging
     }
 
     // MARK: - Dependencies
@@ -244,7 +249,21 @@ final class BackupManagementViewModel {
     // MARK: - Refresh
 
     func refresh() async {
+        guard canRefresh else { return }
+
+        isRefreshing = true
+        let startedAt = Date()
+        defer { isRefreshing = false }
+
         await loadBackups()
+
+        let minimumFeedbackDuration = 0.35
+        let elapsed = Date().timeIntervalSince(startedAt)
+        let remaining = minimumFeedbackDuration - elapsed
+
+        if remaining > 0 {
+            try? await Task.sleep(nanoseconds: UInt64(remaining * 1_000_000_000))
+        }
     }
 
     /// Waits until all tracked mutation tasks have completed.

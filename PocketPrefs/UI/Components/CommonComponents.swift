@@ -239,3 +239,91 @@ struct ToolbarButtonStyle: ButtonStyle {
             }
     }
 }
+
+struct RefreshButton: View {
+    let isRefreshing: Bool
+    let isEnabled: Bool
+    let action: () -> Void
+    @Environment(\.colorScheme) private var colorScheme
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "arrow.clockwise")
+                .font(.system(size: 14, weight: .semibold))
+                .rotationEffect(.degrees(isRefreshing ? 360 : 0))
+                .animation(
+                    isRefreshing
+                        ? .linear(duration: 0.9).repeatForever(autoreverses: false)
+                        : DesignConstants.Animation.quick,
+                    value: isRefreshing
+                )
+                .frame(width: 32, height: 32)
+                .contentShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
+        }
+        .buttonStyle(RefreshButtonStyle(isRefreshing: isRefreshing))
+        .disabled(!isEnabled)
+        .accessibilityLabel(String(localized: "Common_Refresh", defaultValue: "Refresh"))
+        .help(String(localized: "Common_Refresh", defaultValue: "Refresh"))
+    }
+}
+
+struct RefreshButtonStyle: ButtonStyle {
+    @Environment(\.isEnabled) private var isEnabled
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var isHovered = false
+
+    let isRefreshing: Bool
+
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .foregroundColor(
+                isEnabled
+                    ? foregroundColor
+                    : Color.App.secondary.color(for: colorScheme).opacity(0.7)
+            )
+            .scaleEffect(scale(configuration: configuration))
+            .opacity(opacity(configuration: configuration))
+            .contentShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
+            .animation(DesignConstants.Animation.quick, value: configuration.isPressed)
+            .animation(DesignConstants.Animation.quick, value: isHovered)
+            .animation(DesignConstants.Animation.quick, value: isRefreshing)
+            .onHover { hovering in
+                withAnimation(DesignConstants.Animation.quick) {
+                    isHovered = hovering
+                }
+            }
+    }
+
+    private var foregroundColor: Color {
+        if isRefreshing {
+            return Color.App.accent.color(for: colorScheme)
+        }
+        return Color.App.primary.color(for: colorScheme)
+    }
+
+    private func scale(configuration: Configuration) -> CGFloat {
+        if configuration.isPressed {
+            return 0.94
+        }
+        if isRefreshing {
+            return 1.04
+        }
+        if isHovered, isEnabled {
+            return 1.02
+        }
+        return 1.0
+    }
+
+    private func opacity(configuration: Configuration) -> Double {
+        if configuration.isPressed {
+            return 0.72
+        }
+        if isRefreshing {
+            return 1.0
+        }
+        if isHovered, isEnabled {
+            return 0.82
+        }
+        return 0.68
+    }
+}
