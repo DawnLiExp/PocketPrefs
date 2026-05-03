@@ -85,13 +85,7 @@ final class BackupManagementViewModel {
         isLoading = true
 
         backups = await backupService.scanBackups()
-
-        // detailBackup is a computed property derived from backups.
-        // If detailBackupId still matches a backup, it is preserved automatically.
-        // On first load (detailBackupId == nil), falls back to backups.first via computed property.
-        if detailBackupId == nil {
-            detailBackupId = backups.first?.id
-        }
+        reconcileSelectionWithCurrentBackups()
 
         selectedDetailAppIds.removeAll()
 
@@ -102,6 +96,16 @@ final class BackupManagementViewModel {
 
         if let detail = detailBackup {
             await computeAppSizes(for: detail)
+        }
+    }
+
+    func reconcileSelectionWithCurrentBackups() {
+        let currentBackupIds = Set(backups.map(\.id))
+        selectedBackupIds.formIntersection(currentBackupIds)
+
+        guard let detailBackupId, currentBackupIds.contains(detailBackupId) else {
+            self.detailBackupId = backups.first?.id
+            return
         }
     }
 
