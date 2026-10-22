@@ -94,6 +94,8 @@ struct ConfigPathItem: View {
                     )
             }
             .buttonStyle(.plain)
+            .keyboardFocusOutline()
+            .accessibilityLabel(Text(String(localized: "Accessibility_Show_Path_In_Finder", defaultValue: "Show \(path) in Finder")))
             .help("Show_In_Finder")
         }
         .padding(12)

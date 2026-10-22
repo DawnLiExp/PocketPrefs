@@ -36,16 +36,25 @@ struct BackupManagementView: View {
 struct BackupListColumn: View {
     @Bindable var viewModel: BackupManagementViewModel
     @Environment(\.colorScheme) var colorScheme
+    @FocusState private var focusedRowID: String?
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView {
-                LazyVStack(spacing: 6) {
-                    ForEach(viewModel.backups) { backup in
-                        BackupListRow(backup: backup, viewModel: viewModel)
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(spacing: 6) {
+                        ForEach(viewModel.backups) { backup in
+                            BackupListRow(backup: backup, viewModel: viewModel, focus: $focusedRowID)
+                        }
                     }
+                    .padding(10)
                 }
-                .padding(10)
+                .keyboardListNavigation(ids: viewModel.backups.map(\.id), focus: $focusedRowID) { id in
+                    if let backup = viewModel.backups.first(where: { $0.id == id }) { viewModel.selectDetailBackup(backup) }
+                }
+                .onChange(of: focusedRowID) { _, id in
+                    if let id { proxy.scrollTo(id) }
+                }
             }
 
             Divider()
@@ -62,45 +71,61 @@ struct BackupListColumn: View {
 struct BackupListRow: View {
     let backup: BackupInfo
     @Bindable var viewModel: BackupManagementViewModel
+    let focus: FocusState<String?>.Binding
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         HStack(spacing: 8) {
-            Toggle(isOn: Binding(
-                get: { viewModel.selectedBackupIds.contains(backup.id) },
-                set: { _ in viewModel.toggleBackupSelection(backup.id) }
-            )) { EmptyView() }
-                .toggleStyle(CustomCheckboxToggleStyle())
+            Toggle(
+                isOn: Binding(
+                    get: { viewModel.selectedBackupIds.contains(backup.id) },
+                    set: { _ in viewModel.toggleBackupSelection(backup.id) }
+                )
+            ) { Text(backup.formattedName) }
+            .toggleStyle(CustomCheckboxToggleStyle())
+            .labelsHidden()
+            .accessibilityLabel(Text(backup.formattedName))
 
-            VStack(alignment: .leading, spacing: 3) {
-                Text(backup.formattedName)
-                    .font(DesignConstants.Typography.headline)
-                    .foregroundColor(Color.App.primary.color(for: colorScheme))
+            Button(action: { viewModel.selectDetailBackup(backup) }) {
+                HStack {
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(backup.formattedName)
+                            .font(DesignConstants.Typography.headline)
+                            .foregroundColor(Color.App.primary.color(for: colorScheme))
 
-                HStack(spacing: 4) {
-                    Text(String(
-                        localized: "Backup_Management_Apps_Count",
-                        defaultValue: "\(backup.apps.count) apps"
-                    ))
-                    Text(verbatim: "·")
-                    Text(viewModel.backupSizeCache[backup.path] ?? "—")
+                        HStack(spacing: 4) {
+                            Text(
+                                String(
+                                    localized: "Backup_Management_Apps_Count",
+                                    defaultValue: "\(backup.apps.count) apps"
+                                ))
+                            Text(verbatim: "·")
+                            Text(viewModel.backupSizeCache[backup.path] ?? "—")
+                        }
+                        .font(DesignConstants.Typography.caption)
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                        .opacity(viewModel.detailBackup?.id == backup.id ? 1 : (isHovered ? 0.5 : 0))
                 }
-                .font(DesignConstants.Typography.caption)
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .contentShape(Rectangle())
-            .onTapGesture { viewModel.selectDetailBackup(backup) }
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12))
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                .opacity(viewModel.detailBackup?.id == backup.id ? 1 : (isHovered ? 0.5 : 0))
+            .buttonStyle(.plain)
+            .focused(focus, equals: backup.id)
+            .focusEffectDisabled()
+            .accessibilityLabel(Text(String(localized: "Accessibility_Backup_Details", defaultValue: "View backup \(backup.formattedName)")))
         }
         .padding(.horizontal, 10)
         .padding(.vertical, 8)
         .cardEffect(isSelected: viewModel.detailBackup?.id == backup.id)
+        .rowFocusOutline(focus.wrappedValue == backup.id)
         .onHover { hovering in
             withAnimation(DesignConstants.Animation.quick) {
                 isHovered = hovering
@@ -164,6 +189,7 @@ struct BackupDetailColumn: View {
 
     // Single-row highlight state (for Finder button), independent from multi-select checkboxes.
     @State private var selectedRowId: String?
+    @FocusState private var focusedRowID: String?
 
     var body: some View {
         Group {
@@ -190,26 +216,33 @@ struct BackupDetailColumn: View {
 
                     Divider()
 
-                    ScrollView {
-                        LazyVStack(spacing: 6) {
-                            ForEach(backup.apps) { app in
-                                BackupAppRow(
-                                    app: app,
-                                    sizeString: viewModel.appSizeCache[app.path] ?? "—",
-                                    isChecked: viewModel.selectedDetailAppIds.contains(app.id),
-                                    isRowSelected: selectedRowId == app.id,
-                                    onToggleCheck: {
-                                        viewModel.toggleDetailAppSelection(app.id)
-                                    },
-                                    onSelectRow: {
-                                        withAnimation(DesignConstants.Animation.quick) {
-                                            selectedRowId = app.id
-                                        }
-                                    }
-                                )
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 6) {
+                                ForEach(backup.apps) { app in
+                                    BackupAppRow(
+                                        app: app,
+                                        sizeString: viewModel.appSizeCache[app.path] ?? "—",
+                                        isChecked: viewModel.selectedDetailAppIds.contains(app.id),
+                                        isRowSelected: selectedRowId == app.id,
+                                        onToggleCheck: {
+                                            viewModel.toggleDetailAppSelection(app.id)
+                                        },
+                                        onSelectRow: {
+                                            withAnimation(DesignConstants.Animation.quick) {
+                                                selectedRowId = app.id
+                                            }
+                                        },
+                                        focus: $focusedRowID
+                                    )
+                                }
                             }
+                            .padding(12)
                         }
-                        .padding(12)
+                        .keyboardListNavigation(ids: backup.apps.map(\.id), focus: $focusedRowID) { selectedRowId = $0 }
+                        .onChange(of: focusedRowID) { _, id in
+                            if let id { proxy.scrollTo(id) }
+                        }
                     }
 
                     Divider()
@@ -225,6 +258,7 @@ struct BackupDetailColumn: View {
                 // Reset single-row highlight whenever the detail backup switches.
                 .onChange(of: viewModel.detailBackup?.id) { _, _ in
                     selectedRowId = nil
+                    focusedRowID = nil
                 }
 
             } else {
@@ -319,36 +353,50 @@ struct BackupAppRow: View {
     let isRowSelected: Bool
     let onToggleCheck: () -> Void
     let onSelectRow: () -> Void
+    let focus: FocusState<String?>.Binding
 
     @State private var isHovered = false
     @Environment(\.colorScheme) var colorScheme
 
     var body: some View {
         HStack(spacing: 10) {
-            // Checkbox tap is handled by Toggle internally and does NOT propagate
-            // to the row's onTapGesture below.
-            Toggle(isOn: Binding(
-                get: { isChecked },
-                set: { _ in onToggleCheck() }
-            )) { EmptyView() }
-                .toggleStyle(CustomCheckboxToggleStyle())
+            Toggle(
+                isOn: Binding(
+                    get: { isChecked },
+                    set: { _ in onToggleCheck() }
+                )
+            ) { Text(app.name) }
+            .toggleStyle(CustomCheckboxToggleStyle())
+            .labelsHidden()
+            .accessibilityLabel(Text(app.name))
 
-            Image(nsImage: IconService.shared.getIcon(for: app.bundleId, category: app.category))
-                .resizable()
-                .aspectRatio(contentMode: .fit)
-                .frame(width: 32, height: 32)
-                .clipShape(RoundedRectangle(cornerRadius: 6))
+            Button(action: onSelectRow) {
+                HStack(spacing: 10) {
+                    Image(nsImage: IconService.shared.getIcon(for: app.bundleId, category: app.category))
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 32, height: 32)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .accessibilityHidden(true)
 
-            VStack(alignment: .leading, spacing: 2) {
-                Text(app.name)
-                    .font(DesignConstants.Typography.headline)
-                    .foregroundColor(Color.App.primary.color(for: colorScheme))
-                Text(sizeString)
-                    .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(app.name)
+                            .font(DesignConstants.Typography.headline)
+                            .foregroundColor(Color.App.primary.color(for: colorScheme))
+                        Text(sizeString)
+                            .font(DesignConstants.Typography.caption)
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    }
+
+                    Spacer()
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
-
-            Spacer()
+            .buttonStyle(.plain)
+            .focused(focus, equals: app.id)
+            .focusEffectDisabled()
+            .accessibilityLabel(Text(String(localized: "Accessibility_Select_App", defaultValue: "Select \(app.name)")))
 
             if isRowSelected {
                 Button(action: {
@@ -359,6 +407,9 @@ struct BackupAppRow: View {
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
                 .buttonStyle(.plain)
+                .keyboardFocusOutline()
+                .accessibilityLabel(Text(String(localized: "Accessibility_Show_Path_In_Finder", defaultValue: "Show \(app.name) in Finder")))
+                .help("Show_In_Finder")
             } else {
                 Image(systemName: "chevron.right")
                     .font(.system(size: 12))
@@ -370,8 +421,8 @@ struct BackupAppRow: View {
         .padding(.vertical, 8)
         // cardEffect follows single-row highlight, not checkbox state.
         .cardEffect(isSelected: isRowSelected)
+        .rowFocusOutline(focus.wrappedValue == app.id)
         .contentShape(Rectangle())
-        .onTapGesture(perform: onSelectRow)
         .onHover { hovering in
             withAnimation(DesignConstants.Animation.quick) {
                 isHovered = hovering

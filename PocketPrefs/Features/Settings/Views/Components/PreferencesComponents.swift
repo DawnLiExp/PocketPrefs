@@ -36,6 +36,7 @@ struct AppearanceSection: View {
                 }
                 .pickerStyle(.radioGroup)
                 .horizontalRadioGroupLayout()
+                .accessibilityLabel(Text("Menu_Theme"))
                 .onChange(of: themeManager.currentTheme) { _, newTheme in
                     themeManager.setTheme(newTheme)
                 }
@@ -81,6 +82,7 @@ struct LanguageSection: View {
                 }
                 .pickerStyle(.radioGroup)
                 .horizontalRadioGroupLayout()
+                .accessibilityLabel(Text("Settings_Language"))
                 .onChange(of: selectedLanguage) { oldValue, newValue in
                     if oldValue != newValue {
                         onLanguageChange(newValue)

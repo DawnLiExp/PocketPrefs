@@ -214,6 +214,9 @@ struct SettingsTabBar: View {
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
             .buttonStyle(.plain)
+            .keyboardFocusOutline()
+            .accessibilityLabel(Text("Common_Close"))
+            .help("Common_Close")
             .padding(.trailing, 16)
         }
         .padding(.vertical, 10)
@@ -254,6 +257,7 @@ struct TabButton: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
+        .keyboardFocusOutline()
         .onHover { hovering in
             withAnimation(DesignConstants.Animation.quick) {
                 isHovered = hovering
@@ -275,7 +279,8 @@ struct CustomAppsContent: View {
     @Binding var validationError: String
     @Binding var pendingAlert: AlertModel?
     @Environment(\.colorScheme) var colorScheme
-    
+    @FocusState private var focusedRowID: String?
+
     var body: some View {
         HStack(spacing: 0) {
             // Left Panel - Apps List
@@ -310,11 +315,18 @@ struct CustomAppsContent: View {
                                             customAppManager.selectedApp = app
                                         },
                                         manager: customAppManager,
+                                        focus: $focusedRowID,
                                     )
                                     .id(app.id)
                                 }
                             }
                             .padding(12)
+                        }
+                        .keyboardListNavigation(ids: filteredApps.map(\.id), focus: $focusedRowID) { id in
+                            customAppManager.selectedApp = customAppManager.customApps.first { $0.id == id }
+                        }
+                        .onChange(of: focusedRowID) { _, id in
+                            if let id { proxy.scrollTo(id) }
                         }
                         .onChange(of: customAppManager.pendingRevealAppId) { _, appId in
                             scrollToPendingReveal(appId, with: proxy)

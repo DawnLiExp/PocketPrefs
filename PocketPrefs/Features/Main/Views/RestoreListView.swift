@@ -17,7 +17,6 @@ struct RestoreListView: View {
 
 private struct RestoreListContent: View {
     @State private var viewModel: RestoreListViewModel
-    @State private var selectedBackupApp: BackupAppInfo?
 
     init(coordinator: MainCoordinator) {
         self._viewModel = State(wrappedValue: RestoreListViewModel(coordinator: coordinator))
@@ -36,7 +35,6 @@ private struct RestoreListContent: View {
             // Only the scrollable list content needs to be non-draggable
             NonDraggableView {
                 RestoreListScrollArea(
-                    selectedBackupApp: $selectedBackupApp,
                     viewModel: viewModel,
                 )
             }
@@ -199,9 +197,9 @@ struct SearchFieldView: View {
 // MARK: - Content Area
 
 struct RestoreListScrollArea: View {
-    @Binding var selectedBackupApp: BackupAppInfo?
     var viewModel: RestoreListViewModel
     @Environment(MainCoordinator.self) private var coordinator
+    @FocusState private var focusedRowID: String?
 
     var body: some View {
         Group {
@@ -209,23 +207,25 @@ struct RestoreListScrollArea: View {
                 if viewModel.filteredApps.isEmpty, !viewModel.searchText.isEmpty {
                     SearchEmptyState(searchText: viewModel.searchText)
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 8) {
-                            ForEach(viewModel.filteredApps, id: \.id) { app in
-                                RestoreAppItem(
-                                    app: app,
-                                    isSelected: selectedBackupApp?.id == app.id,
-                                    viewModel: viewModel,
-                                ) {
-                                    withAnimation(DesignConstants.Animation.quick) {
-                                        selectedBackupApp = app
-                                    }
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 8) {
+                                ForEach(viewModel.filteredApps, id: \.id) { app in
+                                    RestoreAppItem(
+                                        app: app,
+                                        viewModel: viewModel,
+                                        focus: $focusedRowID,
+                                    )
                                 }
                             }
+                            .padding(.horizontal, 15)
+                            .padding(.bottom, 15)
+                            .padding(.top, 3)
                         }
-                        .padding(.horizontal, 15)
-                        .padding(.bottom, 15)
-                        .padding(.top, 3)
+                        .keyboardListNavigation(ids: viewModel.filteredApps.map(\.id), focus: $focusedRowID)
+                        .onChange(of: focusedRowID) { _, id in
+                            if let id { proxy.scrollTo(id) }
+                        }
                     }
                 }
             } else {
@@ -284,10 +284,8 @@ struct RestoreEmptyState: View {
 
 struct RestoreAppItem: View {
     let app: BackupAppInfo
-    let isSelected: Bool
     var viewModel: RestoreListViewModel
-    let onTap: () -> Void
-    @State private var isHovered = false
+    let focus: FocusState<String?>.Binding
     @Environment(\.colorScheme) var colorScheme
     @Environment(MainCoordinator.self) private var coordinator
 
@@ -296,64 +294,61 @@ struct RestoreAppItem: View {
     }
 
     var body: some View {
-        HStack(spacing: 5) {
-            Toggle(isOn: Binding(
+        Toggle(
+            isOn: Binding(
                 get: { isChecked },
                 set: { _ in viewModel.toggleSelection(for: app) },
-            )) {
-                EmptyView()
-            }
-            .toggleStyle(CustomCheckboxToggleStyle())
-
-            Group {
-                let icon = coordinator.getIcon(for: app)
-                Image(nsImage: icon)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 32, height: 32)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(app.name)
-                        .font(DesignConstants.Typography.headline)
-                        .foregroundColor(Color.App.primary.color(for: colorScheme))
-
-                    if !app.isCurrentlyInstalled {
-                        StatusBadge(
-                            text: String(localized: "Restore_App_Status_Not_Installed", defaultValue: "Not Installed"),
-                            color: Color.App.warning.color(for: colorScheme),
-                            style: .compact,
-                        )
-                    } else {
-                        StatusBadge(
-                            text: String(localized: "Restore_App_Status_Installed", defaultValue: "Installed"),
-                            color: Color.App.success.color(for: colorScheme),
-                            style: .compact,
-                        )
-                    }
+            )
+        ) {
+            HStack(spacing: 5) {
+                Group {
+                    let icon = coordinator.getIcon(for: app)
+                    Image(nsImage: icon)
+                        .resizable()
+                        .aspectRatio(contentMode: .fit)
+                        .frame(width: 32, height: 32)
+                        .clipShape(RoundedRectangle(cornerRadius: 6))
+                        .accessibilityHidden(true)
                 }
 
-                Text(String(localized: "Restore_App_Config_Files_Count", defaultValue: "\(app.configPaths.count) config files"))
-                    .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                VStack(alignment: .leading, spacing: 4) {
+                    HStack {
+                        Text(app.name)
+                            .font(DesignConstants.Typography.headline)
+                            .foregroundColor(Color.App.primary.color(for: colorScheme))
+
+                        if !app.isCurrentlyInstalled {
+                            StatusBadge(
+                                text: String(localized: "Restore_App_Status_Not_Installed", defaultValue: "Not Installed"),
+                                color: Color.App.warning.color(for: colorScheme),
+                                style: .compact,
+                            )
+                        } else {
+                            StatusBadge(
+                                text: String(localized: "Restore_App_Status_Installed", defaultValue: "Installed"),
+                                color: Color.App.success.color(for: colorScheme),
+                                style: .compact,
+                            )
+                        }
+                    }
+
+                    Text(String(localized: "Restore_App_Config_Files_Count", defaultValue: "\(app.configPaths.count) config files"))
+                        .font(DesignConstants.Typography.caption)
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                }
+
+                Spacer()
+
             }
-
-            Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12))
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                .opacity(isSelected ? 1 : (isHovered ? 0.5 : 0))
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .contentShape(Rectangle())
         }
+        .toggleStyle(CustomCheckboxToggleStyle())
+        .accessibilityLabel(Text(app.name))
+        .focused(focus, equals: app.id)
+        .focusEffectDisabled()
         .padding(11)
-        .cardEffect(isSelected: isSelected)
-        .onTapGesture(perform: onTap)
-        .onHover { hovering in
-            withAnimation(DesignConstants.Animation.quick) {
-                isHovered = hovering
-            }
-        }
+        .cardEffect(isSelected: isChecked)
+        .rowFocusOutline(focus.wrappedValue == app.id)
     }
 }

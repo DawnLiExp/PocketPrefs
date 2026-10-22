@@ -17,75 +17,91 @@ struct CustomAppListItem: View {
     let onToggleSelection: () -> Void
     let onSelectForDetail: () -> Void
     var manager: CustomAppManager
+    let focus: FocusState<String?>.Binding
     @State private var isHovered = false
     @State private var iconRefreshTrigger = UUID()
     @Environment(\.colorScheme) var colorScheme
-    
+
     private var app: AppConfig? {
         manager.customApps.first(where: { $0.id == appId })
     }
-    
+
     var body: some View {
         if let app {
             HStack(spacing: 10) {
-                Toggle(isOn: Binding(
-                    get: { isSelected },
-                    set: { _ in onToggleSelection() },
-                )) {
-                    EmptyView()
+                Toggle(
+                    isOn: Binding(
+                        get: { isSelected },
+                        set: { _ in onToggleSelection() },
+                    )
+                ) {
+                    Text(app.name)
                 }
                 .toggleStyle(CustomCheckboxToggleStyle())
-                
-                Image(nsImage: IconService.shared.getIcon(for: app.bundleId, category: app.category))
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 32, height: 32)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-                    .id(iconRefreshTrigger)
-                
-                VStack(alignment: .leading, spacing: 3) {
-                    HStack(alignment: .firstTextBaseline, spacing: 0) {
-                        Text(app.name)
-                            .font(DesignConstants.Typography.headline)
-                            .foregroundColor(Color.App.primary.color(for: colorScheme))
-                            .lineLimit(1)
-                        
-                        Spacer(minLength: 8)
+                .labelsHidden()
+                .accessibilityLabel(Text(app.name))
 
-                        if isNewlyAdded {
-                            StatusBadge(
-                                text: String(localized: "Settings_New_Badge", defaultValue: "New"),
-                                color: Color.App.info.color(for: colorScheme),
-                                style: .compact,
-                            )
-                        }
-                        
-                        if !app.configPaths.isEmpty {
-                            Text(String(localized: "Settings_Paths_Count", defaultValue: "\(app.configPaths.count) paths"))
+                Button(action: onSelectForDetail) {
+                    HStack(spacing: 10) {
+                        Image(nsImage: IconService.shared.getIcon(for: app.bundleId, category: app.category))
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 32, height: 32)
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .id(iconRefreshTrigger)
+                            .accessibilityHidden(true)
+
+                        VStack(alignment: .leading, spacing: 3) {
+                            HStack(alignment: .firstTextBaseline, spacing: 0) {
+                                Text(app.name)
+                                    .font(DesignConstants.Typography.headline)
+                                    .foregroundColor(Color.App.primary.color(for: colorScheme))
+                                    .lineLimit(1)
+
+                                Spacer(minLength: 8)
+
+                                if isNewlyAdded {
+                                    StatusBadge(
+                                        text: String(localized: "Settings_New_Badge", defaultValue: "New"),
+                                        color: Color.App.info.color(for: colorScheme),
+                                        style: .compact,
+                                    )
+                                }
+
+                                if !app.configPaths.isEmpty {
+                                    Text(String(localized: "Settings_Paths_Count", defaultValue: "\(app.configPaths.count) paths"))
+                                        .font(DesignConstants.Typography.caption)
+                                        .foregroundColor(Color.App.accent.color(for: colorScheme))
+                                }
+                            }
+                            .frame(minHeight: 18, alignment: .center)
+
+                            Text(app.bundleId)
                                 .font(DesignConstants.Typography.caption)
-                                .foregroundColor(Color.App.accent.color(for: colorScheme))
+                                .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                                .lineLimit(1)
+                                .truncationMode(.middle)
                         }
+
+                        Spacer()
+
+                        Image(systemName: "chevron.right")
+                            .font(.system(size: 12))
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                            .opacity(isDetailSelected ? 1 : (isHovered ? 0.5 : 0))
                     }
-                    .frame(minHeight: 18, alignment: .center)
-                    
-                    Text(app.bundleId)
-                        .font(DesignConstants.Typography.caption)
-                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                        .lineLimit(1)
-                        .truncationMode(.middle)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .contentShape(Rectangle())
                 }
-                
-                Spacer()
-                
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 12))
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                    .opacity(isDetailSelected ? 1 : (isHovered ? 0.5 : 0))
+                .buttonStyle(.plain)
+                .focused(focus, equals: app.id)
+                .focusEffectDisabled()
+                .accessibilityLabel(Text(String(localized: "Accessibility_App_Details", defaultValue: "View details for \(app.name)")))
             }
             .padding(12)
             .cardEffect(isSelected: isDetailSelected)
+            .rowFocusOutline(focus.wrappedValue == app.id)
             .contentShape(Rectangle())
-            .onTapGesture(perform: onSelectForDetail)
             .onHover { hovering in
                 isHovered = hovering
             }
@@ -108,12 +124,13 @@ struct CustomAppDetailView: View {
     var manager: CustomAppManager
     @State private var editingName = false
     @State private var tempName = ""
+    @FocusState private var isNameFocused: Bool
     @Environment(\.colorScheme) var colorScheme
-    
+
     private var currentApp: AppConfig? {
         manager.customApps.first(where: { $0.id == app.id })
     }
-    
+
     var body: some View {
         ScrollView {
             if let currentApp {
@@ -123,48 +140,67 @@ struct CustomAppDetailView: View {
                         Text("Settings_App_Information")
                             .font(DesignConstants.Typography.title)
                             .foregroundColor(Color.App.primary.color(for: colorScheme))
-                        
+
                         // App Name
                         HStack {
                             Text("Settings_App_Name")
                                 .font(DesignConstants.Typography.headline)
                                 .frame(width: 100, alignment: .leading)
-                            
+
                             if editingName {
                                 HStack {
-                                    TextField(text: $tempName) { EmptyView() }
+                                    TextField("Settings_App_Name", text: $tempName)
+                                        .labelsHidden()
                                         .textFieldStyle(.roundedBorder)
-                                    
+                                        .focused($isNameFocused)
+                                        .onSubmit { saveName(currentApp) }
+                                        .onKeyPress(.escape) {
+                                            cancelNameEdit()
+                                            return .handled
+                                        }
+
                                     Button(action: { saveName(currentApp) }) {
                                         Image(systemName: "checkmark.circle.fill")
                                             .foregroundColor(Color.App.success.color(for: colorScheme))
                                     }
                                     .buttonStyle(.plain)
-                                    
+                                    .keyboardFocusOutline()
+                                    .accessibilityLabel(Text("Common_Save"))
+                                    .help("Common_Save")
+                                    .keyboardShortcut(.defaultAction)
+                                    .disabled(tempName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
                                     Button(action: cancelNameEdit) {
                                         Image(systemName: "xmark.circle.fill")
                                             .foregroundColor(Color.App.error.color(for: colorScheme))
                                     }
                                     .buttonStyle(.plain)
+                                    .keyboardFocusOutline()
+                                    .accessibilityLabel(Text("Common_Cancel"))
+                                    .help("Common_Cancel")
+                                    .keyboardShortcut(.cancelAction)
                                 }
                             } else {
                                 Text(currentApp.name)
                                     .font(DesignConstants.Typography.body)
-                                
+
                                 Button(action: { startNameEdit(currentApp) }) {
                                     Image(systemName: "pencil.circle")
                                         .foregroundColor(Color.App.accent.color(for: colorScheme))
                                 }
                                 .buttonStyle(.plain)
+                                .keyboardFocusOutline()
+                                .accessibilityLabel(Text("Common_Edit"))
+                                .help("Common_Edit")
                             }
                         }
-                        
+
                         // Bundle ID
                         HStack {
                             Text("Settings_Bundle_ID")
                                 .font(DesignConstants.Typography.headline)
                                 .frame(width: 100, alignment: .leading)
-                            
+
                             Text(currentApp.bundleId)
                                 .font(.system(.body, design: .monospaced))
                                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
@@ -173,7 +209,7 @@ struct CustomAppDetailView: View {
                     .padding()
                     .background(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.3))
                     .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.cornerRadius))
-                    
+
                     // Configuration Paths Section
                     PathPickerViewWrapper(appId: currentApp.id, manager: manager)
                         .padding()
@@ -183,21 +219,22 @@ struct CustomAppDetailView: View {
                 .padding(20)
             }
         }
+        .onChange(of: editingName) { _, isEditing in isNameFocused = isEditing }
     }
-    
+
     private func startNameEdit(_ currentApp: AppConfig) {
         tempName = currentApp.name
         editingName = true
     }
-    
+
     private func saveName(_ currentApp: AppConfig) {
-        guard !tempName.isEmpty else { return }
+        guard editingName, !tempName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
         var updatedApp = currentApp
         updatedApp.name = tempName
         manager.updateApp(updatedApp)
         editingName = false
     }
-    
+
     private func cancelNameEdit() {
         editingName = false
         tempName = ""

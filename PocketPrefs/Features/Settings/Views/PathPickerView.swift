@@ -65,6 +65,7 @@ struct PathPickerView: View {
                         .foregroundStyle(LinearGradient.appAccent(for: colorScheme))
                 }
                 .menuStyle(.borderlessButton)
+                .accessibilityLabel(Text("Accessibility_Add_Path"))
             }
             
             if editingPathIndex == nil, let pathValidationError {
@@ -265,42 +266,45 @@ struct PathItemView: View {
     let validation: PathValidator.PathValidation
     let onEdit: () -> Void
     let onRemove: () -> Void
-    
-    @State private var isHovered = false
+
     @Environment(\.colorScheme) var colorScheme
-    
+
     var body: some View {
         HStack(spacing: 8) {
             Image(systemName: validation.type.icon)
                 .font(.system(size: 14))
                 .foregroundColor(validation.exists ? Color.App.accent.color(for: colorScheme) : Color.App.warning.color(for: colorScheme))
-            
+
             Text(path)
                 .font(DesignConstants.Typography.body)
                 .foregroundColor(validation.exists ? Color.App.primary.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
                 .lineLimit(1)
                 .truncationMode(.middle)
-            
+
             Spacer()
-            
-            if isHovered {
-                HStack(spacing: 4) {
-                    Button(action: onEdit) {
-                        Image(systemName: "pencil.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(Color.App.accent.color(for: colorScheme))
-                    }
-                    .buttonStyle(.plain)
-                    
-                    Button(action: onRemove) {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 16))
-                            .foregroundColor(Color.App.error.color(for: colorScheme))
-                    }
-                    .buttonStyle(.plain)
+
+            HStack(spacing: 4) {
+                Button(action: onEdit) {
+                    Image(systemName: "pencil.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color.App.accent.color(for: colorScheme))
                 }
+                .buttonStyle(.plain)
+                .keyboardFocusOutline()
+                .accessibilityLabel(Text(String(localized: "Accessibility_Edit_Path", defaultValue: "Edit \(path)")))
+                .help("Common_Edit")
+
+                Button(action: onRemove) {
+                    Image(systemName: "xmark.circle.fill")
+                        .font(.system(size: 16))
+                        .foregroundColor(Color.App.error.color(for: colorScheme))
+                }
+                .buttonStyle(.plain)
+                .keyboardFocusOutline()
+                .accessibilityLabel(Text(String(localized: "Accessibility_Remove_Path", defaultValue: "Remove \(path)")))
+                .help("Common_Delete")
             }
-            
+
             if !validation.exists {
                 Image(systemName: "exclamationmark.triangle.fill")
                     .font(.system(size: 12))
@@ -314,9 +318,6 @@ struct PathItemView: View {
             RoundedRectangle(cornerRadius: 4)
                 .fill(Color.App.secondaryBackground.color(for: colorScheme).opacity(0.5)),
         )
-        .onHover { hovering in
-            isHovered = hovering
-        }
     }
 }
 
@@ -351,35 +352,43 @@ struct PathEditSheet: View {
     let onCancel: () -> Void
     var validationError: String? = nil
     @Environment(\.colorScheme) var colorScheme
-    
+    @FocusState private var isPathFocused: Bool
+
     var body: some View {
         VStack(spacing: 20) {
             Text("Settings_Edit_Path")
                 .font(DesignConstants.Typography.title)
-            
-            TextField("Settings_Path_Placeholder",
-                      text: $pathText)
-                .textFieldStyle(.roundedBorder)
-                .frame(width: 400)
+
+            TextField(
+                "Settings_Path_Placeholder",
+                text: $pathText
+            )
+            .textFieldStyle(.roundedBorder)
+            .frame(width: 400)
+            .focused($isPathFocused)
+            .onSubmit(onSave)
 
             if let validationError {
                 Label(validationError, systemImage: "exclamationmark.triangle")
                     .font(DesignConstants.Typography.caption)
                     .frame(width: 400, alignment: .leading)
             }
-            
+
             HStack(spacing: 12) {
                 Button("Common_Cancel", action: onCancel)
                     .buttonStyle(SecondaryButtonStyle())
-                
+                    .keyboardShortcut(.cancelAction)
+
                 Button("Common_Save", action: onSave)
                     .buttonStyle(PrimaryButtonStyle())
                     .disabled(pathText.isEmpty)
+                    .keyboardShortcut(.defaultAction)
             }
         }
         .padding(30)
         .frame(width: 500)
         .background(Color.App.secondaryBackground.color(for: colorScheme))
+        .task { isPathFocused = true }
     }
 }
 

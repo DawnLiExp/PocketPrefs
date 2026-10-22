@@ -29,6 +29,7 @@ private struct AppListContent: View {
     let currentMode: MainView.AppMode
     @State private var viewModel: AppListViewModel
     @State private var appPendingDeletion: AppConfig?
+    @FocusState private var focusedRowID: String?
 
     init(
         coordinator: MainCoordinator,
@@ -57,23 +58,30 @@ private struct AppListContent: View {
                 if viewModel.filteredApps.isEmpty, !viewModel.searchText.isEmpty {
                     BackupSearchEmptyState(searchText: viewModel.searchText)
                 } else {
-                    ScrollView {
-                        LazyVStack(spacing: 8) {
-                            ForEach(viewModel.filteredApps) { app in
-                                AppListItem(
-                                    app: app,
-                                    isSelected: selectedAppID == app.id,
-                                    viewModel: viewModel,
-                                    currentMode: currentMode,
-                                    onDelete: { appPendingDeletion = app },
-                                ) {
-                                    selectedAppID = app.id
+                    ScrollViewReader { proxy in
+                        ScrollView {
+                            LazyVStack(spacing: 8) {
+                                ForEach(viewModel.filteredApps) { app in
+                                    AppListItem(
+                                        app: app,
+                                        isSelected: selectedAppID == app.id,
+                                        viewModel: viewModel,
+                                        currentMode: currentMode,
+                                        onDelete: { appPendingDeletion = app },
+                                        focus: $focusedRowID,
+                                    ) {
+                                        selectedAppID = app.id
+                                    }
                                 }
                             }
+                            .padding(.horizontal, 15)
+                            .padding(.bottom, 15)
+                            .padding(.top, 3)
                         }
-                        .padding(.horizontal, 15)
-                        .padding(.bottom, 15)
-                        .padding(.top, 3)
+                        .keyboardListNavigation(ids: viewModel.filteredApps.map(\.id), focus: $focusedRowID) { selectedAppID = $0 }
+                        .onChange(of: focusedRowID) { _, id in
+                            if let id { proxy.scrollTo(id) }
+                        }
                     }
                 }
             }
@@ -106,8 +114,12 @@ private struct AppListContent: View {
         } message: { app in
             Text(
                 app.isUserAdded
-                    ? String(localized: "AppList_Delete_Custom_Alert_Message", defaultValue: "This will permanently delete this app configuration. This action cannot be undone.")
-                    : String(localized: "AppList_Delete_Preset_Alert_Message", defaultValue: "\(app.name) is a built-in preset. After removal, you can re-add it manually in Settings.")
+                    ? String(
+                        localized: "AppList_Delete_Custom_Alert_Message",
+                        defaultValue: "This will permanently delete this app configuration. This action cannot be undone.")
+                    : String(
+                        localized: "AppList_Delete_Preset_Alert_Message",
+                        defaultValue: "\(app.name) is a built-in preset. After removal, you can re-add it manually in Settings.")
             )
         }
     }
@@ -165,6 +177,9 @@ struct AppListHeader: View {
                             .font(.system(size: 14))
                     }
                     .buttonStyle(PlainButtonStyle())
+                    .keyboardFocusOutline()
+                    .accessibilityLabel(Text("Accessibility_Clear_Search"))
+                    .help("Accessibility_Clear_Search")
                     .padding(.trailing, 8)
                 }
 
@@ -191,6 +206,7 @@ struct AppListHeader: View {
                 }
                 .menuIndicator(.hidden)
                 .menuStyle(.borderlessButton)
+                .accessibilityLabel(Text("Accessibility_Sort_Apps"))
                 .fixedSize()
                 .padding(.trailing, 12)
             }
@@ -268,6 +284,8 @@ struct IncrementalModeToggle: View {
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
             .buttonStyle(PlainButtonStyle())
+            .keyboardFocusOutline()
+            .accessibilityLabel(Text("Accessibility_Incremental_Help"))
             .popover(isPresented: $showingHelp, arrowEdge: .bottom) {
                 IncrementalModeHelpPopover()
             }
@@ -342,6 +360,8 @@ struct IncrementalBaseSelector: View {
                     )
             }
             .buttonStyle(PlainButtonStyle())
+            .keyboardFocusOutline()
+            .accessibilityLabel(Text("Common_Refresh"))
             .frame(width: 32, height: 32)
             .background(
                 Color.App.contentAreaBackground.color(for: colorScheme),
@@ -392,6 +412,7 @@ struct AppListItem: View {
     let viewModel: AppListViewModel
     let currentMode: MainView.AppMode
     let onDelete: () -> Void
+    let focus: FocusState<String?>.Binding
     let onTap: () -> Void
 
     @State private var isHovered = false
@@ -404,55 +425,72 @@ struct AppListItem: View {
 
     var body: some View {
         HStack(spacing: 5) {
-            Toggle(isOn: Binding(
-                get: { isChecked },
-                set: { _ in viewModel.toggleSelection(for: app) },
-            )) {
-                EmptyView()
+            Toggle(
+                isOn: Binding(
+                    get: { isChecked },
+                    set: { _ in viewModel.toggleSelection(for: app) },
+                )
+            ) {
+                Text(app.name)
             }
             .toggleStyle(CustomCheckboxToggleStyle())
+            .labelsHidden()
+            .accessibilityLabel(Text(app.name))
             .disabled(currentMode == .backup ? !app.isInstalled : false)
 
-            Group {
-                let icon = coordinator.getIcon(for: app)
-                Image(nsImage: icon)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 32, height: 32)
-                    .clipShape(RoundedRectangle(cornerRadius: 6))
-            }
-
-            VStack(alignment: .leading, spacing: 4) {
-                HStack {
-                    Text(app.name)
-                        .font(DesignConstants.Typography.headline)
-                        .foregroundColor(app.isInstalled || currentMode == .restore ? Color.App.primary.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
-
-                    if currentMode == .backup, !app.isInstalled {
-                        StatusBadge(
-                            text: String(localized: "AppList_App_Status_Not_Installed", defaultValue: "Not Installed"),
-                            color: Color.App.notInstalled.color(for: colorScheme),
-                            style: .compact,
-                        )
+            Button(action: onTap) {
+                HStack(spacing: 5) {
+                    Group {
+                        let icon = coordinator.getIcon(for: app)
+                        Image(nsImage: icon)
+                            .resizable()
+                            .aspectRatio(contentMode: .fit)
+                            .frame(width: 32, height: 32)
+                            .clipShape(RoundedRectangle(cornerRadius: 6))
+                            .accessibilityHidden(true)
                     }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        HStack {
+                            Text(app.name)
+                                .font(DesignConstants.Typography.headline)
+                                .foregroundColor(
+                                    app.isInstalled || currentMode == .restore
+                                        ? Color.App.primary.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
+
+                            if currentMode == .backup, !app.isInstalled {
+                                StatusBadge(
+                                    text: String(localized: "AppList_App_Status_Not_Installed", defaultValue: "Not Installed"),
+                                    color: Color.App.notInstalled.color(for: colorScheme),
+                                    style: .compact,
+                                )
+                            }
+                        }
+
+                        Text(String(localized: "AppList_App_Config_Paths_Count", defaultValue: "\(app.configPaths.count) config paths"))
+                            .font(DesignConstants.Typography.caption)
+                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                    }
+
+                    Spacer()
+
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 12))
+                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                        .opacity(isSelected ? 1 : (isHovered ? 0.5 : 0))
                 }
-
-                Text(String(localized: "AppList_App_Config_Paths_Count", defaultValue: "\(app.configPaths.count) config paths"))
-                    .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .contentShape(Rectangle())
             }
-
-            Spacer()
-
-            Image(systemName: "chevron.right")
-                .font(.system(size: 12))
-                .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                .opacity(isSelected ? 1 : (isHovered ? 0.5 : 0))
+            .buttonStyle(.plain)
+            .focused(focus, equals: app.id)
+            .focusEffectDisabled()
+            .accessibilityLabel(Text(String(localized: "Accessibility_App_Details", defaultValue: "View details for \(app.name)")))
         }
         .padding(11)
         .cardEffect(isSelected: isSelected)
+        .rowFocusOutline(focus.wrappedValue == app.id)
         .animation(DesignConstants.Animation.quick, value: isSelected)
-        .onTapGesture(perform: onTap)
         .onHover { hovering in
             withAnimation(DesignConstants.Animation.quick) {
                 isHovered = hovering

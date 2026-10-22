@@ -27,6 +27,8 @@ struct SettingsTitleBar: View {
                     .foregroundColor(Color.App.secondary.color(for: colorScheme))
             }
             .buttonStyle(.plain)
+            .keyboardFocusOutline()
+            .accessibilityLabel(Text("Common_Close"))
         }
         .padding(16)
         .background(Color.App.contentAreaBackground.color(for: colorScheme))
@@ -67,6 +69,9 @@ struct SettingsToolbar: View {
                             .font(.system(size: 14))
                     }
                     .buttonStyle(.plain)
+                    .keyboardFocusOutline()
+                    .accessibilityLabel(Text("Accessibility_Clear_Search"))
+                    .help("Accessibility_Clear_Search")
                     .padding(.trailing, 12)
                 }
             }
