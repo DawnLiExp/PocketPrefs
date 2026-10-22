@@ -380,6 +380,8 @@ struct BackupAppRow: View {
                     VStack(alignment: .leading, spacing: 2) {
                         Text(app.name)
                             .font(DesignConstants.Typography.headline)
+                            .lineLimit(1)
+                            .help(app.name)
                             .foregroundColor(Color.App.primary.color(for: colorScheme))
                         Text(sizeString)
                             .font(DesignConstants.Typography.caption)

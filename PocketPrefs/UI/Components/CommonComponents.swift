@@ -129,7 +129,9 @@ struct StatusBadge: View {
     var body: some View {
         Text(text)
             .font(style == .compact ? DesignConstants.Typography.caption : DesignConstants.Typography.body)
-            .foregroundColor(color)
+            .foregroundStyle(Color.primary)
+            .lineLimit(1)
+            .fixedSize(horizontal: true, vertical: false)
             .padding(.horizontal, style == .compact ? 6 : 8)
             .padding(.vertical, style == .compact ? 2 : 4)
             .background(color.opacity(0.12))

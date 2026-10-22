@@ -57,6 +57,7 @@ struct CustomAppListItem: View {
                                     .font(DesignConstants.Typography.headline)
                                     .foregroundColor(Color.App.primary.color(for: colorScheme))
                                     .lineLimit(1)
+                                    .help(app.name)
 
                                 Spacer(minLength: 8)
 
@@ -71,7 +72,7 @@ struct CustomAppListItem: View {
                                 if !app.configPaths.isEmpty {
                                     Text(String(localized: "Settings_Paths_Count", defaultValue: "\(app.configPaths.count) paths"))
                                         .font(DesignConstants.Typography.caption)
-                                        .foregroundColor(Color.App.accent.color(for: colorScheme))
+                                        .foregroundStyle(.primary)
                                 }
                             }
                             .frame(minHeight: 18, alignment: .center)
@@ -183,6 +184,8 @@ struct CustomAppDetailView: View {
                             } else {
                                 Text(currentApp.name)
                                     .font(DesignConstants.Typography.body)
+                                    .lineLimit(1)
+                                    .help(currentApp.name)
 
                                 Button(action: { startNameEdit(currentApp) }) {
                                     Image(systemName: "pencil.circle")
@@ -203,6 +206,9 @@ struct CustomAppDetailView: View {
 
                             Text(currentApp.bundleId)
                                 .font(.system(.body, design: .monospaced))
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                                .help(currentApp.bundleId)
                                 .foregroundColor(Color.App.secondary.color(for: colorScheme))
                         }
                     }

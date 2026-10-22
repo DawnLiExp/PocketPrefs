@@ -25,9 +25,14 @@ struct AppDetailHeader: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(app.name)
                         .font(DesignConstants.Typography.title)
+                        .lineLimit(1)
+                        .help(app.name)
                     
                     Text(app.bundleId)
                         .font(DesignConstants.Typography.caption)
+                        .lineLimit(1)
+                        .truncationMode(.middle)
+                        .help(app.bundleId)
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
                 
@@ -76,6 +81,7 @@ struct ConfigPathItem: View {
                     .foregroundColor(Color.App.primary.color(for: colorScheme))
                     .lineLimit(1)
                     .truncationMode(.middle)
+                    .help(path)
                 
                 Text(fileSize)
                     .font(DesignConstants.Typography.caption)

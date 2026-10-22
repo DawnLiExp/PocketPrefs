@@ -156,6 +156,9 @@ struct OperationSummary: Identifiable {
 // MARK: - BackupName Formatting Extension
 
 extension BackupInfo {
+    var selectionDate: String { date.formatted(date: .numeric, time: .omitted) }
+    var selectionTime: String { date.formatted(.dateTime.hour().minute().second()) }
+
     /// Formats the backup name for display.
     /// It removes the "Backup_" prefix and attempts to reformat the timestamp into a more human-readable, localized string.
     /// - Returns: The formatted backup name (e.g., "2025年9月27日 下午2:35:00").

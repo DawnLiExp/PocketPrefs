@@ -312,30 +312,26 @@ struct RestoreAppItem: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text(app.name)
-                            .font(DesignConstants.Typography.headline)
-                            .foregroundColor(Color.App.primary.color(for: colorScheme))
-
-                        if !app.isCurrentlyInstalled {
-                            StatusBadge(
-                                text: String(localized: "Restore_App_Status_Not_Installed", defaultValue: "Not Installed"),
-                                color: Color.App.warning.color(for: colorScheme),
-                                style: .compact,
-                            )
-                        } else {
-                            StatusBadge(
-                                text: String(localized: "Restore_App_Status_Installed", defaultValue: "Installed"),
-                                color: Color.App.success.color(for: colorScheme),
-                                style: .compact,
-                            )
-                        }
+                    Text(app.name)
+                        .font(DesignConstants.Typography.headline)
+                        .foregroundStyle(.primary)
+                        .lineLimit(1)
+                        .truncationMode(.tail)
+                        .help(app.name)
+                    HStack(spacing: 6) {
+                        Text(String(localized: "Restore_App_Config_Files_Count", defaultValue: "\(app.configPaths.count) config files"))
+                            .font(DesignConstants.Typography.caption)
+                            .foregroundStyle(.secondary)
+                            .lineLimit(1)
+                        Spacer(minLength: 4)
+                        StatusBadge(
+                            text: app.isCurrentlyInstalled
+                                ? String(localized: "Restore_App_Status_Installed") : String(localized: "Restore_App_Status_Not_Installed"),
+                            color: app.isCurrentlyInstalled ? Color.App.success.color(for: colorScheme) : Color.App.warning.color(for: colorScheme),
+                            style: .compact)
                     }
-
-                    Text(String(localized: "Restore_App_Config_Files_Count", defaultValue: "\(app.configPaths.count) config files"))
-                        .font(DesignConstants.Typography.caption)
-                        .foregroundColor(Color.App.secondary.color(for: colorScheme))
                 }
+                .frame(maxWidth: .infinity, alignment: .leading)
 
                 Spacer()
 

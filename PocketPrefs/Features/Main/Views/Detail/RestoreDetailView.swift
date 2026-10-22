@@ -58,22 +58,20 @@ struct RestoreDetailContent: View {
                             systemImage: "checkmark.circle.fill",
                         )
                         .font(DesignConstants.Typography.body)
-                        .foregroundColor(
-                            viewModel.selectedRestoreAppsCount > 0
-                                ? Color.App.success.color(for: colorScheme)
-                                : Color.App.secondary.color(for: colorScheme),
-                        )
+                        .labelStyle(
+                            RestoreSummaryLabelStyle(
+                                color: viewModel.selectedRestoreAppsCount > 0
+                                    ? Color.App.success.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme)))
 
                         Label(
                             String(localized: "Detail_Restore_Uninstalled_Apps_Count", defaultValue: "\(viewModel.uninstalledSelectedCount) uninstalled apps"),
                             systemImage: "exclamationmark.triangle.fill",
                         )
                         .font(DesignConstants.Typography.body)
-                        .foregroundColor(
-                            viewModel.uninstalledSelectedCount > 0
-                                ? Color.App.warning.color(for: colorScheme)
-                                : Color.App.secondary.color(for: colorScheme),
-                        )
+                        .labelStyle(
+                            RestoreSummaryLabelStyle(
+                                color: viewModel.uninstalledSelectedCount > 0
+                                    ? Color.App.warning.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme)))
                     }
                 }
                 .padding(20)
@@ -87,22 +85,27 @@ struct RestoreDetailContent: View {
 
                             ForEach(backup.apps.filter(\.isSelected)) { app in
                                 HStack {
-                                    Image(systemName: app.isCurrentlyInstalled
-                                        ? "checkmark.circle"
-                                        : "exclamationmark.circle")
-                                        .foregroundColor(
-                                            app.isCurrentlyInstalled
-                                                ? Color.App.success.color(for: colorScheme)
-                                                : Color.App.warning.color(for: colorScheme),
-                                        )
+                                    Image(
+                                        systemName: app.isCurrentlyInstalled
+                                            ? "checkmark.circle"
+                                            : "exclamationmark.circle"
+                                    )
+                                    .foregroundColor(
+                                        app.isCurrentlyInstalled
+                                            ? Color.App.success.color(for: colorScheme)
+                                            : Color.App.warning.color(for: colorScheme),
+                                    )
 
                                     Text(app.name)
                                         .font(DesignConstants.Typography.body)
+                                        .lineLimit(1)
+                                        .help(app.name)
 
                                     if !app.isCurrentlyInstalled {
                                         Text("Detail_Restore_App_Not_Installed_Badge")
                                             .font(DesignConstants.Typography.caption)
-                                            .foregroundColor(Color.App.warning.color(for: colorScheme))
+                                            .foregroundStyle(.primary)
+                                            .fixedSize(horizontal: true, vertical: false)
                                     }
 
                                     Spacer()
@@ -144,6 +147,17 @@ struct RestoreDetailContent: View {
             }
         } else {
             RestoreEmptyDetail()
+        }
+    }
+}
+
+private struct RestoreSummaryLabelStyle: LabelStyle {
+    let color: Color
+
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(spacing: 8) {
+            configuration.icon.foregroundStyle(color)
+            configuration.title.foregroundStyle(Color.primary)
         }
     }
 }

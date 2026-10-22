@@ -100,3 +100,16 @@ struct RestoreResultStatusTests {
         #expect(!r.statusMessage.contains("⚠️"))
     }
 }
+
+@Suite("备份选择器时间显示")
+struct BackupPickerDateTests {
+    @Test("同日相差一秒的备份显示不同时间")
+    func distinguishSeconds() {
+        let date = Date(timeIntervalSince1970: 1_792_650_000)
+        let first = BackupInfo(path: "/tmp/a", name: "A", date: date)
+        let second = BackupInfo(path: "/tmp/b", name: "B", date: date.addingTimeInterval(1))
+        #expect(first.selectionDate == second.selectionDate)
+        #expect(first.selectionTime != second.selectionTime)
+        #expect(!first.selectionDate.isEmpty)
+    }
+}

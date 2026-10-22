@@ -225,34 +225,21 @@ struct AppListHeader: View {
                     ),
             )
 
-
-            HStack(spacing: 16) {
-                Toggle(isOn: Binding(
-                    get: { viewModel.cachedAllSelected },
-                    set: { _ in viewModel.toggleSelectAll() },
-                )) {
-                    Text("Select_All")
-                        .font(DesignConstants.Typography.body)
-                        .fixedSize(horizontal: true, vertical: false)
+            ViewThatFits(in: .horizontal) {
+                HStack {
+                    selectionControls.fixedSize(horizontal: true, vertical: false)
+                    Spacer(minLength: 8)
+                    selectionCount
                 }
-                .toggleStyle(CustomCheckboxToggleStyle())
-
-                IncrementalModeToggle(
-                    mainViewModel: mainViewModel,
-                    hasAvailableBackups: hasAvailableBackups,
-                )
-
-                Spacer()
-
-                Text(String(localized: "Selected_Count", defaultValue: "Selected \(selectedCount) / \(totalCount)"))
-                    .font(DesignConstants.Typography.caption)
-                    .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                    .fixedSize(horizontal: true, vertical: false)
+                VStack(alignment: .leading, spacing: 8) {
+                    selectionControls
+                    selectionCount.frame(maxWidth: .infinity, alignment: .trailing)
+                }
             }
 
             if mainViewModel.isIncrementalMode, hasAvailableBackups {
-                IncrementalBaseSelector(isRefreshing: .constant(false))
-                .padding(.top, 0)
+                IncrementalBaseSelector()
+                    .padding(.top, 0)
             }
         }
         .padding(.horizontal, 15)
@@ -260,6 +247,23 @@ struct AppListHeader: View {
         .padding(.bottom, 15)
         .background(Color.App.contentAreaBackground.color(for: colorScheme))
     }
+    private var selectionControls: some View {
+        HStack(spacing: 16) {
+            Toggle(isOn: Binding(get: { viewModel.cachedAllSelected }, set: { _ in viewModel.toggleSelectAll() })) {
+                Text("Select_All").font(DesignConstants.Typography.body)
+            }
+            .toggleStyle(CustomCheckboxToggleStyle())
+            IncrementalModeToggle(mainViewModel: mainViewModel, hasAvailableBackups: hasAvailableBackups)
+        }
+    }
+
+    private var selectionCount: some View {
+        Text(String(localized: "Selected_Count", defaultValue: "Selected \(selectedCount) / \(totalCount)"))
+            .font(DesignConstants.Typography.caption)
+            .foregroundStyle(.secondary)
+            .fixedSize(horizontal: true, vertical: false)
+    }
+
 }
 
 struct IncrementalModeToggle: View {
@@ -307,46 +311,23 @@ struct IncrementalModeHelpPopover: View {
 }
 
 struct IncrementalBaseSelector: View {
-    @Binding var isRefreshing: Bool
     @Environment(\.colorScheme) var colorScheme
     @State private var localRefreshing = false
     @Environment(MainCoordinator.self) private var coordinator
     @Environment(MainViewModel.self) private var mainViewModel
 
     var body: some View {
-        HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 5) {
             Text("Select_Base_Backup_Label")
-                .font(DesignConstants.Typography.body)
-                .foregroundColor(Color.App.primary.color(for: colorScheme))
-
-            Menu {
-                ForEach(coordinator.currentBackups) { backup in
-                    Button {
-                        mainViewModel.selectIncrementalBase(backup)
-                    } label: {
-                        Text(backup.formattedName)
-                    }
+                .font(DesignConstants.Typography.caption)
+                .foregroundStyle(.secondary)
+            HStack(spacing: 8) {
+                BackupSelectionMenu(
+                    backups: coordinator.currentBackups, selectedBackup: mainViewModel.incrementalBaseBackup,
+                    label: "Select_Base_Backup_Label", onSelect: mainViewModel.selectIncrementalBase)
+                RefreshButton(isRefreshing: localRefreshing, isEnabled: !localRefreshing) {
+                    Task { @MainActor in await refreshBackups() }
                 }
-            } label: {
-                Text(mainViewModel.incrementalBaseBackup?.formattedName ?? "")
-                    .font(DesignConstants.Typography.body)
-                    .foregroundColor(Color.App.primary.color(for: colorScheme))
-                    .padding(.horizontal, 12)
-                    .padding(.vertical, 9)
-                    .background(
-                        RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                            .fill(Color.App.tertiaryBackground.color(for: colorScheme).opacity(0.7)),
-                    )
-                    .overlay(
-                        RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
-                            .stroke(Color.App.lightSeparator.color(for: colorScheme).opacity(0.7), lineWidth: 1.0),
-                    )
-            }
-            .menuStyle(.borderlessButton)
-            .fixedSize(horizontal: false, vertical: true)
-
-            RefreshButton(isRefreshing: localRefreshing, isEnabled: !localRefreshing) {
-                Task { @MainActor in await refreshBackups() }
             }
         }
     }
@@ -431,26 +412,29 @@ struct AppListItem: View {
                     }
 
                     VStack(alignment: .leading, spacing: 4) {
-                        HStack {
-                            Text(app.name)
-                                .font(DesignConstants.Typography.headline)
-                                .foregroundColor(
-                                    app.isInstalled || currentMode == .restore
-                                        ? Color.App.primary.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme))
-
+                        Text(app.name)
+                            .font(DesignConstants.Typography.headline)
+                            .foregroundColor(
+                                app.isInstalled || currentMode == .restore
+                                    ? Color.App.primary.color(for: colorScheme) : Color.App.secondary.color(for: colorScheme)
+                            )
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .help(app.name)
+                        HStack(spacing: 6) {
+                            Text(String(localized: "AppList_App_Config_Paths_Count", defaultValue: "\(app.configPaths.count) config paths"))
+                                .font(DesignConstants.Typography.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(1)
+                            Spacer(minLength: 4)
                             if currentMode == .backup, !app.isInstalled {
                                 StatusBadge(
                                     text: String(localized: "AppList_App_Status_Not_Installed", defaultValue: "Not Installed"),
-                                    color: Color.App.notInstalled.color(for: colorScheme),
-                                    style: .compact,
-                                )
+                                    color: Color.App.notInstalled.color(for: colorScheme), style: .compact)
                             }
                         }
-
-                        Text(String(localized: "AppList_App_Config_Paths_Count", defaultValue: "\(app.configPaths.count) config paths"))
-                            .font(DesignConstants.Typography.caption)
-                            .foregroundColor(Color.App.secondary.color(for: colorScheme))
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                     Spacer()
 
