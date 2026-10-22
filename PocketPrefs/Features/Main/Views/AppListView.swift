@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct AppListView: View {
-    @Binding var selectedApp: AppConfig?
+    @Binding var selectedAppID: String?
     let currentMode: MainView.AppMode
     @Environment(MainCoordinator.self) private var coordinator
     @Environment(MainViewModel.self) private var mainViewModel
@@ -17,7 +17,7 @@ struct AppListView: View {
         AppListContent(
             coordinator: coordinator,
             mainViewModel: mainViewModel,
-            selectedApp: $selectedApp,
+            selectedAppID: $selectedAppID,
             currentMode: currentMode,
         )
     }
@@ -25,7 +25,7 @@ struct AppListView: View {
 
 private struct AppListContent: View {
     let mainViewModel: MainViewModel
-    @Binding var selectedApp: AppConfig?
+    @Binding var selectedAppID: String?
     let currentMode: MainView.AppMode
     @State private var viewModel: AppListViewModel
     @State private var appPendingDeletion: AppConfig?
@@ -33,11 +33,11 @@ private struct AppListContent: View {
     init(
         coordinator: MainCoordinator,
         mainViewModel: MainViewModel,
-        selectedApp: Binding<AppConfig?>,
+        selectedAppID: Binding<String?>,
         currentMode: MainView.AppMode,
     ) {
         self.mainViewModel = mainViewModel
-        self._selectedApp = selectedApp
+        self._selectedAppID = selectedAppID
         self.currentMode = currentMode
         self._viewModel = State(wrappedValue: AppListViewModel(coordinator: coordinator))
     }
@@ -62,12 +62,12 @@ private struct AppListContent: View {
                             ForEach(viewModel.filteredApps) { app in
                                 AppListItem(
                                     app: app,
-                                    isSelected: selectedApp?.id == app.id,
+                                    isSelected: selectedAppID == app.id,
                                     viewModel: viewModel,
                                     currentMode: currentMode,
                                     onDelete: { appPendingDeletion = app },
                                 ) {
-                                    selectedApp = app
+                                    selectedAppID = app.id
                                 }
                             }
                         }
@@ -97,7 +97,7 @@ private struct AppListContent: View {
                 role: .destructive,
             ) {
                 viewModel.deleteApp(app)
-                if selectedApp?.id == app.id { selectedApp = nil }
+                if selectedAppID == app.id { selectedAppID = nil }
                 appPendingDeletion = nil
             }
             Button(String(localized: "Common_Cancel"), role: .cancel) {

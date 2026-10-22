@@ -66,6 +66,11 @@ final class MainCoordinator {
     var currentSelectedBackup: BackupInfo? {
         selectedBackup
     }
+
+    func app(withID id: String?) -> AppConfig? {
+        guard let id else { return nil }
+        return currentApps.first { $0.id == id }
+    }
     
     // MARK: - Event Subscriptions
     

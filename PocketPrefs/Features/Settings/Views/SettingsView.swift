@@ -344,6 +344,7 @@ struct CustomAppsContent: View {
                     app: selectedApp,
                     manager: customAppManager,
                 )
+                .id(selectedApp.id)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
                 .background(Color.App.contentAreaBackground.color(for: colorScheme))
             } else {

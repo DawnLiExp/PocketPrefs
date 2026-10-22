@@ -183,7 +183,6 @@ struct CustomAppDetailView: View {
                 .padding(20)
             }
         }
-        .id(app.id)
     }
     
     private func startNameEdit(_ currentApp: AppConfig) {

@@ -10,9 +10,10 @@ import SwiftUI
 struct MainView: View {
     @State private var themeManager = ThemeManager.shared
     @State private var currentMode: AppMode = .backup
-    @State private var selectedApp: AppConfig?
+    @State private var selectedAppID: String?
     @State private var showingRestorePicker = false
     @Environment(\.colorScheme) var colorScheme
+    @Environment(MainCoordinator.self) private var coordinator
     
     private enum Layout {
         static let unifiedSpacing: CGFloat = 10
@@ -59,6 +60,11 @@ struct MainView: View {
             minHeight: DesignConstants.Layout.minWindowHeight,
         )
         .preferredColorScheme(themeManager.currentTheme.colorScheme)
+        .onChange(of: coordinator.currentApps.map(\.id)) { _, ids in
+            if let selectedAppID, !ids.contains(selectedAppID) {
+                self.selectedAppID = nil
+            }
+        }
     }
     
     // MARK: - Layout Components
@@ -107,7 +113,7 @@ struct MainView: View {
                 .padding(.trailing, Layout.unifiedSpacing)
 
             DetailContainerView(
-                selectedApp: selectedApp,
+                selectedApp: coordinator.app(withID: selectedAppID),
                 currentMode: currentMode,
                 showingRestorePicker: $showingRestorePicker,
             )
@@ -120,7 +126,7 @@ struct MainView: View {
         switch currentMode {
         case .backup:
             AppListView(
-                selectedApp: $selectedApp,
+                selectedAppID: $selectedAppID,
                 currentMode: currentMode,
             )
         case .restore:

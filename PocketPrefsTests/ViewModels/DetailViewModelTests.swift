@@ -79,6 +79,28 @@ struct DetailViewModelTests {
 
     // MARK: - Helpers
 
+    @Test("按 ID 获取详情会跟随名称、路径更新，删除后返回空")
+    func selectedAppFollowsStoreChanges() async throws {
+        let temp = try TempDirectory()
+        defer { temp.cleanup() }
+        let store = UserConfigStore(storageURL: temp.url.appending(path: "apps.json"))
+        var app = AppConfig.makeCustom(name: "Alpha")
+        store.addApp(app)
+        let coordinator = MainCoordinator(apps: [app], backups: [], userStore: store)
+        let selectedID = app.id
+        #expect(coordinator.app(withID: selectedID)?.name == "Alpha")
+        app.name = "Updated Alpha"
+        app.configPaths = ["~/new-config"]
+        store.updateApp(app)
+        await coordinator.loadApps()
+        #expect(coordinator.app(withID: selectedID)?.name == "Updated Alpha")
+        #expect(coordinator.app(withID: selectedID)?.configPaths == ["~/new-config"])
+        store.removeApps([selectedID])
+        await coordinator.loadApps()
+        #expect(coordinator.app(withID: selectedID) == nil)
+        #expect(coordinator.app(withID: nil) == nil)
+    }
+
     private func makeSetup() async -> (coordinator: MainCoordinator, mainViewModel: MainViewModel, detailViewModel: DetailViewModel) {
         let coordinator = MainCoordinator()
         let mainViewModel = MainViewModel(coordinator: coordinator)
