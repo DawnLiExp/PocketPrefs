@@ -14,6 +14,7 @@ struct PathPickerView: View {
     @State private var showingPicker = false
     @State private var editingPathIndex: Int?
     @State private var editingPathText = ""
+    @State private var pathValidationError: String?
     @State private var pathSelectionType: PathSelectionType = .directory
     @State private var pathValidator = PathValidator()
     @Environment(\.colorScheme) var colorScheme
@@ -66,6 +67,12 @@ struct PathPickerView: View {
                 .menuStyle(.borderlessButton)
             }
             
+            if editingPathIndex == nil, let pathValidationError {
+                Label(pathValidationError, systemImage: "exclamationmark.triangle")
+                    .font(DesignConstants.Typography.caption)
+                    .foregroundStyle(.primary)
+            }
+
             // Paths list
             if paths.isEmpty {
                 EmptyPathsView()
@@ -104,22 +111,15 @@ struct PathPickerView: View {
         .sheet(item: $editingPathIndex) { _ in
             PathEditSheet(
                 pathText: $editingPathText,
-                onSave: {
-                    if let index = editingPathIndex {
-                        if index == -1 {
-                            if !editingPathText.isEmpty, !paths.contains(editingPathText) {
-                                paths.append(editingPathText)
-                            }
-                        } else {
-                            pathValidator.invalidate(paths[index])
-                            paths[index] = editingPathText
-                        }
-                    }
+                onSave: saveEditedPath,
+                onCancel: {
                     editingPathIndex = nil
+                    pathValidationError = nil
                 },
-                onCancel: { editingPathIndex = nil },
+                validationError: pathValidationError,
             )
         }
+        .onChange(of: editingPathText) { _, _ in pathValidationError = nil }
         .onChange(of: paths) { _, newPaths in
             pathValidator.validateBatch(newPaths)
         }
@@ -138,8 +138,12 @@ struct PathPickerView: View {
                     ? "~" + path.dropFirst(homePath.count)
                     : path
                 
-                if !paths.contains(displayPath) {
-                    paths.append(displayPath)
+                switch ConfigurationPathInput.validate(displayPath, existing: paths) {
+                case .success(let path):
+                    paths.append(path)
+                    pathValidationError = nil
+                case .failure(let error):
+                    pathValidationError = error.localizedDescription
                 }
             }
         case .failure(let error):
@@ -148,13 +152,58 @@ struct PathPickerView: View {
     }
     
     private func startEditing(index: Int, path: String) {
+        pathValidationError = nil
         editingPathIndex = index
         editingPathText = path
     }
     
     private func addManualPath() {
+        pathValidationError = nil
         editingPathIndex = -1
         editingPathText = ""
+    }
+
+    private func saveEditedPath() {
+        guard let editingPathIndex else { return }
+        let index = editingPathIndex >= 0 ? editingPathIndex : nil
+        switch ConfigurationPathInput.validate(editingPathText, existing: paths, editingIndex: index) {
+        case .success(let path):
+            if let index {
+                pathValidator.invalidate(paths[index])
+                paths[index] = path
+            } else {
+                paths.append(path)
+            }
+            self.editingPathIndex = nil
+            pathValidationError = nil
+        case .failure(let error):
+            pathValidationError = error.localizedDescription
+        }
+    }
+}
+
+enum ConfigurationPathInput {
+    enum ValidationError: LocalizedError, Equatable {
+        case empty, duplicate, unavailable
+
+        var errorDescription: String? {
+            switch self {
+            case .empty: String(localized: "Path_Validation_Empty")
+            case .duplicate: String(localized: "Path_Validation_Duplicate")
+            case .unavailable: String(localized: "Path_Validation_Unavailable")
+            }
+        }
+    }
+
+    static func validate(_ draft: String, existing: [String], editingIndex: Int? = nil) -> Result<String, ValidationError> {
+        guard !draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return .failure(.empty) }
+        if let editingIndex, !existing.indices.contains(editingIndex) { return .failure(.unavailable) }
+        let expanded = NSString(string: draft).expandingTildeInPath
+        let duplicate = existing.enumerated().contains { index, path in
+            index != editingIndex && NSString(string: path).expandingTildeInPath == expanded
+        }
+        // Preserve path spelling and symbolic-link semantics; existence is only advisory.
+        return duplicate ? .failure(.duplicate) : .success(draft)
     }
 }
 
@@ -300,6 +349,7 @@ struct PathEditSheet: View {
     @Binding var pathText: String
     let onSave: () -> Void
     let onCancel: () -> Void
+    var validationError: String? = nil
     @Environment(\.colorScheme) var colorScheme
     
     var body: some View {
@@ -311,6 +361,12 @@ struct PathEditSheet: View {
                       text: $pathText)
                 .textFieldStyle(.roundedBorder)
                 .frame(width: 400)
+
+            if let validationError {
+                Label(validationError, systemImage: "exclamationmark.triangle")
+                    .font(DesignConstants.Typography.caption)
+                    .frame(width: 400, alignment: .leading)
+            }
             
             HStack(spacing: 12) {
                 Button("Common_Cancel", action: onCancel)

@@ -1,6 +1,54 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Path_Validation_Empty" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Enter a configuration path."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "请输入配置路径。"
+          }
+        }
+      }
+    },
+    "Path_Validation_Duplicate" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This configuration path has already been added."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "此配置路径已添加，请修改后保存。"
+          }
+        }
+      }
+    },
+    "Path_Validation_Unavailable" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "This path changed while editing. Cancel and open it again."
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "原路径已发生变化，请取消后重新编辑。"
+          }
+        }
+      }
+    },
     "Backup_Management_Delete_Failed_Title" : {
       "localizations" : {
         "en" : {
