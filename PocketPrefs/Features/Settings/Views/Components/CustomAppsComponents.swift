@@ -404,6 +404,7 @@ struct AddAppSheet: View {
             guard let appURL = urls.first else { return }
             
             isLoadingAppInfo = true
+            defer { isLoadingAppInfo = false }
             
             do {
                 let appInfo = try await appInfoReader.reader.readAppInfo(from: appURL)
@@ -412,14 +413,9 @@ struct AddAppSheet: View {
                 bundleId = appInfo.bundleId
                 successMessage = String(localized: "AppInfo_Success_Message", defaultValue: "Loaded info from \(appURL.deletingPathExtension().lastPathComponent)")
                 
-                try? await Task.sleep(for: .seconds(1))
-                successMessage = ""
-                
             } catch {
                 validationError = error.localizedDescription
             }
-            
-            isLoadingAppInfo = false
             
         case .failure(let error):
             validationError = error.localizedDescription
