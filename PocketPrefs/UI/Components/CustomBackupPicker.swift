@@ -59,16 +59,17 @@ struct BackupSelectionMenu: View {
             }
         } label: {
             HStack(spacing: 8) {
-                VStack(alignment: .leading, spacing: 2) {
+                Group {
                     if let selectedBackup {
-                        Text(selectedBackup.selectionDate).font(DesignConstants.Typography.body)
-                        Text(selectedBackup.selectionTime).font(DesignConstants.Typography.caption)
-                            .monospacedDigit().foregroundStyle(.secondary)
+                        Text(verbatim: "\(selectedBackup.selectionDate) \(selectedBackup.selectionTime)")
+                            .monospacedDigit()
                     } else {
-                        Text("Restore_Select_Backup").font(DesignConstants.Typography.body)
+                        Text("Restore_Select_Backup")
                     }
                 }
+                .font(DesignConstants.Typography.body)
                 .lineLimit(1)
+                .minimumScaleFactor(0.9)
                 .frame(maxWidth: .infinity, alignment: .leading)
                 Image(systemName: "chevron.down").font(.system(size: 10, weight: .medium))
                     .accessibilityHidden(true)
