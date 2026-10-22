@@ -63,9 +63,7 @@ struct PocketPrefsApp: App {
 
     @MainActor
     private func changeTheme(to theme: Theme) {
-        withAnimation(DesignConstants.Animation.smooth) {
-            themeManager.setTheme(theme)
-        }
+        themeManager.setTheme(theme)
     }
 }
 

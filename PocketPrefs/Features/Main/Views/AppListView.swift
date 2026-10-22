@@ -224,7 +224,7 @@ struct AppListHeader: View {
                         lineWidth: 1.0,
                     ),
             )
-            .animation(.easeInOut(duration: 0.15), value: isSearchFocused)
+
 
             HStack(spacing: 16) {
                 Toggle(isOn: Binding(
@@ -345,29 +345,9 @@ struct IncrementalBaseSelector: View {
             .menuStyle(.borderlessButton)
             .fixedSize(horizontal: false, vertical: true)
 
-            Button(action: {
-                Task { @MainActor in
-                    await refreshBackups()
-                }
-            }) {
-                Image(systemName: "arrow.clockwise")
-                    .font(.system(size: 14, weight: .medium))
-                    .foregroundColor(Color.App.primary.color(for: colorScheme))
-                    .rotationEffect(.degrees(localRefreshing ? 360 : 0))
-                    .animation(
-                        localRefreshing ? Animation.linear(duration: 1).repeatForever(autoreverses: false) : .default,
-                        value: localRefreshing,
-                    )
+            RefreshButton(isRefreshing: localRefreshing, isEnabled: !localRefreshing) {
+                Task { @MainActor in await refreshBackups() }
             }
-            .buttonStyle(PlainButtonStyle())
-            .keyboardFocusOutline()
-            .accessibilityLabel(Text("Common_Refresh"))
-            .frame(width: 32, height: 32)
-            .background(
-                Color.App.contentAreaBackground.color(for: colorScheme),
-            )
-            .clipShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
-            .disabled(localRefreshing)
         }
     }
 
@@ -490,7 +470,6 @@ struct AppListItem: View {
         .padding(11)
         .cardEffect(isSelected: isSelected)
         .rowFocusOutline(focus.wrappedValue == app.id)
-        .animation(DesignConstants.Animation.quick, value: isSelected)
         .onHover { hovering in
             withAnimation(DesignConstants.Animation.quick) {
                 isHovered = hovering

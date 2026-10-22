@@ -387,9 +387,7 @@ struct CustomAppsContent: View {
     private func scrollToPendingReveal(_ appId: String?, with proxy: ScrollViewProxy) {
         guard let appId, filteredApps.contains(where: { $0.id == appId }) else { return }
 
-        withAnimation(DesignConstants.Animation.quick) {
-            proxy.scrollTo(appId, anchor: .center)
-        }
+        proxy.scrollTo(appId, anchor: .center)
 
         customAppManager.consumePendingRevealAppId(appId)
     }

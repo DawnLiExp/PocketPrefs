@@ -13,9 +13,8 @@ struct FadeInScaleAnimation: ViewModifier {
     func body(content: Content) -> some View {
         content
             .opacity(isAnimating ? 1 : 0)
-            .scaleEffect(isAnimating ? 1 : 0.8)
             .onAppear {
-                withAnimation(.easeOut(duration: 1.0)) {
+                withAnimation(.easeOut(duration: 0.18)) {
                     isAnimating = true
                 }
             }

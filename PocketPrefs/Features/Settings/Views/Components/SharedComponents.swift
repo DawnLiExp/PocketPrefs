@@ -87,7 +87,7 @@ struct SettingsToolbar: View {
                         lineWidth: 1.0
                     )
             )
-            .animation(.easeInOut(duration: 0.15), value: isSearchFocused)
+
 
             // Action buttons
             HStack {

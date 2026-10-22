@@ -190,7 +190,7 @@ struct SearchFieldView: View {
                     lineWidth: 1.0,
                 ),
         )
-        .animation(.easeInOut(duration: 0.15), value: isFocused)
+
     }
 }
 

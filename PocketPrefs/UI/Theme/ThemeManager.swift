@@ -25,12 +25,10 @@ class ThemeManager {
         currentTheme = Theme(rawValue: storedTheme) ?? .system
     }
 
-    /// Set theme with animation
+    /// Apply theme immediately, including keyboard-initiated changes.
     func setTheme(_ theme: Theme) {
-        withAnimation(DesignConstants.Animation.smooth) {
-            currentTheme = theme
-            storedTheme = theme.rawValue
-        }
+        currentTheme = theme
+        storedTheme = theme.rawValue
     }
 }
 
@@ -144,7 +142,7 @@ enum DesignConstants {
     // Enhanced animations for glass effects
     enum Animation {
         static let standard = SwiftUI.Animation.spring(response: 0.35, dampingFraction: 0.86)
-        static let quick = SwiftUI.Animation.spring(response: 0.25, dampingFraction: 0.9)
+        static let quick = SwiftUI.Animation.easeOut(duration: 0.12)
         static let smooth = SwiftUI.Animation.easeInOut(duration: 0.3)
         static let glass = SwiftUI.Animation.easeInOut(duration: 0.25)
     }

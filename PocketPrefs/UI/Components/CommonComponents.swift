@@ -13,6 +13,7 @@ struct ProgressView: View {
     let progress: Double
     let messageHistory: [String]
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         VStack(spacing: 32) {
@@ -31,14 +32,17 @@ struct ProgressView: View {
                         )
                         .multilineTextAlignment(.center)
                         .lineLimit(1)
-                        .transition(.asymmetric(
-                            insertion: .move(edge: .bottom).combined(with: .opacity),
-                            removal: .move(edge: .top).combined(with: .opacity)
-                        ))
+                        .transition(
+                            reduceMotion
+                                ? .opacity
+                                : .asymmetric(
+                                    insertion: .move(edge: .bottom).combined(with: .opacity),
+                                    removal: .move(edge: .top).combined(with: .opacity)
+                                ))
                 }
             }
             .frame(height: 80)
-            .animation(.easeInOut(duration: 0.3), value: messageHistory)
+            .animation(.easeOut(duration: 0.18), value: messageHistory)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(.ultraThinMaterial.opacity(0.8))
@@ -53,7 +57,7 @@ struct ProgressView: View {
 struct CircularProgressView: View {
     let progress: Double
     @Environment(\.colorScheme) var colorScheme
-    @State private var decorativeRotation: Double = 0
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         ZStack {
@@ -71,7 +75,7 @@ struct CircularProgressView: View {
                     LinearGradient(
                         colors: [
                             Color.App.accent.color(for: colorScheme),
-                            Color.App.accent.color(for: colorScheme).opacity(0.7)
+                            Color.App.accent.color(for: colorScheme).opacity(0.7),
                         ],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
@@ -82,33 +86,31 @@ struct CircularProgressView: View {
                     )
                 )
                 .rotationEffect(.degrees(-90))
-                .animation(.easeOut(duration: 0.7), value: progress)
+                .animation(reduceMotion ? nil : .easeOut(duration: 0.2), value: progress)
 
             // Decorative Ring
-            Circle()
-                .stroke(
-                    LinearGradient(
-                        colors: [
-                            Color.App.accent.color(for: colorScheme).opacity(0.3),
-                            .clear
-                        ],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    ),
-                    lineWidth: 2
-                )
-                .frame(width: 140, height: 140)
-                .rotationEffect(.degrees(decorativeRotation))
-                .animation(.linear(duration: 3).repeatForever(autoreverses: false), value: decorativeRotation)
-                .onAppear {
-                    decorativeRotation = 360
-                }
+            if !reduceMotion {
+                Circle()
+                    .stroke(
+                        LinearGradient(
+                            colors: [
+                                Color.App.accent.color(for: colorScheme).opacity(0.3),
+                                .clear,
+                            ],
+                            startPoint: .top,
+                            endPoint: .bottom
+                        ),
+                        lineWidth: 2
+                    )
+                    .frame(width: 140, height: 140)
+                    .modifier(ContinuousRotation(duration: 3))
+            }
 
             // Center percentage number
             Text(progress, format: .percent.precision(.fractionLength(0)))
                 .font(.system(size: 38, weight: .light, design: .rounded))
+                .monospacedDigit()
                 .foregroundColor(Color.App.accent.color(for: colorScheme))
-                .animation(.easeOut(duration: 0.3), value: progress)
         }
     }
 }
@@ -179,6 +181,7 @@ struct PrimaryButtonStyle: ButtonStyle {
 struct SecondaryButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) var isEnabled
     @Environment(\.colorScheme) var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
@@ -194,7 +197,7 @@ struct SecondaryButtonStyle: ButtonStyle {
                 RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius)
                     .stroke(Color.App.lightSeparator.color(for: colorScheme), lineWidth: 0.5)
             )
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+            .scaleEffect(reduceMotion ? 1 : (configuration.isPressed ? 0.96 : 1))
             .opacity(configuration.isPressed ? 0.8 : 1.0)
     }
 }
@@ -245,25 +248,28 @@ struct RefreshButton: View {
     let isEnabled: Bool
     let action: () -> Void
     @Environment(\.colorScheme) private var colorScheme
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
         Button(action: action) {
-            Image(systemName: "arrow.clockwise")
-                .font(.system(size: 14, weight: .semibold))
-                .rotationEffect(.degrees(isRefreshing ? 360 : 0))
-                .animation(
-                    isRefreshing
-                        ? .linear(duration: 0.9).repeatForever(autoreverses: false)
-                        : DesignConstants.Animation.quick,
-                    value: isRefreshing
-                )
-                .frame(width: 32, height: 32)
-                .contentShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
+            Group {
+                if isRefreshing, !reduceMotion {
+                    Image(systemName: "arrow.clockwise")
+                        .modifier(ContinuousRotation(duration: 0.9))
+                } else {
+                    Image(systemName: isRefreshing ? "hourglass" : "arrow.clockwise")
+                }
+            }
+            .font(.system(size: 14, weight: .semibold))
+            .frame(width: 32, height: 32)
+            .contentShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
         }
         .buttonStyle(RefreshButtonStyle(isRefreshing: isRefreshing))
+        .keyboardFocusOutline()
         .disabled(!isEnabled)
         .accessibilityLabel(String(localized: "Common_Refresh", defaultValue: "Refresh"))
         .help(String(localized: "Common_Refresh", defaultValue: "Refresh"))
+        .accessibilityValue(isRefreshing ? String(localized: "Common_Refreshing") : String(localized: "Common_Ready"))
     }
 }
 
@@ -281,12 +287,8 @@ struct RefreshButtonStyle: ButtonStyle {
                     ? foregroundColor
                     : Color.App.secondary.color(for: colorScheme).opacity(0.7)
             )
-            .scaleEffect(scale(configuration: configuration))
             .opacity(opacity(configuration: configuration))
             .contentShape(RoundedRectangle(cornerRadius: DesignConstants.Layout.smallCornerRadius))
-            .animation(DesignConstants.Animation.quick, value: configuration.isPressed)
-            .animation(DesignConstants.Animation.quick, value: isHovered)
-            .animation(DesignConstants.Animation.quick, value: isRefreshing)
             .onHover { hovering in
                 withAnimation(DesignConstants.Animation.quick) {
                     isHovered = hovering
@@ -301,19 +303,6 @@ struct RefreshButtonStyle: ButtonStyle {
         return Color.App.primary.color(for: colorScheme)
     }
 
-    private func scale(configuration: Configuration) -> CGFloat {
-        if configuration.isPressed {
-            return 0.94
-        }
-        if isRefreshing {
-            return 1.04
-        }
-        if isHovered, isEnabled {
-            return 1.02
-        }
-        return 1.0
-    }
-
     private func opacity(configuration: Configuration) -> Double {
         if configuration.isPressed {
             return 0.72
@@ -325,5 +314,20 @@ struct RefreshButtonStyle: ButtonStyle {
             return 0.82
         }
         return 0.68
+    }
+}
+
+private struct ContinuousRotation: ViewModifier {
+    let duration: Double
+    @State private var angle = 0.0
+
+    func body(content: Content) -> some View {
+        content
+            .rotationEffect(.degrees(angle))
+            .onAppear {
+                withAnimation(.linear(duration: duration).repeatForever(autoreverses: false)) {
+                    angle = 360
+                }
+            }
     }
 }

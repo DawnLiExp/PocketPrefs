@@ -72,7 +72,6 @@ struct BackupPlaceholderView: View {
                     Text("Detail_Placeholder_Select_App")
                         .font(DesignConstants.Typography.headline)
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
-                        .breathingPulseAnimation()
                 }
 
                 Spacer()

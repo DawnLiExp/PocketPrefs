@@ -1,6 +1,38 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Common_Refreshing" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Refreshing…"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "正在刷新…"
+          }
+        }
+      }
+    },
+    "Common_Ready" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Ready"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "就绪"
+          }
+        }
+      }
+    },
     "Common_Edit" : {
       "localizations" : {
         "en" : {

@@ -27,9 +27,7 @@ struct SidebarView: View {
                         title: mode.displayName,
                         isSelected: currentMode == mode,
                     ) {
-                        withAnimation(DesignConstants.Animation.quick) {
-                            currentMode = mode
-                        }
+                        currentMode = mode
                     }
                 }
             }
@@ -87,7 +85,6 @@ struct SidebarIconButton: View {
     let action: () -> Void
     
     @State private var isHovered = false
-    @State private var isPressing = false
     @Environment(\.colorScheme) private var colorScheme
     
     // Enhanced visual state management
@@ -134,27 +131,17 @@ struct SidebarIconButton: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
             .padding(.horizontal, 4)
-            .scaleEffect(isPressing ? 0.96 : 1.0)
             .contentShape(Rectangle())
         }
-        .buttonStyle(PlainButtonStyle())
+        .buttonStyle(SidebarPressStyle())
+        .keyboardFocusOutline()
+        .accessibilityLabel(Text(title))
+        .accessibilityAddTraits(isSelected ? .isSelected : [])
         .onHover { hovering in
             withAnimation(DesignConstants.Animation.quick) {
                 isHovered = hovering
             }
         }
-        .pressEvents(
-            onPress: {
-                withAnimation(.easeInOut(duration: 0.1)) {
-                    isPressing = true
-                }
-            },
-            onRelease: {
-                withAnimation(.easeOut(duration: 0.2)) {
-                    isPressing = false
-                }
-            },
-        )
     }
     
     @ViewBuilder
@@ -180,29 +167,9 @@ struct SidebarIconButton: View {
     }
 }
 
-// MARK: - Press Events Modifier
-
-private struct PressEventsModifier: ViewModifier {
-    let onPress: () -> Void
-    let onRelease: () -> Void
-    
-    func body(content: Content) -> some View {
-        content
-            .simultaneousGesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in
-                        onPress()
-                    }
-                    .onEnded { _ in
-                        onRelease()
-                    },
-            )
-    }
-}
-
-extension View {
-    func pressEvents(onPress: @escaping () -> Void, onRelease: @escaping () -> Void) -> some View {
-        modifier(PressEventsModifier(onPress: onPress, onRelease: onRelease))
+private struct SidebarPressStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label.opacity(configuration.isPressed ? 0.7 : 1)
     }
 }
 

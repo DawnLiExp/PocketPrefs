@@ -229,9 +229,7 @@ struct BackupDetailColumn: View {
                                             viewModel.toggleDetailAppSelection(app.id)
                                         },
                                         onSelectRow: {
-                                            withAnimation(DesignConstants.Animation.quick) {
-                                                selectedRowId = app.id
-                                            }
+                                            selectedRowId = app.id
                                         },
                                         focus: $focusedRowID
                                     )
