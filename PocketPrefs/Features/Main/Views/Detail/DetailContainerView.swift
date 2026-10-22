@@ -60,6 +60,8 @@ private struct DetailContent: View {
                 messageHistory: mainViewModel.statusMessageHistory,
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
+        } else if let result = mainViewModel.operationResult {
+            OperationResultView(result: result, onDone: mainViewModel.dismissOperationResult)
         } else if currentMode == .backup {
             if let app = selectedApp {
                 AppDetailView(

@@ -27,7 +27,6 @@ final class AppLogger: Sendable {
         case preferences = "PreferencesManager"
         case appInfoReader = "AppInfoReader"
         case customAppManager = "CustomAppManager"
-        case operationEvents = "OperationEventPublisher"
         case settingsEvents = "SettingsEventPublisher"
     }
 

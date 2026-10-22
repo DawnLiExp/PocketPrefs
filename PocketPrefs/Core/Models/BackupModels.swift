@@ -116,6 +116,43 @@ struct RestoreResult {
     }
 }
 
+struct OperationSummary: Identifiable {
+    enum Kind { case backup, restore }
+    enum Status { case success, partialFailure, failure, notPerformed }
+
+    struct Failure {
+        let name: String
+        let reason: String
+    }
+
+    let id = UUID()
+    let kind: Kind
+    let successCount: Int
+    let totalProcessed: Int
+    let failures: [Failure]
+    var notice: String?
+
+    var status: Status {
+        if totalProcessed == 0 { return .notPerformed }
+        if failures.isEmpty, successCount > 0 { return .success }
+        return successCount > 0 ? .partialFailure : .failure
+    }
+
+    init(backup result: BackupResult) {
+        kind = .backup
+        successCount = result.successCount
+        totalProcessed = result.totalProcessed
+        failures = result.failedApps.map { Failure(name: $0.name, reason: $0.error.localizedDescription) }
+    }
+
+    init(restore result: RestoreResult) {
+        kind = .restore
+        successCount = result.successCount
+        totalProcessed = result.totalProcessed
+        failures = result.failedApps.map { Failure(name: $0.name, reason: $0.error.localizedDescription) }
+    }
+}
+
 // MARK: - BackupName Formatting Extension
 
 extension BackupInfo {

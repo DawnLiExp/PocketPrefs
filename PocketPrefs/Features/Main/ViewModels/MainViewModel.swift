@@ -6,7 +6,6 @@
 //
 
 import Foundation
-import os.log
 import SwiftUI
 
 @MainActor
@@ -14,7 +13,8 @@ import SwiftUI
 final class MainViewModel {
     // MARK: - Operation State
     
-    var isProcessing = false
+    private(set) var isProcessing = false
+    private(set) var operationResult: OperationSummary?
     var statusMessage = ""
     var currentProgress: Double = 0.0
     var statusMessageHistory: [String] = []
@@ -36,60 +36,52 @@ final class MainViewModel {
     // MARK: - Dependencies
     
     private let coordinator: MainCoordinator
-    @ObservationIgnored private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "MainViewModel")
-    
-    @ObservationIgnored private var operationEventTask: Task<Void, Never>?
+    typealias BackupOperation = @MainActor ([AppConfig], BackupInfo?, @escaping ProgressHandler) async -> BackupResult
+    typealias RestoreOperation = @MainActor (BackupInfo, Bool, @escaping ProgressHandler) async -> RestoreResult
+    @ObservationIgnored private let backupOperation: BackupOperation
+    @ObservationIgnored private let restoreOperation: RestoreOperation
+    @ObservationIgnored private let restoreBackupPreference: @MainActor () -> Bool
+    @ObservationIgnored private var operationTask: Task<Void, Never>?
     
     // MARK: - Initialization
     
-    init(coordinator: MainCoordinator) {
+    init(
+        coordinator: MainCoordinator,
+        backupOperation: BackupOperation? = nil,
+        restoreOperation: RestoreOperation? = nil,
+        restoreBackupPreference: @escaping @MainActor () -> Bool = { PreferencesManager.shared.createBackupBeforeRestore }
+    ) {
         self.coordinator = coordinator
-        subscribeToOperationEvents()
+        self.backupOperation = backupOperation ?? { apps, base, progress in
+            await coordinator.performBackupOperation(apps: apps, incrementalBase: base, onProgress: progress)
+        }
+        self.restoreOperation = restoreOperation ?? { backup, createBackup, progress in
+            await coordinator.performRestoreOperation(backup: backup, createBackupBeforeRestore: createBackup, onProgress: progress)
+        }
+        self.restoreBackupPreference = restoreBackupPreference
     }
     
     deinit {
-        operationEventTask?.cancel()
+        operationTask?.cancel()
     }
     
-    // MARK: - Event Subscriptions
-    
-    private func subscribeToOperationEvents() {
-        operationEventTask?.cancel()
-        operationEventTask = Task { [weak self] in
-            guard let self else { return }
-            let eventStream = OperationEventPublisher.shared.subscribe()
-            
-            for await event in eventStream {
-                guard !Task.isCancelled else { break }
-                await self.handleOperationEvent(event)
-            }
-        }
-    }
-    
-    // MARK: - Event Handlers
-    
-    private func handleOperationEvent(_ event: OperationEvent) async {
-        isProcessing = true
-        defer {
-            isProcessing = false
-            currentProgress = 0.0
-            statusMessageHistory = []
-        }
+    // MARK: - Window-owned Operation
 
-        switch event {
-        case .performBackup:
-            await coordinator.performBackupOperation(
-                incrementalBase: isIncrementalMode ? incrementalBaseBackup : nil,
-                onProgress: { [weak self] update in
-                    await self?.updateProgress(update)
-                },
-            )
-        case .performRestore:
-            await coordinator.performRestoreOperation(
-                onProgress: { [weak self] update in
-                    await self?.updateProgress(update)
-                },
-            )
+    private func startOperation(_ operation: @escaping @MainActor (@escaping ProgressHandler) async -> OperationSummary) {
+        isProcessing = true
+        currentProgress = 0
+        statusMessage = ""
+        statusMessageHistory = []
+        operationTask = Task { [weak self] in
+            let result = await operation { [weak self] update in
+                self?.updateProgress(update)
+            }
+            guard !Task.isCancelled, let self else { return }
+            self.operationResult = result
+            self.isProcessing = false
+            self.currentProgress = 0
+            self.statusMessageHistory = []
+            self.operationTask = nil
         }
     }
 
@@ -121,11 +113,35 @@ final class MainViewModel {
     
     /// Request backup operation
     func requestBackup() {
-        OperationEventPublisher.shared.publish(.performBackup)
+        guard !isProcessing, operationResult == nil else { return }
+        let apps = coordinator.currentApps
+        let base = isIncrementalMode ? incrementalBaseBackup : nil
+        startOperation { [backupOperation] progress in
+            OperationSummary(backup: await backupOperation(apps, base, progress))
+        }
     }
     
     /// Request restore operation
     func requestRestore() {
-        OperationEventPublisher.shared.publish(.performRestore)
+        guard !isProcessing, operationResult == nil else { return }
+        guard let backup = coordinator.currentSelectedBackup else {
+            var summary = OperationSummary(restore: RestoreResult(successCount: 0, failedApps: [], totalProcessed: 0))
+            summary.notice = String(localized: "Operation_Result_Missing_Backup")
+            operationResult = summary
+            return
+        }
+        let createBackup = restoreBackupPreference()
+        startOperation { [restoreOperation] progress in
+            OperationSummary(restore: await restoreOperation(backup, createBackup, progress))
+        }
+    }
+
+    func dismissOperationResult() {
+        guard !isProcessing else { return }
+        operationResult = nil
+    }
+
+    func waitForOperation() async {
+        await operationTask?.value
     }
 }

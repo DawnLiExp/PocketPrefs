@@ -299,59 +299,45 @@ final class MainCoordinator {
     // MARK: - Operations
     
     func performBackupOperation(
+        apps: [AppConfig],
         incrementalBase: BackupInfo?,
-        onProgress: @escaping @Sendable (ProgressUpdate) async -> Void,
-    ) async {
-        let startTime = Date()
-
+        onProgress: @escaping ProgressHandler,
+    ) async -> BackupResult {
         await onProgress(ProgressUpdate(
             fraction: 0.0,
             message: String(localized: "Backup_Starting", defaultValue: "Starting configuration backup..."),
         ))
         
         let result = await backupService.performBackup(
-            apps: currentApps,
+            apps: apps,
             incrementalBase: incrementalBase,
             onProgress: onProgress,
         )
         
-        await enforceMinimumDuration(startTime: startTime, onProgress: onProgress, result: result.statusMessage)
-        
+        await onProgress(.completed(message: result.statusMessage))
         await scanBackups()
-        
-        try? await Task.sleep(for: .seconds(0.2))
+        return result
     }
     
     func performRestoreOperation(
-        onProgress: @escaping @Sendable (ProgressUpdate) async -> Void,
-    ) async {
-        guard let backup = selectedBackup else {
-            logger.error("No backup selected for restore")
-            return
-        }
-
-        let startTime = Date()
-
+        backup: BackupInfo,
+        createBackupBeforeRestore: Bool,
+        onProgress: @escaping ProgressHandler,
+    ) async -> RestoreResult {
         await onProgress(ProgressUpdate(
             fraction: 0.0,
             message: String(localized: "Restore_Starting", defaultValue: "Starting configuration restore..."),
         ))
         
-        // IMPORTANT: snapshot the backup preference once before starting restore;
-        // mid-restore changes by the user must not affect this operation.
-        let shouldBackup = PreferencesManager.shared.createBackupBeforeRestore
-        
         let result = await restoreService.performRestore(
             backup: backup,
-            createBackupBeforeRestore: shouldBackup,
+            createBackupBeforeRestore: createBackupBeforeRestore,
             onProgress: onProgress,
         )
         
-        await enforceMinimumDuration(startTime: startTime, onProgress: onProgress, result: result.statusMessage)
-        
+        await onProgress(.completed(message: result.statusMessage))
         await loadApps()
-        
-        try? await Task.sleep(for: .seconds(0.2))
+        return result
     }
     
     func scanAppsInBackup(at path: String) async -> [BackupAppInfo] {
@@ -369,22 +355,4 @@ final class MainCoordinator {
         selectedBackup = availableBackups[backupIndex]
     }
     
-    private func enforceMinimumDuration(
-        startTime: Date,
-        onProgress: @escaping @Sendable (ProgressUpdate) async -> Void,
-        result: String,
-    ) async {
-        let elapsed = Date().timeIntervalSince(startTime)
-        let minDuration = 1.3
-        if elapsed < minDuration {
-            try? await Task.sleep(for: .seconds(minDuration - elapsed))
-        }
-        
-        await onProgress(ProgressUpdate(
-            fraction: 1.0,
-            message: result,
-        ))
-        
-        try? await Task.sleep(for: .seconds(0.5))
-    }
 }
