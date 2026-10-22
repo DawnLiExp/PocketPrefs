@@ -31,7 +31,7 @@ final class MainCoordinator {
     @ObservationIgnored private let backupService = BackupService()
     @ObservationIgnored private let restoreService = RestoreService()
     @ObservationIgnored private let fileOps = FileOperationService.shared
-    @ObservationIgnored private let userStore = UserConfigStore.shared
+    @ObservationIgnored private let userStore: UserConfigStore
     
     // MARK: - Tasks Management
     
@@ -40,12 +40,21 @@ final class MainCoordinator {
     // MARK: - Initialization
     
     init() {
+        userStore = .shared
         Task {
             await loadApps()
             await scanBackups()
         }
         
         subscribeToEvents()
+    }
+
+    /// Snapshot-backed initialization avoids startup scans and shared storage in tests.
+    init(apps: [AppConfig] = [], backups: [BackupInfo], userStore: UserConfigStore) {
+        self.userStore = userStore
+        currentApps = apps
+        availableBackups = backups
+        selectedBackup = backups.first
     }
     
     // MARK: - Public Accessors
@@ -255,6 +264,15 @@ final class MainCoordinator {
         modifyBackupApps { apps in
             guard let index = apps.firstIndex(where: { $0.id == app.id }) else { return }
             apps[index].isSelected.toggle()
+        }
+    }
+
+    func setRestoreSelection(for appIDs: Set<String>, isSelected: Bool) {
+        guard !appIDs.isEmpty else { return }
+        modifyBackupApps { apps in
+            for index in apps.indices where appIDs.contains(apps[index].id) {
+                apps[index].isSelected = isSelected
+            }
         }
     }
     

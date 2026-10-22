@@ -96,12 +96,19 @@ struct RestoreListHeader: View {
                             .font(DesignConstants.Typography.body)
                     }
                     .toggleStyle(CustomCheckboxToggleStyle())
+                    .disabled(viewModel.cachedTotalCount == 0)
 
                     Spacer()
 
                     Text(String(localized: "Selected_Count", defaultValue: "Selected \(cachedSelectedCount) / \(cachedTotalCount)"))
                         .font(DesignConstants.Typography.caption)
                         .foregroundColor(Color.App.secondary.color(for: colorScheme))
+                }
+
+                if !searchText.isEmpty {
+                    Text(String(localized: "Restore_Overall_Selected_Count", defaultValue: "Total selected: \(viewModel.cachedOverallSelectedCount)"))
+                        .font(DesignConstants.Typography.caption)
+                        .foregroundStyle(Color.App.primary.color(for: colorScheme))
                 }
             }
         }

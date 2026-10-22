@@ -1,6 +1,38 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Restore_Overall_Selected_Count" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Total selected: %lld"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "总共已选 %lld 个应用"
+          }
+        }
+      }
+    },
+    "Restore_Action_Selected_Count" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Restore %lld Apps"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "恢复已选 %lld 个应用"
+          }
+        }
+      }
+    },
     "AppInfo_Error_Invalid_Bundle" : {
       "localizations" : {
         "en" : {

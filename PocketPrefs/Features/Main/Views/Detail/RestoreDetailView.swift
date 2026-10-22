@@ -133,7 +133,7 @@ struct RestoreDetailContent: View {
 
                     Button(action: { viewModel.performRestore() }) {
                         Label(
-                            "Detail_Restore_Action_Restore_Selected",
+                            String(localized: "Restore_Action_Selected_Count", defaultValue: "Restore \(viewModel.selectedRestoreAppsCount) Apps"),
                             systemImage: "arrow.down.circle.fill",
                         )
                     }

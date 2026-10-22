@@ -25,11 +25,14 @@ final class RestoreListViewModel {
 
     var selectedBackup: BackupInfo?
     var availableBackups: [BackupInfo] = []
-    var searchText = ""
+    var searchText = "" {
+        didSet { refreshCachedState() }
+    }
     var isRefreshing = false
     var cachedAllSelected = false
     var cachedSelectedCount = 0
     var cachedTotalCount = 0
+    var cachedOverallSelectedCount = 0
 
     // MARK: - Persistent Sort Option
 
@@ -58,17 +61,7 @@ final class RestoreListViewModel {
     }
 
     var filteredApps: [BackupAppInfo] {
-        guard let backup = selectedBackup else { return [] }
-        let source = backup.apps
-        let filtered: [BackupAppInfo] = if searchText.isEmpty {
-            source
-        } else {
-            source.filter { app in
-                app.name.localizedCaseInsensitiveContains(searchText) ||
-                    app.bundleId.localizedCaseInsensitiveContains(searchText)
-            }
-        }
-        return currentSortOption.apply(to: filtered)
+        currentSortOption.apply(to: matchingApps(in: selectedBackup?.apps ?? []))
     }
 
     // MARK: - Dependencies
@@ -111,24 +104,24 @@ final class RestoreListViewModel {
 
     func toggleSelection(for app: BackupAppInfo) {
         coordinator?.toggleRestoreSelection(for: app)
-        refreshCachedState(from: coordinator?.currentSelectedBackup?.apps ?? [])
+        syncFromCoordinator()
+        refreshCachedState()
     }
 
     func toggleSelectAll() {
         guard let coordinator else { return }
 
-        if cachedAllSelected {
-            coordinator.deselectAllRestoreApps()
-        } else {
-            coordinator.selectAllRestoreApps()
-        }
-
-        // Synchronous update — same runloop cycle as user action.
-        refreshCachedState(from: coordinator.currentSelectedBackup?.apps ?? [])
+        let visibleIDs = Set(filteredApps.map(\.id))
+        guard !visibleIDs.isEmpty else { return }
+        coordinator.setRestoreSelection(for: visibleIDs, isSelected: !cachedAllSelected)
+        syncFromCoordinator()
+        refreshCachedState()
     }
 
     func selectBackup(_ backup: BackupInfo) {
         coordinator?.selectBackup(backup)
+        syncFromCoordinator()
+        refreshCachedState()
     }
 
     func refreshBackups() async {
@@ -174,16 +167,21 @@ final class RestoreListViewModel {
         selectedBackup = coordinator.selectedBackup
     }
 
-    private func refreshCachedState(from apps: [BackupAppInfo]? = nil) {
-        let source = apps ?? selectedBackup?.apps ?? []
-        let visible: [BackupAppInfo] = if searchText.isEmpty {
-            source
+    private func matchingApps(in apps: [BackupAppInfo]) -> [BackupAppInfo] {
+        if searchText.isEmpty {
+            apps
         } else {
-            source.filter { app in
+            apps.filter { app in
                 app.name.localizedCaseInsensitiveContains(searchText) ||
                     app.bundleId.localizedCaseInsensitiveContains(searchText)
             }
         }
+    }
+
+    private func refreshCachedState() {
+        let source = selectedBackup?.apps ?? []
+        let visible = matchingApps(in: source)
+        cachedOverallSelectedCount = source.count(where: \.isSelected)
 
         guard !visible.isEmpty else {
             cachedAllSelected = false
