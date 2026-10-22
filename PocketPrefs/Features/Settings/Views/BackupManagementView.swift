@@ -16,11 +16,13 @@ struct BackupManagementView: View {
         HStack(spacing: 0) {
             BackupListColumn(viewModel: viewModel)
                 .frame(width: 280)
+                .disabled(!viewModel.canChangeSelection)
 
             Divider()
 
             BackupDetailColumn(viewModel: viewModel)
                 .frame(maxWidth: .infinity)
+                .disabled(!viewModel.canChangeSelection)
         }
         .task {
             await viewModel.loadBackups()

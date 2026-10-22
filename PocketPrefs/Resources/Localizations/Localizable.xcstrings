@@ -1,6 +1,22 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Backup_Management_Delete_Failed_Title" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Some Items Could Not Be Deleted"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "部分项目未能删除"
+          }
+        }
+      }
+    },
     "Operation_Result_Success" : {
       "localizations" : {
         "en" : {

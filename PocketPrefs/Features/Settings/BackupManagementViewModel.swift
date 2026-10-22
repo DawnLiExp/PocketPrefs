@@ -48,15 +48,18 @@ final class BackupManagementViewModel {
     var isLoading = false
     var isRefreshing = false
     var isMerging = false
+    private(set) var isDeleting = false
+
+    var canChangeSelection: Bool { !isLoading && !isDeleting && !isMerging }
 
     // MARK: - Computed
 
     var canMerge: Bool {
-        selectedBackupIds.count >= 2
+        selectedBackupIds.count >= 2 && canChangeSelection
     }
 
     var canBatchDelete: Bool {
-        !selectedBackupIds.isEmpty
+        !selectedBackupIds.isEmpty && canChangeSelection
     }
 
     var selectedCount: Int {
@@ -68,29 +71,44 @@ final class BackupManagementViewModel {
     }
 
     var canRefresh: Bool {
-        !isLoading && !isRefreshing && !isMerging
+        !isLoading && !isRefreshing && !isMerging && !isDeleting
     }
 
     // MARK: - Dependencies
 
-    private let backupService = BackupService()
-    private let managementService = BackupManagementService()
+    private let managementService: BackupManagementService
     private let fileOps = FileOperationService.shared
     private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "BackupManagementViewModel")
     @ObservationIgnored private var pendingMutationTasks: [UUID: Task<Void, Never>] = [:]
+    @ObservationIgnored private let scanOperation: @MainActor () async -> [BackupInfo]
+    @ObservationIgnored private let deleteBackupOperation: @MainActor (BackupInfo) async throws -> Void
+    @ObservationIgnored private let deleteAppOperation: @MainActor (BackupAppInfo) async throws -> Void
+
+    init(
+        scanOperation: (@MainActor () async -> [BackupInfo])? = nil,
+        deleteBackupOperation: (@MainActor (BackupInfo) async throws -> Void)? = nil,
+        deleteAppOperation: (@MainActor (BackupAppInfo) async throws -> Void)? = nil
+    ) {
+        let scanner = BackupService()
+        let manager = BackupManagementService()
+        managementService = manager
+        self.scanOperation = scanOperation ?? { await scanner.scanBackups() }
+        self.deleteBackupOperation = deleteBackupOperation ?? { try await manager.deleteBackup($0) }
+        self.deleteAppOperation = deleteAppOperation ?? { try await manager.deleteAppFromBackup($0) }
+    }
 
     // MARK: - Load
 
     func loadBackups() async {
         isLoading = true
+        defer { isLoading = false }
 
-        backups = await backupService.scanBackups()
+        backups = await scanOperation()
         reconcileSelectionWithCurrentBackups()
 
         selectedDetailAppIds.removeAll()
 
         pendingDeleteBackupId = nil
-        isLoading = false
 
         await computeBackupSizes()
 
@@ -128,6 +146,7 @@ final class BackupManagementViewModel {
     // MARK: - Backup Selection (left column)
 
     func toggleBackupSelection(_ id: String) {
+        guard canChangeSelection else { return }
         if selectedBackupIds.contains(id) {
             selectedBackupIds.remove(id)
         } else {
@@ -137,6 +156,7 @@ final class BackupManagementViewModel {
 
     /// Switches the right-column detail view; resets both pending-delete and app selection.
     func selectDetailBackup(_ backup: BackupInfo) {
+        guard canChangeSelection else { return }
         detailBackupId = backup.id
         pendingDeleteBackupId = nil
         selectedDetailAppIds.removeAll()
@@ -146,6 +166,7 @@ final class BackupManagementViewModel {
     // MARK: - App Selection (right column)
 
     func toggleDetailAppSelection(_ id: String) {
+        guard canChangeSelection else { return }
         if selectedDetailAppIds.contains(id) {
             selectedDetailAppIds.remove(id)
         } else {
@@ -154,15 +175,19 @@ final class BackupManagementViewModel {
     }
 
     func clearDetailSelection() {
+        guard canChangeSelection else { return }
         selectedDetailAppIds.removeAll()
     }
 
     // MARK: - Delete Backup (left-column inline two-step)
 
     func handleDeleteBackup(_ backup: BackupInfo) async {
+        guard canChangeSelection else { return }
         if pendingDeleteBackupId == backup.id {
+            isDeleting = true
+            defer { isDeleting = false }
             do {
-                try await managementService.deleteBackup(backup)
+                try await deleteBackupOperation(backup)
                 backupSizeCache.removeValue(forKey: backup.id)
                 pendingDeleteBackupId = nil
                 await loadBackups()
@@ -186,7 +211,7 @@ final class BackupManagementViewModel {
 
     /// Precondition: `detailBackup` must be non-nil and `selectedDetailAppIds` must be non-empty.
     func deleteSelectedDetailApps() {
-        guard let backup = detailBackup else { return }
+        guard canChangeSelection, let backup = detailBackup else { return }
         let toDelete = backup.apps.filter { selectedDetailAppIds.contains($0.id) }
         guard !toDelete.isEmpty else { return }
 
@@ -199,7 +224,7 @@ final class BackupManagementViewModel {
             primaryLabel: String(localized: "Common_Delete"),
             style: .destructive,
             primaryAction: { [weak self] in
-                self?.executeDeleteDetailApps(toDelete)
+                self?.executeDeleteDetailApps(toDelete, backupID: backup.id)
             }
         )
     }
@@ -207,6 +232,7 @@ final class BackupManagementViewModel {
     // MARK: - Batch Delete Backups (toolbar confirmation)
 
     func batchDeleteSelectedBackups() {
+        guard canBatchDelete else { return }
         let toDelete = backups.filter { selectedBackupIds.contains($0.id) }
         guard !toDelete.isEmpty else { return }
 
@@ -227,6 +253,7 @@ final class BackupManagementViewModel {
     // MARK: - Merge (confirmation)
 
     func performMerge() {
+        guard canMerge else { return }
         let toMerge = backups.filter { selectedBackupIds.contains($0.id) }
         guard toMerge.count >= 2 else { return }
 
@@ -293,39 +320,58 @@ final class BackupManagementViewModel {
         pendingMutationTasks[taskId] = task
     }
 
-    private func executeDeleteDetailApps(_ toDelete: [BackupAppInfo]) {
+    private func executeDeleteDetailApps(_ toDelete: [BackupAppInfo], backupID: String) {
+        guard canChangeSelection else { return }
+        isDeleting = true
         runTrackedMutation { [weak self] in
             guard let self else { return }
-            self.isLoading = true
-            defer { self.isLoading = false }
+            defer { self.isDeleting = false }
 
+            var failures: [(id: String, name: String, reason: String)] = []
             for app in toDelete {
-                try? await self.managementService.deleteAppFromBackup(app)
-                self.appSizeCache.removeValue(forKey: app.id)
+                do {
+                    try await self.deleteAppOperation(app)
+                    self.appSizeCache.removeValue(forKey: app.id)
+                } catch {
+                    failures.append((app.id, app.name, error.localizedDescription))
+                }
             }
-            self.selectedDetailAppIds.removeAll()
             await self.loadBackups()
+            if self.detailBackup?.id == backupID {
+                let remainingIDs = Set(self.detailBackup?.apps.map(\.id) ?? [])
+                self.selectedDetailAppIds = Set(failures.map(\.id)).intersection(remainingIDs)
+            }
+            self.reportDeletionFailures(failures)
         }
     }
 
     private func executeBatchDeleteBackups(_ toDelete: [BackupInfo]) {
+        guard canChangeSelection else { return }
+        isDeleting = true
         runTrackedMutation { [weak self] in
             guard let self else { return }
-            self.isLoading = true
-            defer { self.isLoading = false }
+            defer { self.isDeleting = false }
 
+            var failures: [(id: String, name: String, reason: String)] = []
             for backup in toDelete {
-                try? await self.managementService.deleteBackup(backup)
-                self.backupSizeCache.removeValue(forKey: backup.id)
+                do {
+                    try await self.deleteBackupOperation(backup)
+                    self.backupSizeCache.removeValue(forKey: backup.id)
+                } catch {
+                    failures.append((backup.id, backup.formattedName, error.localizedDescription))
+                }
             }
             await self.loadBackups()
+            self.selectedBackupIds = Set(failures.map(\.id)).intersection(Set(self.backups.map(\.id)))
+            self.reportDeletionFailures(failures)
         }
     }
 
     private func executeMerge(_ toMerge: [BackupInfo]) {
+        guard canMerge else { return }
+        isMerging = true
         runTrackedMutation { [weak self] in
             guard let self else { return }
-            self.isMerging = true
             defer { self.isMerging = false }
 
             do {
@@ -339,5 +385,13 @@ final class BackupManagementViewModel {
                 )
             }
         }
+    }
+
+    private func reportDeletionFailures(_ failures: [(id: String, name: String, reason: String)]) {
+        guard !failures.isEmpty else { return }
+        pendingAlert = AlertModel.info(
+            title: String(localized: "Backup_Management_Delete_Failed_Title"),
+            message: failures.map { "\($0.name): \($0.reason)" }.joined(separator: "\n\n")
+        )
     }
 }
