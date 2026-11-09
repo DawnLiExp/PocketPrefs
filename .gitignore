@@ -38,3 +38,7 @@ Tree.md
 /local
 AGENTS.md
 /.kiro
+
+# Local development rules and documentation
+/.agents/
+/docs/dev/
