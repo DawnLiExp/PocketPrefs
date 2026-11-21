@@ -1,6 +1,38 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Archive_Invalid_Mapping" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Cannot identify a unique backup entry for %@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "无法为 %@ 确定唯一的备份项"
+          }
+        }
+      }
+    },
+    "Restore_Rollback_Error" : {
+      "localizations" : {
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Could not roll back the replacement. The displaced item is at %1$@. %2$@"
+          }
+        },
+        "zh-Hans" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "未能恢复到原路径。替换前的内容保存在 %1$@。%2$@"
+          }
+        }
+      }
+    },
     "Backup_Skipped_Missing_Path" : {
       "localizations" : {
         "en" : {

@@ -6,6 +6,7 @@
 //
 
 import AppKit
+import Darwin
 import Foundation
 import os.log
 
@@ -51,9 +52,9 @@ actor FileOperationService {
         let data = try Data(contentsOf: staging.appendingPathComponent(BackupManifest.filename))
         let manifest = try JSONDecoder().decode(BackupManifest.self, from: data)
         guard manifest.app.bundleId == app.bundleId else { throw AppError.invalidBackupFormat(path: app.path) }
-        let entries = try BackupManifest.restoreEntries(paths: manifest.app.configPaths, mapping: manifest.entries, in: app.path)
-        guard !entries.isEmpty else { throw ConfigurationFileIssues() }
-        for entry in entries {
+        let plan = BackupManifest.restorePlan(paths: manifest.app.configPaths, mapping: manifest.entries)
+        guard !plan.entries.isEmpty, plan.issues.reasons.isEmpty else { throw plan.issues }
+        for entry in plan.entries {
             do {
                 _ = try fileManager.attributesOfItem(atPath: staging.appendingPathComponent(entry.storedName).path)
             } catch {
@@ -63,39 +64,67 @@ actor FileOperationService {
         try fileManager.moveItem(at: staging, to: BackupManifest.directory(in: root, bundleID: app.bundleId))
     }
 
-    func copyFile(from source: String, to destination: String) async throws {
-        let expandedSource = expandPath(source)
-        let expandedDest = expandPath(destination)
-        
-        try await ensureDestinationDirectory(for: expandedDest)
-        try removeIfExists(at: expandedDest)
-        
+    /// Copy completely on the destination volume before changing the live item or its previous version.
+    func restoreItem(from source: URL, to originalPath: String, keepPrevious: Bool) throws {
+        let destination = URL(fileURLWithPath: expandPath(originalPath))
+        _ = try fileManager.attributesOfItem(atPath: source.path)
+        let parent = destination.deletingLastPathComponent()
+        try fileManager.createDirectory(at: parent, withIntermediateDirectories: true)
+        let workspace = parent.appendingPathComponent(".pocketprefs-\(UUID().uuidString)", isDirectory: true)
+        try fileManager.createDirectory(at: workspace, withIntermediateDirectories: false)
+
+        let candidate = workspace.appendingPathComponent("new")
         do {
-            try fileManager.copyItem(atPath: expandedSource, toPath: expandedDest)
-            logger.debug("Copied: \(source) → \(destination)")
+            try fileManager.copyItem(at: source, to: candidate)
+            if let previous = try install(candidate, at: destination, in: workspace), keepPrevious {
+                let backup = URL(fileURLWithPath: destination.path + ".pocketprefs_backup")
+                do {
+                    _ = try install(previous, at: backup, in: workspace)
+                } catch {
+                    // Rotation failed. Put the old live item back before reporting the failure.
+                    do { _ = try install(previous, at: destination, in: workspace) }
+                    catch { throw RestoreRollbackError(savedItem: previous, underlying: error) }
+                    throw error
+                }
+            }
+        } catch let error as RestoreRollbackError {
+            // Its saved item can be the only remaining original.
+            throw error
         } catch {
-            logger.error("Copy failed: \(source) → \(destination) - \(error.localizedDescription)")
+            try? fileManager.removeItem(at: workspace)
             throw error
         }
+        try? fileManager.removeItem(at: workspace)
     }
-    
-    func backupExistingFile(_ path: String) async throws {
-        let expandedPath = expandPath(path)
-        
-        guard fileExists(atPath: expandedPath) else { return }
-        
-        let backupPath = expandedPath + ".pocketprefs_backup"
-        try removeIfExists(at: backupPath)
-        
+
+    /// Returns the displaced item inside the workspace, or nil when installing at a new path.
+    private func install(_ candidate: URL, at target: URL, in workspace: URL) throws -> URL? {
         do {
-            try fileManager.moveItem(atPath: expandedPath, toPath: backupPath)
-            logger.info("Backed up: \(path)")
+            _ = try fileManager.attributesOfItem(atPath: target.path)
+        } catch CocoaError.fileReadNoSuchFile {
+            try fileManager.moveItem(at: candidate, to: target)
+            return nil
+        }
+        // Swap directory entries, including symbolic links and non-empty directories.
+        if renamex_np(candidate.path, target.path, UInt32(RENAME_SWAP)) == 0 { return candidate }
+        let code = errno
+        guard code == ENOTSUP || code == EINVAL || code == ENOSYS else {
+            throw NSError(domain: NSPOSIXErrorDomain, code: Int(code), userInfo: [NSFilePathErrorKey: target.path])
+        }
+
+        // Volumes without exchange support use same-volume moves and retain the original for rollback.
+        let previous = workspace.appendingPathComponent(UUID().uuidString)
+        try fileManager.moveItem(at: target, to: previous)
+        do {
+            try fileManager.moveItem(at: candidate, to: target)
         } catch {
-            logger.error("Backup failed: \(path) - \(error.localizedDescription)")
+            do { try fileManager.moveItem(at: previous, to: target) }
+            catch { throw RestoreRollbackError(savedItem: previous, underlying: error) }
             throw error
         }
+        return previous
     }
-    
+
     func createDirectory(at path: String) async throws {
         let expandedPath = expandPath(path)
         
@@ -110,10 +139,6 @@ actor FileOperationService {
             logger.error("Directory creation failed: \(path) - \(error.localizedDescription)")
             throw error
         }
-    }
-    
-    func fileExists(at path: String) async -> Bool {
-        fileExists(atPath: expandPath(path))
     }
     
     // MARK: - File Size Calculation
@@ -149,24 +174,6 @@ actor FileOperationService {
         fileManager.fileExists(atPath: path)
     }
     
-    private func removeIfExists(at path: String) throws {
-        if fileExists(atPath: path) {
-            try fileManager.removeItem(atPath: path)
-        }
-    }
-    
-    private func ensureDestinationDirectory(for filePath: String) async throws {
-        let destDir = URL(fileURLWithPath: filePath).deletingLastPathComponent().path
-        
-        if !fileExists(atPath: destDir) {
-            try fileManager.createDirectory(
-                atPath: destDir,
-                withIntermediateDirectories: true,
-                attributes: nil,
-            )
-        }
-    }
-    
     private func calculateDirectorySize(at url: URL) async -> Int64 {
         guard let enumerator = fileManager.enumerator(
             at: url,
@@ -196,5 +203,14 @@ actor FileOperationService {
         formatter.includesUnit = true
         formatter.isAdaptive = true
         return formatter.string(fromByteCount: size)
+    }
+}
+
+private struct RestoreRollbackError: LocalizedError {
+    let savedItem: URL
+    let underlying: Error
+
+    var errorDescription: String? {
+        String(localized: "Restore_Rollback_Error", defaultValue: "Could not roll back the replacement. The displaced item is at \(savedItem.path). \(underlying.localizedDescription)")
     }
 }

@@ -106,24 +106,17 @@ actor RestoreService {
     }
 
     private func restoreConfigFiles(for app: BackupAppInfo, createBackupBeforeRestore: Bool) async throws {
-        let entries = try BackupManifest.restoreEntries(paths: app.configPaths, mapping: app.backupEntries, in: app.path)
-        var issues = ConfigurationFileIssues()
-        for entry in entries {
+        var plan = BackupManifest.restorePlan(paths: app.configPaths, mapping: app.backupEntries)
+        for entry in plan.entries {
             let source = URL(fileURLWithPath: app.path).appendingPathComponent(entry.storedName)
             do {
-                guard await fileOps.fileExists(at: source.path) else {
-                    throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: source.path])
-                }
-                if createBackupBeforeRestore {
-                    try await fileOps.backupExistingFile(entry.originalPath)
-                }
-                try await fileOps.copyFile(from: source.path, to: entry.originalPath)
-                issues.completed += 1
+                try await fileOps.restoreItem(from: source, to: entry.originalPath, keepPrevious: createBackupBeforeRestore)
+                plan.issues.completed += 1
             } catch {
-                issues.record(error, at: entry.originalPath)
+                plan.issues.record(error, at: entry.originalPath)
             }
         }
-        if issues.completed == 0 || !issues.reasons.isEmpty { throw issues }
+        if plan.issues.completed == 0 || !plan.issues.reasons.isEmpty { throw plan.issues }
     }
 
     private func reportProgress(

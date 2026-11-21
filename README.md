@@ -32,25 +32,9 @@ Here's my custom configs JSON (importable): <a href="https://github.com/DawnLiEx
 
 ## Data Security ⚠️
 
-PocketPrefs uses the following strategy to protect existing configurations when restoring files:
+PocketPrefs copies each backed-up file or directory to a temporary location on the destination volume before replacing the live configuration. If the copy fails, the existing configuration and its previous backup stay in place. The result lists paths that could not be restored.
 
-### Design Principles
-
-- **Data integrity:** Before restoring configuration files, PocketPrefs first renames any existing configuration in the target directory to `[original_name].pocketprefs_backup` to preserve the original state.
-
-### Operation Details
-
-When performing a restore operation, PocketPrefs intelligently handles existing files or directories at the target path:
-
-1. **Existing configuration backup:** If a file or directory with the same name already exists at the target path (for example, `~/Library/Application Support/Code/User/settings.json` or `~/Library/Application Support/Code/User/`), PocketPrefs renames it to `[original_name].pocketprefs_backup`.  
-   - **Example:** `settings.json` becomes `settings.json.pocketprefs_backup`.  
-   - **Example:** `User/` directory becomes `User.pocketprefs_backup/`.
-
-2. **New configuration restoration:** The file or directory from the backup is then restored to the original target path.
-
-**Important Note:**
-
-- `.pocketprefs_backup` files or directories only preserve the configuration state from the **most recent restore operation**. Each new restore operation will overwrite this backup.
+With **Create old-config backup before restore** enabled, a successful replacement keeps the preceding version beside the restored item. For example, the previous `settings.json` is kept as `settings.json.pocketprefs_backup`, and a directory named `User` is kept as `User.pocketprefs_backup`. Each successful replacement with this option enabled refreshes that copy.
 
 ## System Requirements
 

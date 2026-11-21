@@ -31,7 +31,7 @@ enum AppError: LocalizedError {
         case .configEncodingFailed(let app, let error):
             return "Failed to encode config for \(app): \(error.localizedDescription)"
         case .invalidBackupFormat(let path):
-            return "Invalid backup format at: \(path)"
+            return String(localized: "Archive_Invalid_Mapping", defaultValue: "Cannot identify a unique backup entry for \(path)")
         case .noAppsSelected:
             return "No applications selected for operation"
         case .backupNotFound(let path):

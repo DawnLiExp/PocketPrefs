@@ -71,20 +71,29 @@ struct BackupManifest: Codable {
         }
     }
 
-    static func restoreEntries(paths: [String], mapping: [BackupEntry]?, in directory: String) throws -> [BackupEntry] {
-        let entries = mapping ?? paths.map {
+    /// A legacy app may have ambiguous names alongside independent, recoverable files.
+    static func restorePlan(paths: [String], mapping: [BackupEntry]?) -> (entries: [BackupEntry], issues: ConfigurationFileIssues) {
+        let candidates = mapping ?? paths.map {
             BackupEntry(originalPath: $0, storedName: basename($0))
         }
-        var used = Set([nameKey(filename)])
-        let mappedPaths = Set(entries.map(\.originalPath))
-        guard entries.count == mappedPaths.count, mappedPaths == Set(paths) else {
-            throw AppError.invalidBackupFormat(path: directory)
+        let byPath = Dictionary(grouping: candidates, by: \.originalPath)
+        let byName = Dictionary(grouping: candidates) { nameKey($0.storedName) }
+        let requested = Set(paths)
+        var issues = ConfigurationFileIssues()
+        for path in byPath.keys.sorted() where !requested.contains(path) {
+            issues.reasons.append(AppError.invalidBackupFormat(path: path).localizedDescription)
         }
-        for entry in entries {
-            guard isComponent(entry.storedName), used.insert(nameKey(entry.storedName)).inserted else {
-                throw AppError.invalidBackupFormat(path: entry.originalPath)
+        var visited: Set<String> = []
+        let entries = paths.compactMap { path -> BackupEntry? in
+            guard visited.insert(path).inserted else { return nil }
+            guard let matches = byPath[path], matches.count == 1, let entry = matches.first,
+                  isComponent(entry.storedName), nameKey(entry.storedName) != nameKey(filename),
+                  byName[nameKey(entry.storedName)]?.count == 1 else {
+                issues.reasons.append(AppError.invalidBackupFormat(path: path).localizedDescription)
+                return nil
             }
+            return entry
         }
-        return entries
+        return (entries, issues)
     }
 }

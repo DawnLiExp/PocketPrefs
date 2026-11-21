@@ -114,7 +114,8 @@ struct BackupRoundTripTests {
         #expect(!FileManager.default.fileExists(atPath: second.path + ".pocketprefs_backup"))
     }
 
-    @Test("v1.1 无日期、无映射的备份可恢复；重复原名或与清单同名时保留目标", arguments: [["prefs"], ["prefs", "prefs"], ["app_config.json"]])
+    @Test("v1.1 备份逐项恢复可辨认的文件，重复原名和清单同名项保留目标",
+          arguments: [["prefs"], ["prefs", "prefs"], ["app_config.json"], ["prefs", "prefs", "other"]])
     func restoreLegacy(names: [String]) async throws {
         let temp = try TempDirectory()
         defer { temp.cleanup() }
@@ -123,6 +124,7 @@ struct BackupRoundTripTests {
         let targets = names.enumerated().map { temp.url.appending(path: "live/\($0.offset)/\($0.element)") }
         for path in targets { try write("existing", to: path) }
         try write("legacy bytes", to: folder.appending(path: "prefs"))
+        try write("other bytes", to: folder.appending(path: "other"))
         let legacy: [String: Any] = ["name": "Editor", "bundleId": "com.test.editor", "category": "Custom",
                                     "isUserAdded": true, "configPaths": targets.map(\.path)]
         try JSONSerialization.data(withJSONObject: legacy).write(to: folder.appending(path: "app_config.json"))
@@ -130,10 +132,11 @@ struct BackupRoundTripTests {
         let snapshot = try #require(backups.first)
         #expect(snapshot.apps.first?.backupEntries == nil)
         let result = await RestoreService().performRestore(backup: selected(snapshot))
-        let unambiguous = names == ["prefs"]
-        #expect(result.isCompleteSuccess == unambiguous)
-        for path in targets {
-            #expect(try Data(contentsOf: path) == Data((unambiguous ? "legacy bytes" : "existing").utf8))
+        let status: OperationSummary.Status = names == ["prefs"] ? .success : (names.contains("other") ? .partialFailure : .failure)
+        #expect(OperationSummary(restore: result).status == status)
+        for (path, name) in zip(targets, names) {
+            let expected = name == "other" ? "other bytes" : (names == ["prefs"] ? "legacy bytes" : "existing")
+            #expect(try Data(contentsOf: path) == Data(expected.utf8))
         }
     }
 
