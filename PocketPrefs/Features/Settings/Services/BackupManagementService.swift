@@ -5,6 +5,7 @@
 //  Disk operations for backup deletion and merge.
 //
 
+import Darwin
 import Foundation
 import os.log
 
@@ -23,20 +24,16 @@ actor BackupManagementService {
     }
 
     /// Deletes a single app sub-directory from within a backup.
-    /// Postcondition: if no valid app sub-directories remain in the parent backup
-    /// directory, the entire backup directory is removed to prevent orphan empties.
+    /// The parent is removed only if it is physically empty, including hidden items.
     func deleteAppFromBackup(_ app: BackupAppInfo) async throws {
         let backupDir = URL(fileURLWithPath: app.path).deletingLastPathComponent().path
         try fileManager.removeItem(atPath: app.path)
         logger.info("Deleted app from backup: \(app.name)")
 
-        if await backupService.scanAppsInBackup(at: backupDir).isEmpty {
-            do {
-                try fileManager.removeItem(atPath: backupDir)
-                logger.info("Removed empty backup directory: \(backupDir)")
-            } catch {
-                logger.error("Failed to remove empty backup directory: \(backupDir), error: \(error.localizedDescription)")
-            }
+        if rmdir(backupDir) == 0 {
+            logger.info("Removed empty backup directory: \(backupDir)")
+        } else if errno != ENOTEMPTY && errno != ENOENT {
+            logger.warning("Could not remove empty backup directory: \(backupDir), errno: \(errno)")
         }
     }
 

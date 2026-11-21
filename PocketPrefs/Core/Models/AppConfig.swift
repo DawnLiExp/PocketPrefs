@@ -81,6 +81,21 @@ struct AppConfig: Identifiable, Codable, Equatable {
     }
 }
 
+extension AppConfig {
+    init(from decoder: Decoder) throws {
+        let fields = try decoder.container(keyedBy: CodingKeys.self)
+        self.init(
+            name: try fields.decode(String.self, forKey: .name),
+            bundleId: try fields.decode(String.self, forKey: .bundleId),
+            configPaths: try fields.decode([String].self, forKey: .configPaths),
+            category: try fields.decode(AppCategory.self, forKey: .category),
+            isUserAdded: try fields.decode(Bool.self, forKey: .isUserAdded),
+            // Releases before 1.2 did not record a creation date.
+            createdAt: try fields.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date(timeIntervalSince1970: 0)
+        )
+    }
+}
+
 // MARK: - Preset Configurations
 
 extension AppConfig {

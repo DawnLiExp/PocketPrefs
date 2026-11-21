@@ -21,6 +21,41 @@ struct UserConfigStoreTests {
 
     // MARK: - addApp
 
+    @Test("v1.1 配置列表和导出保留旧项，新增后可再次读取")
+    func legacyConfigSurvivesEdit() throws {
+        let temp = try TempDirectory()
+        defer { temp.cleanup() }
+        let url = temp.url.appending(path: "custom_apps.json")
+        let record = #"{"name":"Legacy","bundleId":"com.test.legacy","configPaths":["~/legacy.json"],"category":"Custom","isUserAdded":true}"#
+        try Data("[\(record)]".utf8).write(to: url)
+        let store = UserConfigStore(storageURL: url)
+        let legacy = try #require(store.customApps.first)
+        #expect(legacy.createdAt == Date(timeIntervalSince1970: 0))
+        let export = #"{"version":1,"exportDate":0,"customApps":[\#(record)]}"#
+        #expect(try JSONDecoder().decode(ExportData.self, from: Data(export.utf8)).customApps == [legacy])
+        store.addApp(.makeCustom(name: "New"))
+        let reloaded = UserConfigStore(storageURL: url)
+        #expect(reloaded.customApps.map(\.name) == ["Legacy", "New"])
+        #expect(reloaded.customApps.first == legacy)
+    }
+
+    @Test("无法解析的已有列表不会被新增、删除或导入覆写")
+    func unreadableConfigIsPreserved() throws {
+        let temp = try TempDirectory()
+        defer { temp.cleanup() }
+        let url = temp.url.appending(path: "custom_apps.json")
+        let original = Data("unreadable existing config".utf8)
+        try original.write(to: url)
+        let store = UserConfigStore(storageURL: url)
+        #expect(store.loadError != nil)
+        let app = AppConfig.makeCustom(name: "New")
+        store.addApp(app)
+        store.removeApps([app.id])
+        store.batchUpdate([app])
+        #expect(store.customApps.isEmpty)
+        #expect(try Data(contentsOf: url) == original)
+    }
+
     @Test("addApp：customApps 包含新 app")
     func addAppContains() {
         let store = UserConfigStore(storageURL: makeTempURL())

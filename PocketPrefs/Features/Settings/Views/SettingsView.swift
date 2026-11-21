@@ -58,17 +58,25 @@ struct SettingsView: View {
                     PreferencesView()
 
                 case .customApps:
-                    CustomAppsContent(
-                        customAppManager: customAppManager,
-                        importExportManager: importExportManager,
-                        filteredApps: searchDebouncer.filteredApps,
-                        searchText: $searchText,
-                        showingAddAppSheet: $showingAddAppSheet,
-                        newAppName: $newAppName,
-                        newAppBundleId: $newAppBundleId,
-                        validationError: $validationError,
-                        pendingAlert: $settingsPendingAlert
-                    )
+                    if let error = customAppManager.userStore.loadError {
+                        ContentUnavailableView {
+                            Label("Settings_Tab_Custom_Apps", systemImage: "exclamationmark.triangle")
+                        } description: {
+                            Text(verbatim: error).textSelection(.enabled)
+                        }
+                    } else {
+                        CustomAppsContent(
+                            customAppManager: customAppManager,
+                            importExportManager: importExportManager,
+                            filteredApps: searchDebouncer.filteredApps,
+                            searchText: $searchText,
+                            showingAddAppSheet: $showingAddAppSheet,
+                            newAppName: $newAppName,
+                            newAppBundleId: $newAppBundleId,
+                            validationError: $validationError,
+                            pendingAlert: $settingsPendingAlert
+                        )
+                    }
                     
                 case .backups:
                     BackupManagementView(viewModel: backupManagementViewModel)

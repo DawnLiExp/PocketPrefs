@@ -224,6 +224,23 @@ struct BackupManagementServiceTests {
         #expect(!FileManager.default.fileExists(atPath: backupURL.path))
     }
 
+    @Test("删除最后一个可识别应用时，隐藏文件和不可识别的配置内容保留", arguments: [".note", "Damaged/prefs.json"])
+    func deletionPreservesUnselectedContents(relativePath: String) async throws {
+        let temp = try TempDirectory()
+        defer { temp.cleanup() }
+        let backup = temp.url.appending(path: "Backup")
+        let selected = try makeValidBackupApp(in: backup, appName: "Selected", bundleId: "com.test.selected")
+        let other = backup.appending(path: relativePath)
+        try FileManager.default.createDirectory(at: other.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let original = Data("keep my configuration".utf8)
+        try original.write(to: other)
+
+        try await service.deleteAppFromBackup(selected)
+
+        #expect(!FileManager.default.fileExists(atPath: selected.path))
+        #expect(try Data(contentsOf: other) == original)
+    }
+
     @Test("deleteAppFromBackup：备份内仍有其它 app 时，父备份目录保留")
     func deleteAppFromBackupKeepsParentWhenOtherAppsRemain() async throws {
         let tempDir = try TempDirectory()

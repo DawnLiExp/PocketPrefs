@@ -26,6 +26,7 @@ final class UserConfigStore {
     static let shared = UserConfigStore()
     
     private(set) var customApps: [AppConfig] = []
+    private(set) var loadError: String?
     
     private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "UserConfigStore")
     private let storageURL: URL
@@ -84,25 +85,14 @@ final class UserConfigStore {
     // MARK: - Storage Operations
     
     private func loadCustomApps() {
-        guard FileManager.default.fileExists(atPath: storageURL.path) else {
-            logger.info("No custom apps file found")
-            return
-        }
-        
         do {
             let data = try Data(contentsOf: storageURL)
-            var apps = try JSONDecoder().decode([AppConfig].self, from: data)
-            
-            // Ensure all user-added apps have createdAt set
-            for index in apps.indices where apps[index].isUserAdded {
-                if apps[index].createdAt == Date(timeIntervalSince1970: 0) {
-                    apps[index].createdAt = Date()
-                }
-            }
-            
-            customApps = apps
+            customApps = try JSONDecoder().decode([AppConfig].self, from: data)
             logger.info("Loaded \(self.customApps.count) custom apps")
+        } catch CocoaError.fileReadNoSuchFile {
+            logger.info("No custom apps file found")
         } catch {
+            loadError = "\(storageURL.path)\n\(error.localizedDescription)"
             logger.error("Failed to load custom apps: \(error.localizedDescription)")
         }
     }
@@ -122,6 +112,7 @@ final class UserConfigStore {
     // MARK: - App Management
     
     func addApp(_ app: AppConfig) {
+        guard loadError == nil else { return }
         var newApp = app
         newApp.isUserAdded = true
         newApp.category = .custom
@@ -146,7 +137,7 @@ final class UserConfigStore {
     }
     
     func removeApps(_ appIds: Set<String>) {
-        guard !appIds.isEmpty else { return }
+        guard loadError == nil, !appIds.isEmpty else { return }
         
         let countBefore = customApps.count
         customApps.removeAll { appIds.contains($0.id) }
@@ -158,14 +149,11 @@ final class UserConfigStore {
     }
     
     func batchUpdate(_ apps: [AppConfig]) {
+        guard loadError == nil else { return }
         customApps = apps.map { app in
             var modifiedApp = app
             modifiedApp.isUserAdded = true
             modifiedApp.category = .custom
-            // Preserve existing createdAt if available, otherwise set current time
-            if modifiedApp.createdAt == Date(timeIntervalSince1970: 0) {
-                modifiedApp.createdAt = Date()
-            }
             return modifiedApp
         }
         save()
