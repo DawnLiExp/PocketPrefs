@@ -11,11 +11,15 @@ import os.log
 actor BackupService {
     private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "BackupService")
     private let fileOps = FileOperationService.shared
+    private let baseDirectory: URL?
+
+    init(baseDirectory: URL? = nil) {
+        self.baseDirectory = baseDirectory
+    }
     
     enum Config {
         static let backupDateFormat = "yyyy-MM-dd_HH-mm-ss"
         static let backupPrefix = "Backup_"
-        static let configFileName = "app_config.json"
     }
     
     /// Reusable date formatter for backup timestamps
@@ -27,7 +31,8 @@ actor BackupService {
     }()
     
     private func getBaseDirectory() async -> String {
-        await PreferencesManager.shared.getBackupDirectory()
+        if let baseDirectory { return baseDirectory.path }
+        return await PreferencesManager.shared.getBackupDirectory()
     }
     
     // MARK: - Public Interface
@@ -158,12 +163,12 @@ actor BackupService {
         await withTaskGroup(of: (String, Result<Void, Error>).self) { group in
             for app in unselectedApps {
                 group.addTask {
-                    let result = await self.copyAppDirectory(
-                        from: app.path,
-                        to: destinationDir,
-                        appName: app.name,
-                    )
-                    return (app.name, result)
+                    do {
+                        try await self.fileOps.copyArchivedApp(app, to: URL(fileURLWithPath: destinationDir))
+                        return (app.name, .success(()))
+                    } catch {
+                        return (app.name, .failure(error))
+                    }
                 }
             }
             
@@ -184,25 +189,6 @@ actor BackupService {
             failedApps: failedApps,
             totalProcessed: unselectedApps.count,
         )
-    }
-    
-    private func copyAppDirectory(
-        from sourcePath: String,
-        to destinationBase: String,
-        appName: String,
-    ) async -> Result<Void, Error> {
-        let fileManager = FileManager.default
-        let sourceURL = URL(fileURLWithPath: sourcePath)
-        let destDirName = sanitizeName(appName)
-        let destURL = URL(fileURLWithPath: destinationBase)
-            .appendingPathComponent(destDirName)
-        
-        do {
-            try fileManager.copyItem(at: sourceURL, to: destURL)
-            return .success(())
-        } catch {
-            return .failure(error)
-        }
     }
     
     // MARK: - Common Backup Logic
@@ -255,85 +241,51 @@ actor BackupService {
     }
     
     private func backupSingleApp(_ app: AppConfig, to backupDir: String) async -> Result<Void, Error> {
-        let appBackupDir = "\(backupDir)/\(sanitizeName(app.name))"
-        let backupNameMap = BackupService.buildBackupNameMap(app.configPaths)
-        
+        let directory = BackupManifest.directory(in: URL(fileURLWithPath: backupDir), bundleID: app.bundleId)
+        let manager = FileManager.default
         do {
-            try await fileOps.createDirectory(at: appBackupDir)
-            
-            try await withThrowingTaskGroup(of: Void.self) { group in
-                for path in app.configPaths {
-                    let backupName = backupNameMap[path] ?? URL(fileURLWithPath: NSString(string: path).expandingTildeInPath).lastPathComponent
-                    group.addTask {
-                        await self.backupConfigFile(
-                            path: path,
-                            backupName: backupName,
-                            to: appBackupDir,
-                        )
-                    }
-                }
-                
-                try await group.waitForAll()
-            }
-            
-            try await saveAppConfig(app, backupNameMap: backupNameMap, to: appBackupDir)
-            
-            return .success(())
+            // Never write into or clean up an app directory owned by a previous operation.
+            try manager.createDirectory(at: directory, withIntermediateDirectories: false)
         } catch {
             return .failure(error)
         }
-    }
-    
-    private func backupConfigFile(path: String, backupName: String, to destinationDir: String) async {
-        let expandedPath = NSString(string: path).expandingTildeInPath
-        
-        guard await fileOps.fileExists(at: expandedPath) else { return }
-        
-        let destPath = "\(destinationDir)/\(backupName)"
-        
+
+        var saved: [BackupEntry] = []
+        var issues = ConfigurationFileIssues()
+        var manifestWritten = false
+        defer {
+            if !manifestWritten { try? manager.removeItem(at: directory) }
+        }
+        for entry in BackupManifest.entries(for: app.configPaths) {
+            let source = URL(fileURLWithPath: NSString(string: entry.originalPath).expandingTildeInPath)
+            let destination = directory.appendingPathComponent(entry.storedName)
+            do {
+                try manager.copyItem(at: source, to: destination)
+                saved.append(entry)
+            } catch {
+                // copyItem can leave an incomplete directory after a descendant fails.
+                try? manager.removeItem(at: destination)
+                if let error = error as? CocoaError, [.fileNoSuchFile, .fileReadNoSuchFile].contains(error.code) {
+                    issues.reasons.append(String(localized: "Backup_Skipped_Missing_Path", defaultValue: "Skipped missing source: \(entry.originalPath)"))
+                } else {
+                    issues.record(error, at: entry.originalPath)
+                }
+            }
+        }
+        guard !saved.isEmpty else { return .failure(issues) }
         do {
-            try await fileOps.copyFile(from: expandedPath, to: destPath)
+            let manifest = BackupManifest(app: app, savedEntries: saved)
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
+            try encoder.encode(manifest).write(to: directory.appendingPathComponent(BackupManifest.filename), options: .atomic)
+            manifestWritten = true
         } catch {
-            logger.warning("Failed to backup file \(path): \(error)")
+            return .failure(error)
         }
-    }
-    
-    /// Private wrapper struct for serializing app config with backupEntries.
-    /// We do NOT modify AppConfig itself — backupEntries is backup-time metadata only.
-    private struct BackupAppConfig: Codable {
-        let name: String
-        let bundleId: String
-        let configPaths: [String]
-        let category: AppCategory
-        let isUserAdded: Bool
-        let createdAt: Date
-        let backupEntries: [BackupEntry]
+        issues.completed = saved.count
+        return issues.reasons.isEmpty ? .success(()) : .failure(issues)
     }
 
-    private func saveAppConfig(_ app: AppConfig, backupNameMap: [String: String], to directory: String) async throws {
-        // Convert backupNameMap to [BackupEntry], maintaining configPaths order
-        let backupEntries: [BackupEntry] = app.configPaths.compactMap { path in
-            guard let storedName = backupNameMap[path] else { return nil }
-            return BackupEntry(originalPath: path, storedName: storedName)
-        }
-
-        let backupConfig = BackupAppConfig(
-            name: app.name,
-            bundleId: app.bundleId,
-            configPaths: app.configPaths,
-            category: app.category,
-            isUserAdded: app.isUserAdded,
-            createdAt: app.createdAt,
-            backupEntries: backupEntries
-        )
-
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let configData = try encoder.encode(backupConfig)
-        let configURL = URL(fileURLWithPath: "\(directory)/\(Config.configFileName)")
-        try configData.write(to: configURL)
-    }
-    
     // MARK: - Validation
     
     private func validateIncrementalBase(_ baseBackup: BackupInfo?) async -> Bool {
@@ -411,15 +363,9 @@ actor BackupService {
         return apps
     }
     
-    /// Lightweight wrapper to decode the optional `backupEntries` field from `app_config.json`.
-    /// Kept separate from `AppConfig` because `backupEntries` is backup-time metadata only.
-    private struct BackupEntriesWrapper: Decodable {
-        let backupEntries: [BackupEntry]?
-    }
-
     private func loadBackupApp(from appDir: String, at basePath: String) async -> BackupAppInfo? {
         let appPath = "\(basePath)/\(appDir)"
-        let configPath = "\(appPath)/\(Config.configFileName)"
+        let configPath = "\(appPath)/\(BackupManifest.filename)"
         
         guard FileManager.default.fileExists(atPath: configPath) else {
             return nil
@@ -427,11 +373,9 @@ actor BackupService {
         
         do {
             let configData = try Data(contentsOf: URL(fileURLWithPath: configPath))
-            let appConfig = try JSONDecoder().decode(AppConfig.self, from: configData)
-            
-            // Decode backupEntries separately — old backups without this field will decode as nil
-            let entries = try? JSONDecoder().decode(BackupEntriesWrapper.self, from: configData)
-            
+            let manifest = try JSONDecoder().decode(BackupManifest.self, from: configData)
+            let appConfig = manifest.app
+
             let isInstalled = await fileOps.checkIfAppInstalled(
                 bundleId: appConfig.bundleId,
             )
@@ -444,37 +388,12 @@ actor BackupService {
                 isCurrentlyInstalled: isInstalled,
                 isSelected: false,
                 category: appConfig.category,
-                backupEntries: entries?.backupEntries,
+                backupEntries: manifest.entries,
             )
         } catch {
             logger.error("Failed to read app config for \(appDir): \(error)")
             return nil
         }
-    }
-    
-    // MARK: - Backup Name Disambiguation
-    
-    /// Builds a mapping from each config path to a unique backup directory name.
-    /// When multiple paths share the same `lastPathComponent`, appends `_2`, `_3`, etc.
-    /// to disambiguate. Non-conflicting paths keep their original `lastPathComponent`.
-    static func buildBackupNameMap(_ configPaths: [String]) -> [String: String] {
-        var componentCounts: [String: Int] = [:]
-        var result: [String: String] = [:]
-
-        for path in configPaths {
-            let component = URL(fileURLWithPath: NSString(string: path).expandingTildeInPath).lastPathComponent
-
-            if let count = componentCounts[component] {
-                let newCount = count + 1
-                componentCounts[component] = newCount
-                result[path] = "\(component)_\(newCount)"
-            } else {
-                componentCounts[component] = 1
-                result[path] = component
-            }
-        }
-
-        return result
     }
     
     // MARK: - Helpers
@@ -483,13 +402,6 @@ actor BackupService {
         let baseDir = await getBaseDirectory()
         let timestamp = Self.dateFormatter.string(from: Date())
         return "\(baseDir)/\(Config.backupPrefix)\(timestamp)"
-    }
-    
-    /// Sanitizes app name for safe filesystem usage.
-    /// Handles macOS/Windows forbidden characters.
-    func sanitizeName(_ name: String) -> String {
-        let invalidChars = CharacterSet(charactersIn: "/\\:*?\"<>|")
-        return name.components(separatedBy: invalidChars).joined(separator: "_")
     }
     
     private func parseBackupDate(from name: String) -> Date? {

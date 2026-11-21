@@ -39,6 +39,9 @@ struct OperationResultView: View {
             }
             Text(String(localized: "Operation_Result_Counts", defaultValue: "Succeeded \(result.successCount) / Total \(result.totalProcessed)"))
                 .font(DesignConstants.Typography.body)
+            if result.partialAppCount > 0 {
+                Text(String(localized: "Operation_Partial_Apps", defaultValue: "Partially completed apps: \(result.partialAppCount)"))
+            }
 
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {

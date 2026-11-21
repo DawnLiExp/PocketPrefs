@@ -37,11 +37,13 @@ struct BackupManagementServiceTests {
                 atomically: true,
                 encoding: .utf8
             )
+            let config = AppConfig(name: app.name, bundleId: app.bundleId, configPaths: ["~/marker.txt"])
+            try JSONEncoder().encode(config).write(to: appURL.appending(path: BackupManifest.filename))
             backupApps.append(BackupAppInfo(
                 name: app.name,
                 path: appURL.path,
                 bundleId: app.bundleId,
-                configPaths: [],
+                configPaths: config.configPaths,
                 isCurrentlyInstalled: true,
                 isSelected: false,
                 category: .custom
@@ -71,7 +73,7 @@ struct BackupManagementServiceTests {
             createdAt: Date(timeIntervalSince1970: 1_700_000_000)
         )
         let data = try JSONEncoder().encode(config)
-        try data.write(to: appURL.appending(path: BackupService.Config.configFileName))
+        try data.write(to: appURL.appending(path: BackupManifest.filename))
 
         return BackupAppInfo(
             name: appName,
@@ -107,8 +109,9 @@ struct BackupManagementServiceTests {
         // Array is intentionally [older, newer] — merge must sort by date, not input order
         let mergedPath = try await service.mergeBackups([older, newer], baseDir: tempDir.url.path)
 
-        let markerURL = URL(filePath: mergedPath)
-            .appending(path: "SomeApp/marker.txt")
+        let scanned = await BackupService().scanAppsInBackup(at: mergedPath)
+        let winner = try #require(scanned.first { $0.bundleId == "com.some.app" })
+        let markerURL = URL(fileURLWithPath: winner.path).appending(path: "marker.txt")
         let content = try String(contentsOf: markerURL, encoding: .utf8)
         #expect(content == "newer")
     }
@@ -128,14 +131,17 @@ struct BackupManagementServiceTests {
             in: tempDir.url,
             name: "Backup_2025-06-01_10-00-00",
             date: .now,
-            apps: [(name: "AppB", bundleId: "com.app.b", marker: "b")]
+            apps: [(name: "AppA", bundleId: "com.app.b", marker: "b")]
         )
 
         let mergedPath = try await service.mergeBackups([b1, b2], baseDir: tempDir.url.path)
 
-        let contents = try FileManager.default.contentsOfDirectory(atPath: mergedPath)
-        #expect(contents.contains("AppA"))
-        #expect(contents.contains("AppB"))
+        let scanned = await BackupService().scanAppsInBackup(at: mergedPath)
+        #expect(Set(scanned.map(\.bundleId)) == ["com.app.a", "com.app.b"])
+        for app in scanned {
+            let marker = URL(fileURLWithPath: app.path).appending(path: "marker.txt")
+            #expect(try String(contentsOf: marker, encoding: .utf8) == (app.bundleId == "com.app.a" ? "a" : "b"))
+        }
     }
 
     @Test("mergeBackups：新目录创建于传入的 baseDir 下")

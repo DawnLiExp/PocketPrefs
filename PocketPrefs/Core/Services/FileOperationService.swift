@@ -43,6 +43,26 @@ actor FileOperationService {
     
     // MARK: - File Operations
     
+    /// Carry a complete archived app, including metadata unknown to this release.
+    func copyArchivedApp(_ app: BackupAppInfo, to root: URL) throws {
+        let staging = root.appendingPathComponent(".copy-\(UUID().uuidString)")
+        defer { try? fileManager.removeItem(at: staging) }
+        try fileManager.copyItem(at: URL(fileURLWithPath: app.path), to: staging)
+        let data = try Data(contentsOf: staging.appendingPathComponent(BackupManifest.filename))
+        let manifest = try JSONDecoder().decode(BackupManifest.self, from: data)
+        guard manifest.app.bundleId == app.bundleId else { throw AppError.invalidBackupFormat(path: app.path) }
+        let entries = try BackupManifest.restoreEntries(paths: manifest.app.configPaths, mapping: manifest.entries, in: app.path)
+        guard !entries.isEmpty else { throw ConfigurationFileIssues() }
+        for entry in entries {
+            do {
+                _ = try fileManager.attributesOfItem(atPath: staging.appendingPathComponent(entry.storedName).path)
+            } catch {
+                throw AppError.fileOperationFailed(path: entry.originalPath, underlying: error)
+            }
+        }
+        try fileManager.moveItem(at: staging, to: BackupManifest.directory(in: root, bundleID: app.bundleId))
+    }
+
     func copyFile(from source: String, to destination: String) async throws {
         let expandedSource = expandPath(source)
         let expandedDest = expandPath(destination)

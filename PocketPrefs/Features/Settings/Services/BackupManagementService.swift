@@ -12,7 +12,6 @@ import os.log
 actor BackupManagementService {
     private let fileManager = FileManager.default
     private let fileOps = FileOperationService.shared
-    private let backupService = BackupService()
     private let logger = Logger(subsystem: "com.me2.PocketPrefs", category: "BackupManagementService")
 
     // MARK: - Delete
@@ -76,14 +75,8 @@ actor BackupManagementService {
         logger.info("Created merge destination: \(newBackupPath)")
 
         // ── Step 5: Copy each winning app directory into new backup
-        for (_, app) in appMap {
-            let destName = await backupService.sanitizeName(app.name)
-            let destURL = URL(fileURLWithPath: newBackupPath)
-                .appendingPathComponent(destName)
-            try fileManager.copyItem(
-                at: URL(fileURLWithPath: app.path),
-                to: destURL
-            )
+        for app in appMap.values {
+            try await fileOps.copyArchivedApp(app, to: URL(fileURLWithPath: newBackupPath))
         }
 
         logger.info("Merge complete: \(appMap.count) apps → \(newDirName)")

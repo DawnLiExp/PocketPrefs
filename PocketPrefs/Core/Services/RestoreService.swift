@@ -101,73 +101,31 @@ actor RestoreService {
             try await restoreConfigFiles(for: app, createBackupBeforeRestore: createBackupBeforeRestore)
             return RestoreTaskResult(appName: app.name, outcome: .success(()))
         } catch {
-            let wrappedError = AppError.restoreFailed(
-                app: app.name,
-                reason: error.localizedDescription,
-            )
-            return RestoreTaskResult(appName: app.name, outcome: .failure(wrappedError))
+            return RestoreTaskResult(appName: app.name, outcome: .failure(error))
         }
     }
-    
-    /// Restore all config files concurrently
+
     private func restoreConfigFiles(for app: BackupAppInfo, createBackupBeforeRestore: Bool) async throws {
-        // Build entriesMap from backupEntries if available
-        var entriesMap: [String: String]? = nil
-        if let entries = app.backupEntries {
-            var map: [String: String] = [:]
-            for entry in entries {
-                map[entry.originalPath] = entry.storedName
-            }
-            entriesMap = map
-        }
-        
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            for originalPath in app.configPaths {
-                let expandedPath = NSString(string: originalPath).expandingTildeInPath
-                let fallbackName = URL(fileURLWithPath: expandedPath).lastPathComponent
-                let backupName = entriesMap?[originalPath] ?? fallbackName
-                
-                group.addTask {
-                    try await self.restoreSingleConfigFile(
-                        originalPath: originalPath,
-                        backupRoot: app.path,
-                        backupName: backupName,
-                        createBackupBeforeRestore: createBackupBeforeRestore,
-                    )
+        let entries = try BackupManifest.restoreEntries(paths: app.configPaths, mapping: app.backupEntries, in: app.path)
+        var issues = ConfigurationFileIssues()
+        for entry in entries {
+            let source = URL(fileURLWithPath: app.path).appendingPathComponent(entry.storedName)
+            do {
+                guard await fileOps.fileExists(at: source.path) else {
+                    throw CocoaError(.fileReadNoSuchFile, userInfo: [NSFilePathErrorKey: source.path])
                 }
+                if createBackupBeforeRestore {
+                    try await fileOps.backupExistingFile(entry.originalPath)
+                }
+                try await fileOps.copyFile(from: source.path, to: entry.originalPath)
+                issues.completed += 1
+            } catch {
+                issues.record(error, at: entry.originalPath)
             }
-            
-            try await group.waitForAll()
         }
+        if issues.completed == 0 || !issues.reasons.isEmpty { throw issues }
     }
-    
-    private func restoreSingleConfigFile(
-        originalPath: String,
-        backupRoot: String,
-        backupName: String,
-        createBackupBeforeRestore: Bool,
-    ) async throws {
-        let expandedPath = NSString(string: originalPath).expandingTildeInPath
-        let fallbackName = URL(fileURLWithPath: expandedPath).lastPathComponent
-        
-        // Try backupName first; if that directory doesn't exist, fall back to lastPathComponent
-        var sourcePath = "\(backupRoot)/\(backupName)"
-        if backupName != fallbackName, !(await fileOps.fileExists(at: sourcePath)) {
-            sourcePath = "\(backupRoot)/\(fallbackName)"
-        }
-        
-        guard await fileOps.fileExists(at: sourcePath) else {
-            logger.debug("Config file not in backup: \(backupName)")
-            return
-        }
-        
-        // Backup existing file before overwriting (if enabled)
-        if createBackupBeforeRestore {
-            try await fileOps.backupExistingFile(expandedPath)
-        }
-        try await fileOps.copyFile(from: sourcePath, to: expandedPath)
-    }
-    
+
     private func reportProgress(
         completed: Int,
         total: Int,

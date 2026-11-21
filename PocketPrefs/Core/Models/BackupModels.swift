@@ -38,6 +38,21 @@ struct BackupEntry: Codable, Equatable {
     let storedName: String
 }
 
+/// An app can have usable files even when other configured paths could not be copied.
+struct ConfigurationFileIssues: LocalizedError {
+    var completed = 0
+    var reasons: [String] = []
+
+    mutating func record(_ error: Error, at path: String) {
+        reasons.append("\(path) — \(error.localizedDescription)")
+    }
+
+    var errorDescription: String? {
+        let summary = String(localized: "Operation_Files_Copied", defaultValue: "Files or folders copied: \(completed)")
+        return ([summary] + reasons).joined(separator: "\n")
+    }
+}
+
 // MARK: - Backup App Information
 
 struct BackupAppInfo: Identifiable, Hashable {
@@ -123,6 +138,13 @@ struct OperationSummary: Identifiable {
     struct Failure {
         let name: String
         let reason: String
+        let hasCopiedFiles: Bool
+
+        init(name: String, error: Error) {
+            self.name = name
+            reason = error.localizedDescription
+            hasCopiedFiles = ((error as? ConfigurationFileIssues)?.completed ?? 0) > 0
+        }
     }
 
     let id = UUID()
@@ -132,24 +154,26 @@ struct OperationSummary: Identifiable {
     let failures: [Failure]
     var notice: String?
 
+    var partialAppCount: Int { failures.count(where: \.hasCopiedFiles) }
+
     var status: Status {
         if totalProcessed == 0 { return .notPerformed }
         if failures.isEmpty, successCount > 0 { return .success }
-        return successCount > 0 ? .partialFailure : .failure
+        return successCount > 0 || partialAppCount > 0 ? .partialFailure : .failure
     }
 
     init(backup result: BackupResult) {
         kind = .backup
         successCount = result.successCount
         totalProcessed = result.totalProcessed
-        failures = result.failedApps.map { Failure(name: $0.name, reason: $0.error.localizedDescription) }
+        failures = result.failedApps.map { Failure(name: $0.name, error: $0.error) }
     }
 
     init(restore result: RestoreResult) {
         kind = .restore
         successCount = result.successCount
         totalProcessed = result.totalProcessed
-        failures = result.failedApps.map { Failure(name: $0.name, reason: $0.error.localizedDescription) }
+        failures = result.failedApps.map { Failure(name: $0.name, error: $0.error) }
     }
 }
 
